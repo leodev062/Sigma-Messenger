@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "214522219716",
+    "project_id": "ui-sigma",
+    "storage_bucket": "ui-sigma.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214522219716:android:dfa2baed5e4699cbb64d91",
+        "android_client_info": {
+          "package_name": "org.sigma.messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXqMFWL3FnoXFn7uhUFdnHpik7L6Hx3iU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
