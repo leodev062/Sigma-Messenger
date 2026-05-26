@@ -62,6 +62,7 @@ class SignalRequest {
 
 class SocketManager extends ChangeNotifier {
   WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
   SocketStatus _status = SocketStatus.disconnected;
   
   SocketStatus get status => _status;
@@ -97,7 +98,7 @@ class SocketManager extends ChangeNotifier {
         Uri.parse("$_baseUrl?userId=$_currentUserId"),
       );
 
-      _channel!.stream.listen(
+      _subscription = _channel!.stream.listen(
         (data) {
           _onMessageReceived(data);
         },
@@ -141,6 +142,7 @@ class SocketManager extends ChangeNotifier {
   void _onDisconnected() {
     _status = SocketStatus.disconnected;
     _stopHeartbeat();
+    _subscription?.cancel();
     notifyListeners();
     _scheduleReconnect();
   }
@@ -217,6 +219,7 @@ class SocketManager extends ChangeNotifier {
     _currentUserId = null;
     _reconnectTimer?.cancel();
     _stopHeartbeat();
+    _subscription?.cancel();
     _channel?.sink.close(ws_status.goingAway);
     _status = SocketStatus.disconnected;
     notifyListeners();

@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:sigma/core/storage/sigma_store.dart';
 
 part 'database.g.dart';
 
@@ -42,6 +46,8 @@ class Messages extends Table {
   TextColumn get textContent => text()();
   IntColumn get type => intEnum<MessageType>().withDefault(Constant(MessageType.text.index))();
   TextColumn get attachmentUrl => text().nullable()();
+  TextColumn get attachmentAesKey => text().nullable()();
+  TextColumn get attachmentMacKey => text().nullable()();
   IntColumn get timestamp => integer()();
   IntColumn get status => intEnum<MessageStatus>().withDefault(Constant(MessageStatus.pending.index))();
   BoolColumn get isFromMe => boolean()();
@@ -50,15 +56,73 @@ class Messages extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Users, Chats, Messages])
+// --- Tabelas de Persistência do Protocolo Signal ---
+
+class SignalSessions extends Table {
+  TextColumn get addressName => text()();
+  IntColumn get deviceId => integer()();
+  BlobColumn get sessionRecord => blob()();
+
+  @override
+  Set<Column> get primaryKey => {addressName, deviceId};
+}
+
+class SignalPreKeys extends Table {
+  IntColumn get preKeyId => integer()();
+  BlobColumn get preKeyRecord => blob()();
+
+  @override
+  Set<Column> get primaryKey => {preKeyId};
+}
+
+class SignalSignedPreKeys extends Table {
+  IntColumn get signedPreKeyId => integer()();
+  BlobColumn get signedPreKeyRecord => blob()();
+
+  @override
+  Set<Column> get primaryKey => {signedPreKeyId};
+}
+
+class SignalIdentities extends Table {
+  TextColumn get addressName => text()();
+  IntColumn get registrationId => integer()();
+  BlobColumn get identityKey => blob().nullable()(); // IdentityKey pública do remoto
+
+  @override
+  Set<Column> get primaryKey => {addressName};
+}
+
+@DriftDatabase(tables: [
+  Users, 
+  Chats, 
+  Messages, 
+  SignalSessions, 
+  SignalPreKeys, 
+  SignalSignedPreKeys, 
+  SignalIdentities
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3; // Incremented schema version (Jobs table removed)
+  int get schemaVersion => 5; // Incrementado para incluir chaves de anexo E2EE
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'sigma_database');
+    return LazyDatabase(() async {
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dbFolder.path, 'sigma_database.db'));
+      
+      // Recupera a senha mestre do SecureStorage
+      final password = await SigmaStore.instance.keys.getDatabasePassword();
+
+      return NativeDatabase.createInBackground(
+        file,
+        setup: (database) {
+          // Ativa encriptação via SQLCipher
+          database.execute("PRAGMA key = '$password'");
+        },
+      );
+    });
   }
   
   // User Operations

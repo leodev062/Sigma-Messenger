@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:sigma/features/auth/data/models/user_response.dart';
+import 'package:sigma/data/models/user_response.dart';
 import 'package:sigma/core/updater/apk_update_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 

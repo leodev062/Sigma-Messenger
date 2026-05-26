@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sigma/core/network/socket_manager.dart';
+import 'package:sigma/domain/entities/chat_entity.dart';
 import 'package:sigma/features/chat/presentation/viewmodels/chat_viewmodel.dart';
-import 'package:sigma/core/storage/database.dart';
 import 'package:sigma/features/updater/update_banner.dart';
 import 'package:sigma/features/updater/update_viewmodel.dart';
 
@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const UpdateBanner(),
           
           Expanded(
-            child: StreamBuilder<List<Chat>>(
+            child: StreamBuilder<List<ChatEntity>>(
               stream: chatViewModel.chats,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ChatTile extends StatelessWidget {
-  final Chat chat;
+  final ChatEntity chat;
   const _ChatTile({required this.chat});
 
   @override

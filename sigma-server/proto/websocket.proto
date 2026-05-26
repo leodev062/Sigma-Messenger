@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package sigmapb;
+
+option go_package = "sigma-server/proto;sigmapb";
+
+message WebSocketMessage {
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    REQUEST = 1;
+    RESPONSE = 2;
+  }
+
+  Type type = 1;
+  WebSocketRequestMessage request = 2;
+  WebSocketResponseMessage response = 3;
+}
+
+message WebSocketRequestMessage {
+  string id = 1;
+  string verb = 2;
+  string path = 3;
+  string destination = 4;
+  repeated string headers = 5;
+  bytes body = 6;
+}
+
+message WebSocketResponseMessage {
+  string id = 1;
+  int32 status = 2;
+  string message = 3;
+  string destination = 4;
+  repeated string headers = 5;
+  bytes body = 6;
+}

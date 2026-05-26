@@ -1,129 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:sigma/features/auth/domain/usecases/request_code_usecase.dart';
-import 'package:sigma/features/auth/domain/usecases/verify_code_usecase.dart';
-import 'package:sigma/features/auth/domain/repositories/auth_repository.dart';
 import 'package:sigma/core/network/socket_manager.dart';
+import 'package:sigma/domain/repositories/i_auth_repository.dart';
+import 'package:sigma/domain/interactors/auth/request_code_interactor.dart';
+import 'package:sigma/domain/interactors/auth/verify_code_interactor.dart';
+import 'package:sigma/core/util/sigma_log.dart';
+import 'package:sigma/data/services/incoming_message_processor.dart';
+import 'package:sigma/app/locator.dart';
 
-enum AuthStatus { 
-  idle, 
-  requestingCode, 
-  codeSent, 
-  loggingIn, 
-  verified,
-  success, 
-  error, 
-  unauthenticated 
-}
+enum AuthStatus { idle, loading, unauthenticated, success, verified, error }
 
 class AuthState {
   final AuthStatus status;
-  final String? phoneNumber;
-  final String? errorMessage;
-  final String? userId;
   final bool initialized;
+  final String? error;
 
   AuthState({
     this.status = AuthStatus.idle,
-    this.phoneNumber,
-    this.errorMessage,
-    this.userId,
     this.initialized = false,
+    this.error,
   });
 
   AuthState copyWith({
     AuthStatus? status,
-    String? phoneNumber,
-    String? errorMessage,
-    String? userId,
     bool? initialized,
+    String? error,
   }) {
     return AuthState(
       status: status ?? this.status,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      errorMessage: errorMessage ?? this.errorMessage,
-      userId: userId ?? this.userId,
       initialized: initialized ?? this.initialized,
+      error: error ?? this.error,
     );
   }
 }
 
 class AuthViewModel extends ChangeNotifier {
-  final RequestCodeUseCase _requestCodeUseCase;
-  final VerifyCodeUseCase _verifyCodeUseCase;
-  final AuthRepository _authRepository;
-  
+  static const String TAG = "AuthViewModel";
+
+  final RequestCodeInteractor _requestCodeInteractor;
+  final VerifyCodeInteractor _verifyCodeInteractor;
+  final IAuthRepository _authRepository;
   final SocketManager _socketManager;
 
   AuthState _state = AuthState();
   AuthState get state => _state;
 
+  bool get isLoading => _state.status == AuthStatus.loading;
+
   AuthViewModel(
-    this._requestCodeUseCase,
-    this._verifyCodeUseCase,
+    this._requestCodeInteractor,
+    this._verifyCodeInteractor,
     this._authRepository,
-    this._socketManager, 
+    this._socketManager,
   ) {
-    _checkInitialAuth();
+    _init();
   }
 
-  void _checkInitialAuth() async {
-    final user = await _authRepository.getCurrentUser();
-    
-    if (user != null) {
-      _state = _state.copyWith(
-        status: AuthStatus.success,
-        userId: user.id,
-        initialized: true,
-      );
-      _socketManager.connect(user.id);
-    } else {
-      _state = _state.copyWith(
-        status: AuthStatus.unauthenticated,
-        initialized: true,
-      );
-    }
-    notifyListeners();
-  }
-
-  Future<void> requestCode(String phoneNumber) async {
-    _state = _state.copyWith(status: AuthStatus.requestingCode, phoneNumber: phoneNumber);
-    notifyListeners();
-
+  Future<void> _init() async {
     try {
-      await _requestCodeUseCase.execute(phoneNumber);
-      _state = _state.copyWith(status: AuthStatus.codeSent);
-    } catch (e) {
-      _state = _state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
-    } finally {
-      notifyListeners();
-    }
-  }
-
-  Future<void> verifyCode(String smsCode) async {
-    if (_state.phoneNumber == null) return;
-
-    _state = _state.copyWith(status: AuthStatus.loggingIn);
-    notifyListeners();
-
-    try {
-      final user = await _verifyCodeUseCase.execute(
-        _state.phoneNumber!,
-        smsCode,
-      );
-
+      final user = await _authRepository.getCurrentUser();
       if (user != null) {
-        _state = _state.copyWith(status: AuthStatus.verified, userId: user.id);
-        _socketManager.connect(user.id);
+        _state = _state.copyWith(status: AuthStatus.verified, initialized: true);
+        _onLoginSuccess(user.id);
+      } else {
+        _state = _state.copyWith(status: AuthStatus.unauthenticated, initialized: true);
       }
     } catch (e) {
-      _state = _state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
+      _state = _state.copyWith(status: AuthStatus.unauthenticated, initialized: true);
+    }
+    notifyListeners();
+  }
+
+  void _onLoginSuccess(String userId) {
+    _socketManager.connect(userId);
+    // Inicializa o processador de mensagens recebidas (Signal-Style)
+    locator<IncomingMessageProcessor>().init();
+  }
+
+  Future<void> requestCode(String phone) async {
+    _updateState(status: AuthStatus.loading);
+    try {
+      await _requestCodeInteractor.execute(phone);
+      SigmaLog.i(TAG, "Código solicitado com sucesso para $phone");
+      _updateState(status: AuthStatus.success);
+    } catch (e) {
+      SigmaLog.e(TAG, "Erro ao solicitar código", e);
+      _updateState(status: AuthStatus.error, error: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<void> verifyCode(String phone, String code) async {
+    _updateState(status: AuthStatus.loading);
+    try {
+      final user = await _verifyCodeInteractor.execute(phone, code);
+      if (user != null) {
+        SigmaLog.i(TAG, "Login realizado com sucesso: ${user.id}");
+        _state = _state.copyWith(status: AuthStatus.verified);
+        _onLoginSuccess(user.id);
+      } else {
+        _updateState(status: AuthStatus.error, error: "Usuário nulo após verificação");
+      }
+    } catch (e) {
+      SigmaLog.e(TAG, "Erro na verificação", e);
+      _updateState(status: AuthStatus.error, error: e.toString());
+      rethrow;
     } finally {
       notifyListeners();
     }
   }
 
-  void resetState() {
-    _state = AuthState();
+  void _updateState({AuthStatus? status, String? error}) {
+    _state = _state.copyWith(status: status, error: error);
     notifyListeners();
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:sigma/features/auth/data/models/user_response.dart';
+import 'package:sigma/data/models/user_response.dart';
 
 /// Central SigmaStore - Inspirado na arquitetura do Signal-Android.
 /// Provê acesso centralizado, criptografado e cacheado à persistência.
@@ -88,6 +88,7 @@ class KeyStore {
   static const _keyRegistrationId = 'signal_registration_id';
   static const _keySignedPreKey = 'signal_signed_pre_key';
   static const _keyPublicPreKeys = 'signal_public_pre_keys';
+  static const _keyDatabasePassword = 'database_password';
 
   Future<void> write(String key, String value) async {
     await _storage.write(key: key, value: value);
@@ -95,6 +96,17 @@ class KeyStore {
 
   Future<String?> read(String key) async {
     return await _storage.read(key: key);
+  }
+
+  /// Gera ou recupera uma chave mestre para encriptação do banco via SQLCipher.
+  Future<String> getDatabasePassword() async {
+    var pass = await _storage.read(key: _keyDatabasePassword);
+    if (pass == null) {
+      // Simula a geração de uma chave AES-256 forte
+      pass = 'sigma_master_key_${DateTime.now().microsecondsSinceEpoch}'; 
+      await _storage.write(key: _keyDatabasePassword, value: pass);
+    }
+    return pass;
   }
 
   // Atalhos para chaves específicas do protocolo

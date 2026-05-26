@@ -2,62 +2,38 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:sigma/core/network/api_service.dart';
-import 'package:sigma/core/storage/sigma_store.dart';
+import 'package:sigma/core/util/sigma_log.dart';
+import 'package:sigma/core/util/exceptions.dart';
+import 'package:sigma/data/datasources/crypto/drift_signal_protocol_store.dart';
+import 'package:sigma/data/models/signal_payload.dart';
 
 /// Gerenciador de Criptografia de Ponta-a-Ponta (E2EE)
 /// Utiliza o protocolo Signal para selar e abrir envelopes de mensagens.
+/// Agora utiliza persistência em banco de dados blindado (SQLCipher).
 class CryptoManager {
+  static const String TAG = "CryptoManager";
+  
   final ApiService _apiService;
-  InMemorySignalProtocolStore? _protocolStore;
+  final DriftSignalProtocolStore _protocolStore;
 
-  CryptoManager(this._apiService);
+  CryptoManager(this._apiService, this._protocolStore);
 
-  /// Inicializa o store do Signal com as chaves do utilizador logado.
-  /// Lê do SigmaStore (disco seguro) e carrega para a RAM.
+  /// Inicialização simplificada: a persistência é gerida pelo DriftSignalProtocolStore.
   Future<void> init() async {
-    if (_protocolStore != null) return;
-
-    final keys = SigmaStore.instance.keys;
-    
-    final serializedIdentity = await keys.read(keys.identityKeyPairKey);
-    final registrationIdStr = await keys.read(keys.registrationIdKey);
-    
-    if (serializedIdentity == null || registrationIdStr == null) {
-      throw Exception("Chaves não encontradas. Login necessário.");
-    }
-
-    final identityKeyPair = IdentityKeyPair.fromSerialized(base64Decode(serializedIdentity));
-    final registrationId = int.parse(registrationIdStr);
-
-    _protocolStore = InMemorySignalProtocolStore(identityKeyPair, registrationId);
-    
-    // Carregar Signed PreKey (Record completo com privada)
-    final serializedSignedPreKey = await keys.read(keys.signedPreKeyKey);
-    if (serializedSignedPreKey != null) {
-      final signedPreKey = SignedPreKeyRecord.fromSerialized(base64Decode(serializedSignedPreKey));
-      // Padrão síncrono no InMemoryStore
-      _protocolStore!.storeSignedPreKey(signedPreKey.id, signedPreKey);
-    }
-
-    // Carregar One-Time PreKeys (Records completos com privadas)
-    final serializedPreKeys = await keys.read(keys.publicPreKeysKey);
-    if (serializedPreKeys != null) {
-      final List<dynamic> list = jsonDecode(serializedPreKeys);
-      for (var item in list) {
-        // Correção: PreKeyRecord usa fromBuffer
-        final record = PreKeyRecord.fromBuffer(base64Decode(item as String));
-        _protocolStore!.storePreKey(record.id, record);
-      }
-    }
+    // Agora o store é injetado e auto-gerido via Drift.
+    // Verificamos apenas se a identidade local existe.
+    final identity = await _protocolStore.getIdentityKeyPair();
+    SigmaLog.d(TAG, "CryptoManager inicializado. Local Identity: ${identity.getPublicKey().serialize().length} bytes");
   }
 
   /// Constrói uma sessão segura com o destinatário se ela ainda não existir.
   Future<void> buildSessionIfNeeded(String remoteUserId) async {
-    await init();
     final address = SignalProtocolAddress(remoteUserId, 1);
     
-    if (await _protocolStore!.containsSession(address)) return;
+    if (await _protocolStore.containsSession(address)) return;
 
+    SigmaLog.i(TAG, "Construindo nova sessão persistente para $remoteUserId");
+    
     // Busca o PreKeyBundle do servidor Go
     final keyData = await _apiService.getUserKeys(remoteUserId);
     
@@ -72,40 +48,44 @@ class CryptoManager {
       IdentityKey(Curve.decodePoint(base64Decode(keyData['identity_key']), 0)),
     );
 
-    final sessionBuilder = SessionBuilder.fromSignalStore(_protocolStore!, address);
+    final sessionBuilder = SessionBuilder.fromSignalStore(_protocolStore, address);
     await sessionBuilder.processPreKeyBundle(bundle);
   }
 
-  /// Encripta o texto para um envelope Signal Base64.
-  Future<String> encryptMessage(String remoteUserId, String plaintext) async {
+  /// Encripta o SignalPayload para um envelope Signal Base64.
+  Future<String> encryptMessage(String remoteUserId, SignalPayload payload) async {
     await buildSessionIfNeeded(remoteUserId);
     
     final address = SignalProtocolAddress(remoteUserId, 1);
-    final sessionCipher = SessionCipher.fromStore(_protocolStore!, address);
+    final sessionCipher = SessionCipher.fromStore(_protocolStore, address);
     
+    final plaintext = payload.serialize();
     final ciphertext = await sessionCipher.encrypt(Uint8List.fromList(utf8.encode(plaintext)));
     return base64Encode(ciphertext.serialize());
   }
 
-  /// Desencripta um envelope Base64 recebido para texto limpo.
-  Future<String> decryptMessage(String remoteUserId, String base64Ciphertext) async {
-    await init();
-    
+  /// Desencripta um envelope Base64 recebido para um SignalPayload.
+  /// Implementa o padrão de Session Reset em caso de falha.
+  Future<SignalPayload> decryptMessage(String remoteUserId, String base64Ciphertext) async {
     final address = SignalProtocolAddress(remoteUserId, 1);
-    final sessionCipher = SessionCipher.fromStore(_protocolStore!, address);
+    final sessionCipher = SessionCipher.fromStore(_protocolStore, address);
     final ciphertextBytes = base64Decode(base64Ciphertext);
 
     Uint8List plaintextBytes;
     
     try {
-      // Tenta decifrar como SignalMessage
-      plaintextBytes = await sessionCipher.decryptFromSignal(SignalMessage.fromSerialized(ciphertextBytes));
+      try {
+        plaintextBytes = await sessionCipher.decryptFromSignal(SignalMessage.fromSerialized(ciphertextBytes));
+      } catch (e) {
+        plaintextBytes = await sessionCipher.decrypt(PreKeySignalMessage(ciphertextBytes));
+      }
     } catch (e) {
-      // Tenta como PreKeySignalMessage (nova sessão)
-      plaintextBytes = await sessionCipher.decrypt(PreKeySignalMessage(ciphertextBytes));
+      SigmaLog.e(TAG, "Falha na descriptografia para $remoteUserId. Resetando sessão.");
+      await _protocolStore.deleteSession(address);
+      throw DecryptionException("Sessão inválida ou mensagem corrompida. Sessão limpa.");
     }
 
-    return utf8.decode(plaintextBytes);
+    final plaintext = utf8.decode(plaintextBytes);
+    return SignalPayload.deserialize(plaintext);
   }
 }
-

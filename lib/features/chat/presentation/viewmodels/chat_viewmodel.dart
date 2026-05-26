@@ -1,19 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:sigma/features/chat/domain/repositories/chat_repository.dart';
-import 'package:sigma/core/storage/database.dart';
+import 'package:sigma/domain/entities/chat_entity.dart';
+import 'package:sigma/domain/entities/message_entity.dart';
+import 'package:sigma/domain/interactors/chat/send_message_interactor.dart';
+import 'package:sigma/domain/interactors/chat/watch_chats_interactor.dart';
+import 'package:sigma/domain/interactors/chat/watch_messages_interactor.dart';
 
 class ChatViewModel extends ChangeNotifier {
-  final IChatRepository _chatRepository;
+  final WatchChatsInteractor _watchChatsInteractor;
+  final WatchMessagesInteractor _watchMessagesInteractor;
+  final SendMessageInteractor _sendMessageInteractor;
 
-  ChatViewModel(this._chatRepository);
+  ChatViewModel(
+    this._watchChatsInteractor,
+    this._watchMessagesInteractor,
+    this._sendMessageInteractor,
+  );
 
-  Stream<List<Chat>> get chats => _chatRepository.watchChats();
+  Stream<List<ChatEntity>> get chats => _watchChatsInteractor.execute();
 
-  Stream<List<Message>> watchMessages(String chatId) {
-    return _chatRepository.watchMessages(chatId);
+  Stream<List<MessageEntity>> watchMessages(String chatId) {
+    return _watchMessagesInteractor.execute(chatId);
   }
 
   Future<void> sendMessage(String chatId, String senderId, String text) async {
-    await _chatRepository.sendMessage(chatId, senderId, text);
+    await _sendMessageInteractor.execute(
+      chatId: chatId, 
+      senderId: senderId, 
+      text: text,
+    );
   }
 }

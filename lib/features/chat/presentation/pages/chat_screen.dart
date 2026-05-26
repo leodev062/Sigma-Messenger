@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sigma/core/storage/database.dart';
+import 'package:sigma/domain/entities/message_entity.dart';
 import 'package:sigma/features/chat/presentation/viewmodels/chat_viewmodel.dart';
 import 'package:sigma/core/storage/sigma_store.dart';
 
@@ -43,7 +43,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           // Mensagens Reativas do Banco
           Expanded(
-            child: StreamBuilder<List<Message>>(
+            child: StreamBuilder<List<MessageEntity>>(
               stream: chatViewModel.watchMessages(widget.chatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -118,7 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  final Message message;
+  final MessageEntity message;
   const _MessageBubble({required this.message});
 
   @override

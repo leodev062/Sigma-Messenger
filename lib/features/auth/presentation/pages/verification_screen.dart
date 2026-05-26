@@ -87,7 +87,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     ),
                     onChanged: (value) {
                       if (value.length == 6) {
-                        authViewModel.verifyCode(value);
+                        authViewModel.verifyCode(widget.phoneNumber, value);
                       }
                     },
                   ),
@@ -96,7 +96,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               
               const SizedBox(height: 48),
               
-              if (state.status == AuthStatus.loggingIn)
+              if (state.status == AuthStatus.loading)
                 const Center(child: CircularProgressIndicator())
               else ...[
                 if (state.status == AuthStatus.error)
@@ -104,7 +104,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 24.0),
                       child: Text(
-                        state.errorMessage ?? 'Código inválido',
+                        state.error ?? 'Código inválido',
                         style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
                       ),
                     ),
@@ -112,7 +112,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 
                 Center(
                   child: TextButton(
-                    onPressed: state.status == AuthStatus.loggingIn 
+                    onPressed: state.status == AuthStatus.loading
                         ? null 
                         : () {
                           // authViewModel.requestCode(widget.phoneNumber);

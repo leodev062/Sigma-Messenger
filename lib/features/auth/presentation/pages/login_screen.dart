@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final authViewModel = context.watch<AuthViewModel>();
     final state = authViewModel.state;
 
-    if (state.status == AuthStatus.codeSent) {
+    if (state.status == AuthStatus.success) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.push('/verification', extra: '+${_codeController.text}${_phoneController.text}');
       });
@@ -173,14 +173,14 @@ class _LoginScreenState extends State<LoginScreen> {
               
               const SizedBox(height: 48),
               
-              if (state.status == AuthStatus.requestingCode)
+              if (state.status == AuthStatus.loading)
                 const Center(child: CircularProgressIndicator())
               else ...[
                 if (state.status == AuthStatus.error)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
                     child: Text(
-                      state.errorMessage ?? 'Ocorreu um erro',
+                      state.error ?? 'Ocorreu um erro',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),

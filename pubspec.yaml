@@ -46,7 +46,7 @@ dependencies:
   flutter_secure_storage: ^10.2.0
   drift: ^2.33.0
   drift_flutter: ^0.3.0
-  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlcipher_flutter_libs: ^0.7.0+eol
   path_provider: ^2.1.5
   path: ^1.9.0
   web_socket_channel: ^3.0.1
@@ -59,6 +59,8 @@ dependencies:
   fixnum: ^1.1.0
   open_filex: ^4.7.0
   flutter_local_notifications: ^21.0.0
+  cryptography: ^2.7.0
+  collection: ^1.19.0
   workmanager: ^0.9.0+3
 
 dev_dependencies:
