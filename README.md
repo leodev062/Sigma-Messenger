@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # sigma
 
 A new Flutter project.
@@ -15,3 +16,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Sigma-Messenger
+A nova era da comunicação privada e segura. Simples, rápido e elegante.
+>>>>>>> bd10edb3f426719a9ce6d63a924cb79250c17ec7
