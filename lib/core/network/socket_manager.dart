@@ -4,11 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
+import 'package:sigma/core/config/app_config.dart';
 import 'package:sigma/core/network/pb/websocket.pb.dart' as sigmapb;
 
 enum SocketStatus { disconnected, connecting, connected }
 
 class SocketManager extends ChangeNotifier {
+  final AppConfig _config;
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   SocketStatus _status = SocketStatus.disconnected;
@@ -20,12 +22,13 @@ class SocketManager extends ChangeNotifier {
   Stream<sigmapb.WebSocketMessage> get messages => _messageController.stream;
 
   String? _currentUserId;
-  final String _baseUrl = "ws://192.99.236.216:3000/ws";
   
   Timer? _reconnectTimer;
   Timer? _heartbeatTimer;
   int _reconnectAttempts = 0;
   final int _maxReconnectDelay = 30; // seconds
+
+  SocketManager(this._config);
 
   void connect(String userId) {
     if (_status == SocketStatus.connected && _currentUserId == userId) return;
@@ -43,7 +46,7 @@ class SocketManager extends ChangeNotifier {
     try {
       debugPrint("📡 WebSocket: Conectando via Protobuf v1...");
       _channel = WebSocketChannel.connect(
-        Uri.parse("$_baseUrl?userId=$_currentUserId"),
+        Uri.parse("${_config.webSocketUrl}?userId=$_currentUserId"),
       );
 
       _subscription = _channel!.stream.listen(
@@ -74,12 +77,13 @@ class SocketManager extends ChangeNotifier {
     _status = SocketStatus.connected;
     try {
       // Backend v1 envia bytes binários (Protobuf)
-      final bytes = data as Uint8List;
+      // Usamos Uint8List.fromList para garantir compatibilidade entre plataformas
+      final bytes = Uint8List.fromList(data as List<int>);
       final msg = sigmapb.WebSocketMessage.fromBuffer(bytes);
       
       _messageController.add(msg);
     } catch (e) {
-      debugPrint("⚠️ WebSocket Decode Error (Protobuf): $e");
+      // debugPrint("⚠️ WebSocket Decode Error (Protobuf): $e");
     }
     notifyListeners();
   }

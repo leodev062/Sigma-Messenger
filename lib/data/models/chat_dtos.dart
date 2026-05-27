@@ -47,9 +47,13 @@ class MessageDto {
   final String senderId;
   final String textContent;
   final String type;
-  final String? attachmentUrl;
+  
+  // E2EE Attachment Data
+  final String? attachmentId;
   final String? attachmentAesKey;
-  final String? attachmentMacKey;
+  final String? attachmentIv;
+  final String? attachmentDigest;
+  
   final int timestamp;
   final String status;
   final bool isFromMe;
@@ -60,9 +64,10 @@ class MessageDto {
     required this.senderId,
     required this.textContent,
     required this.type,
-    this.attachmentUrl,
+    this.attachmentId,
     this.attachmentAesKey,
-    this.attachmentMacKey,
+    this.attachmentIv,
+    this.attachmentDigest,
     required this.timestamp,
     required this.status,
     required this.isFromMe,
@@ -75,9 +80,10 @@ class MessageDto {
       senderId: msg.senderId,
       textContent: msg.textContent,
       type: msg.type.name,
-      attachmentUrl: msg.attachmentUrl,
+      attachmentId: msg.attachmentUrl, // Drift ainda usa attachmentUrl para o ID
       attachmentAesKey: msg.attachmentAesKey,
-      attachmentMacKey: msg.attachmentMacKey,
+      attachmentIv: msg.attachmentIv, // Drift campo novo
+      attachmentDigest: msg.attachmentMacKey, // Drift ainda usa attachmentMacKey para o Digest
       timestamp: msg.timestamp,
       status: msg.status.name,
       isFromMe: msg.isFromMe,

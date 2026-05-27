@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sigma/domain/entities/message_entity.dart';
+import 'package:sigma/domain/entities/user_entity.dart';
 import 'package:sigma/features/chat/presentation/viewmodels/chat_viewmodel.dart';
 import 'package:sigma/core/storage/sigma_store.dart';
 
@@ -32,7 +33,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat ${widget.chatId.substring(0, 8)}...'),
+        title: StreamBuilder<UserEntity?>(
+          stream: chatViewModel.watchRecipient(widget.chatId), // Assumindo que chatId == recipientId
+          builder: (context, snapshot) {
+            final user = snapshot.data;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user?.name ?? user?.username ?? 'Carregando...',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                if (user?.phone != null)
+                  Text(
+                    user!.phone,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+              ],
+            );
+          },
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.videocam), onPressed: () {}),
           IconButton(icon: const Icon(Icons.call), onPressed: () {}),

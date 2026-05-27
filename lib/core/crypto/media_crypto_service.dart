@@ -1,132 +1,79 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
-import 'dart:math';
+import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
-import 'package:sigma/core/util/sigma_log.dart';
-import 'package:collection/collection.dart';
+import 'package:crypto/crypto.dart' as crypto;
 
-/// Resultado da encriptação de um ficheiro de média.
-class MediaEncryptionResult {
-  final File file;
+class EncryptedMedia {
+  final Uint8List ciphertext;
   final String aesKeyBase64;
-  final String macKeyBase64;
+  final String ivBase64;
+  final String digestBase64;
 
-  MediaEncryptionResult({
-    required this.file,
+  EncryptedMedia({
+    required this.ciphertext,
     required this.aesKeyBase64,
-    required this.macKeyBase64,
+    required this.ivBase64,
+    required this.digestBase64,
   });
 }
 
-/// Serviço de Criptografia de Ficheiros (Média).
-/// Implementa AES-256-CBC + HMAC-SHA256, similar ao Signal.
+/// Serviço responsável pela criptografia simétrica de arquivos multimídia (Padrão Signal).
 class MediaCryptoService {
-  static const String tag = "MediaCryptoService";
+  final _algorithm = AesGcm.with256bits();
 
-  final AesCbc _aesCbc = AesCbc.with256bits(macAlgorithm: MacAlgorithm.empty);
-  final Hmac _hmac = Hmac.sha256();
+  /// Encripta um arquivo usando AES-GCM 256-bit.
+  /// Retorna o ciphertext e os metadados necessários para o AttachmentPointer.
+  Future<EncryptedMedia> encryptFile(File file) async {
+    final bytes = await file.readAsBytes();
 
-  /// Encripta um ficheiro e retorna o ficheiro encriptado e as chaves geradas.
-  /// O formato do ficheiro resultante é: [IV (16 bytes)] + [Ciphertext] + [HMAC (32 bytes)].
-  Future<MediaEncryptionResult> encryptFile(File input) async {
-    SigmaLog.d(tag, "A encriptar ficheiro: ${input.path}");
-    final bytes = await input.readAsBytes();
+    // 1. Calcular SHA-256 do arquivo original (Clean Digest)
+    final digest = crypto.sha256.convert(bytes);
+    final digestBase64 = base64Encode(digest.bytes);
 
-    // Gerar chaves aleatórias de 256 bits
-    final aesKey = await _aesCbc.newSecretKey();
-    
-    // Gerar chave HMAC manualmente (256 bits)
-    final random = Random.secure();
-    final generatedHmacKeyBytes = Uint8List.fromList(List.generate(32, (i) => random.nextInt(256)));
-    final hmacKey = SecretKey(generatedHmacKeyBytes);
+    // 2. Gerar chave AES-256 e IV (Nonce) aleatórios
+    final secretKey = await _algorithm.newSecretKey();
+    final nonce = _algorithm.newNonce();
 
-    // Gerar IV (Nonce) de 16 bytes
-    final iv = _aesCbc.newNonce();
-
-    // Encriptar com AES-CBC
-    final secretBox = await _aesCbc.encrypt(
+    // 3. Executar encriptação
+    final secretBox = await _algorithm.encrypt(
       bytes,
-      secretKey: aesKey,
-      nonce: iv,
+      secretKey: secretKey,
+      nonce: nonce,
     );
 
-    // Calcular HMAC sobre IV + Ciphertext (Encrypt-then-MAC)
-    final hmacInput = Uint8List.fromList([...iv, ...secretBox.cipherText]);
-    final mac = await _hmac.calculateMac(
-      hmacInput,
-      secretKey: hmacKey,
-    );
-
-    // Concatenar: IV + Ciphertext + MAC
-    final outputBytes = Uint8List.fromList([
-      ...iv,
-      ...secretBox.cipherText,
-      ...mac.bytes,
-    ]);
-
-    // Gravar no diretório de cache/temp
-    final tempDir = await getTemporaryDirectory();
-    final outputFileName = "${DateTime.now().microsecondsSinceEpoch}.enc";
-    final outputFile = File(p.join(tempDir.path, outputFileName));
-    await outputFile.writeAsBytes(outputBytes);
-
-    final aesKeyBytes = await aesKey.extractBytes();
-
-    SigmaLog.i(tag, "Ficheiro encriptado com sucesso: ${outputFile.path}");
-
-    return MediaEncryptionResult(
-      file: outputFile,
-      aesKeyBase64: base64Encode(aesKeyBytes),
-      macKeyBase64: base64Encode(generatedHmacKeyBytes),
+    // 4. Extrair metadados em Base64
+    final keyData = await secretKey.extract();
+    final keyBytes = keyData.bytes;
+    
+    return EncryptedMedia(
+      ciphertext: Uint8List.fromList(secretBox.concatenation()),
+      aesKeyBase64: base64Encode(keyBytes),
+      ivBase64: base64Encode(nonce),
+      digestBase64: digestBase64,
     );
   }
 
-  /// Desencripta um ficheiro usando as chaves AES e MAC fornecidas.
-  Future<File> decryptFile(File encryptedInput, String aesKeyBase64, String macKeyBase64) async {
-    SigmaLog.d(tag, "A desencriptar ficheiro: ${encryptedInput.path}");
-    final bytes = await encryptedInput.readAsBytes();
-
-    if (bytes.length < 16 + 32) {
-      throw Exception("Ficheiro encriptado inválido ou corrompido (muito pequeno).");
-    }
-
-    // Extrair IV, Ciphertext e MAC
-    final iv = bytes.sublist(0, 16);
-    final macBytes = bytes.sublist(bytes.length - 32);
-    final cipherText = bytes.sublist(16, bytes.length - 32);
-
-    final aesKey = SecretKey(base64Decode(aesKeyBase64));
-    final hmacKey = SecretKey(base64Decode(macKeyBase64));
-
-    // Verificar HMAC (Integridade)
-    final hmacInput = Uint8List.fromList([...iv, ...cipherText]);
-    final calculatedMac = await _hmac.calculateMac(
-      hmacInput,
-      secretKey: hmacKey,
+  /// Decripta bytes de um anexo usando o AttachmentPointer recebido.
+  Future<Uint8List> decryptBytes({
+    required Uint8List encryptedBytes,
+    required String aesKeyBase64,
+    required String ivBase64,
+  }) async {
+    final secretKey = SecretKey(base64Decode(aesKeyBase64));
+    
+    // O pacote cryptography espera o MAC concatenado ou separado dependendo da versão.
+    final secretBox = SecretBox.fromConcatenation(
+      encryptedBytes,
+      nonceLength: _algorithm.nonceLength,
+      macLength: _algorithm.macAlgorithm.macLength,
     );
 
-    if (!const ListEquality().equals(calculatedMac.bytes, macBytes)) {
-      SigmaLog.e(tag, "Falha na verificação de integridade (HMAC inválido)!");
-      throw Exception("Erro de integridade: O ficheiro pode ter sido alterado.");
-    }
-
-    // Desencriptar com AES-CBC
-    final clearBytes = await _aesCbc.decrypt(
-      SecretBox(cipherText, nonce: iv, mac: Mac.empty),
-      secretKey: aesKey,
+    final cleartext = await _algorithm.decrypt(
+      secretBox,
+      secretKey: secretKey,
     );
 
-    // Gravar ficheiro desencriptado
-    final tempDir = await getTemporaryDirectory();
-    final outputFileName = "${DateTime.now().microsecondsSinceEpoch}.dec";
-    final outputFile = File(p.join(tempDir.path, outputFileName));
-    await outputFile.writeAsBytes(clearBytes);
-
-    SigmaLog.i(tag, "Ficheiro desencriptado com sucesso: ${outputFile.path}");
-
-    return outputFile;
+    return Uint8List.fromList(cleartext);
   }
 }

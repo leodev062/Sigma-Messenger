@@ -12,7 +12,7 @@ import 'package:sigma/core/network/pb/envelope.pb.dart' as env_pb;
 /// Serviço responsável por processar envelopes vindos do socket (Protobuf v1).
 /// Desencripta e persiste no banco via Repositório.
 class IncomingMessageProcessor {
-  static const String TAG = "IncomingMessageProcessor";
+  static const String _tag = "IncomingMessageProcessor";
 
   final ChatRemoteDataSource _remoteDataSource;
   final IChatRepository _chatRepository;
@@ -31,7 +31,7 @@ class IncomingMessageProcessor {
     _subscription = _remoteDataSource.messageStream.listen((msg) {
       _processIncomingData(msg);
     });
-    SigmaLog.i(TAG, "Processor inicializado e escutando socket (Protobuf v1).");
+    SigmaLog.i(_tag, "Processor inicializado e escutando socket (Protobuf v1).");
   }
 
   void stop() {
@@ -53,7 +53,7 @@ class IncomingMessageProcessor {
           final senderId = envelope.source;
           final encryptedEnvelope = base64Encode(envelope.content);
 
-          SigmaLog.d(TAG, "Envelope recebido de $senderId via Protobuf. Iniciando abertura.");
+          SigmaLog.d(_tag, "Envelope recebido de $senderId via Protobuf. Iniciando abertura.");
           
           try {
             await _cryptoManager.init();
@@ -76,9 +76,10 @@ class IncomingMessageProcessor {
               text: cleanText,
               isFromMe: false,
               status: MessageStatusEntity.read,
-              attachmentUrl: attachment?.url,
-              attachmentAesKey: attachment?.aesKeyBase64,
-              attachmentMacKey: attachment?.macKeyBase64,
+              attachmentUrl: attachment?.attachmentId,
+              attachmentAesKey: attachment?.aesKey,
+              attachmentIv: attachment?.iv,
+              attachmentMacKey: attachment?.digest,
             );
 
             await _chatRepository.updateChatMetadata(
@@ -87,11 +88,11 @@ class IncomingMessageProcessor {
               timestamp: now,
             );
 
-            SigmaLog.i(TAG, "Mensagem de $senderId processada e salva.");
+            SigmaLog.i(_tag, "Mensagem de $senderId processada e salva.");
           } on DecryptionException catch (e) {
-            SigmaLog.e(TAG, "Falha na descriptografia: ${e.message}");
+            SigmaLog.e(_tag, "Falha na descriptografia: ${e.message}");
           } catch (e) {
-            SigmaLog.e(TAG, "Erro ao descriptografar/salvar mensagem", e);
+            SigmaLog.e(_tag, "Erro ao descriptografar/salvar mensagem", e);
           }
 
           // Confirma recebimento para o servidor
@@ -99,7 +100,7 @@ class IncomingMessageProcessor {
         }
       }
     } catch (e) {
-      SigmaLog.e(TAG, "Erro crítico no processamento de socket Protobuf v1", e);
+      SigmaLog.e(_tag, "Erro crítico no processamento de socket Protobuf v1", e);
     }
   }
 }

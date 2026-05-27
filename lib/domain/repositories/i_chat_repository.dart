@@ -18,6 +18,7 @@ abstract class IChatRepository {
     required MessageStatusEntity status,
     String? attachmentUrl,
     String? attachmentAesKey,
+    String? attachmentIv,
     String? attachmentMacKey,
   });
 
@@ -30,4 +31,10 @@ abstract class IChatRepository {
     required String lastMessage,
     required int timestamp,
   });
+
+  /// Busca um chat privado com um contacto.
+  Future<ChatEntity?> findPrivateChat(String contactId);
+
+  /// Cria ou atualiza um chat.
+  Future<void> saveChat(ChatEntity chat);
 }

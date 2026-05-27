@@ -50,4 +50,24 @@ class AuthRepositoryImpl implements IAuthRepository {
     SigmaLog.i(TAG, "Realizando logout");
     await localDataSource.logout();
   }
+
+  @override
+  Future<UserEntity> updateProfile({String? name, String? username, String? avatarUrl}) async {
+    final response = await remoteDataSource.updateProfile(
+      name: name,
+      username: username,
+      avatarUrl: avatarUrl,
+    );
+
+    if (response.status == 'SUCCESS' && response.user != null) {
+      // O token não muda no update, então mantemos o atual
+      final currentToken = await localDataSource.getToken();
+      if (currentToken != null) {
+        await localDataSource.saveSession(response.user!, currentToken);
+      }
+      return ModelMapper.userFromDto(response.user!);
+    } else {
+      throw Exception(response.message ?? 'Erro ao atualizar perfil');
+    }
+  }
 }

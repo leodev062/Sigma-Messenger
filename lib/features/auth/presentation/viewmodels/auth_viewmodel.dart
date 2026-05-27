@@ -3,31 +3,37 @@ import 'package:sigma/core/network/socket_manager.dart';
 import 'package:sigma/domain/repositories/i_auth_repository.dart';
 import 'package:sigma/domain/interactors/auth/request_code_interactor.dart';
 import 'package:sigma/domain/interactors/auth/verify_code_interactor.dart';
+import 'package:sigma/domain/interactors/auth/update_profile_interactor.dart';
 import 'package:sigma/core/util/sigma_log.dart';
 import 'package:sigma/data/services/incoming_message_processor.dart';
 import 'package:sigma/app/locator.dart';
+import 'package:sigma/domain/entities/user_entity.dart';
 
-enum AuthStatus { idle, loading, unauthenticated, success, verified, error }
+enum AuthStatus { idle, loading, unauthenticated, success, authenticated, verified, error }
 
 class AuthState {
   final AuthStatus status;
   final bool initialized;
+  final UserEntity? user;
   final String? error;
 
   AuthState({
     this.status = AuthStatus.idle,
     this.initialized = false,
+    this.user,
     this.error,
   });
 
   AuthState copyWith({
     AuthStatus? status,
     bool? initialized,
+    UserEntity? user,
     String? error,
   }) {
     return AuthState(
       status: status ?? this.status,
       initialized: initialized ?? this.initialized,
+      user: user ?? this.user,
       error: error ?? this.error,
     );
   }
@@ -38,6 +44,7 @@ class AuthViewModel extends ChangeNotifier {
 
   final RequestCodeInteractor _requestCodeInteractor;
   final VerifyCodeInteractor _verifyCodeInteractor;
+  final UpdateProfileInteractor _updateProfileInteractor;
   final IAuthRepository _authRepository;
   final SocketManager _socketManager;
 
@@ -49,6 +56,7 @@ class AuthViewModel extends ChangeNotifier {
   AuthViewModel(
     this._requestCodeInteractor,
     this._verifyCodeInteractor,
+    this._updateProfileInteractor,
     this._authRepository,
     this._socketManager,
   ) {
@@ -59,7 +67,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final user = await _authRepository.getCurrentUser();
       if (user != null) {
-        _state = _state.copyWith(status: AuthStatus.verified, initialized: true);
+        _state = _state.copyWith(status: AuthStatus.verified, user: user, initialized: true);
         _onLoginSuccess(user.id);
       } else {
         _state = _state.copyWith(status: AuthStatus.unauthenticated, initialized: true);
@@ -95,7 +103,7 @@ class AuthViewModel extends ChangeNotifier {
       final user = await _verifyCodeInteractor.execute(phone, code);
       if (user != null) {
         SigmaLog.i(TAG, "Login realizado com sucesso: ${user.id}");
-        _state = _state.copyWith(status: AuthStatus.verified);
+        _state = _state.copyWith(status: AuthStatus.authenticated, user: user);
         _onLoginSuccess(user.id);
       } else {
         _updateState(status: AuthStatus.error, error: "Usuário nulo após verificação");
@@ -103,7 +111,25 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       SigmaLog.e(TAG, "Erro na verificação", e);
       _updateState(status: AuthStatus.error, error: e.toString());
-      rethrow;
+      // rethrow; // Removido para evitar crash não tratado na UI
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfile({required String name, required String username, String? avatarUrl}) async {
+    _updateState(status: AuthStatus.loading);
+    try {
+      final user = await _updateProfileInteractor.execute(
+        name: name,
+        username: username,
+        avatarUrl: avatarUrl,
+      );
+      _state = _state.copyWith(status: AuthStatus.verified, user: user);
+      SigmaLog.i(TAG, "Perfil atualizado com sucesso!");
+    } catch (e) {
+      SigmaLog.e(TAG, "Erro ao atualizar perfil", e);
+      _updateState(status: AuthStatus.error, error: e.toString());
     } finally {
       notifyListeners();
     }

@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
@@ -10,15 +10,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type PaymentHandler struct {
+type PaymentController struct {
 	service *services.PaymentService
 }
 
-func NewPaymentHandler(service *services.PaymentService) *PaymentHandler {
-	return &PaymentHandler{service: service}
+func NewPaymentController(service *services.PaymentService) *PaymentController {
+	return &PaymentController{service: service}
 }
 
-func (h *PaymentHandler) Create(c echo.Context) error {
+func (h *PaymentController) Create(c echo.Context) error {
 	var req dto.CreatePaymentRequest
 	if err := c.Bind(&req); err != nil {
 		return api.BadRequest(c, "invalid request")
@@ -30,7 +30,7 @@ func (h *PaymentHandler) Create(c echo.Context) error {
 	return api.OK(c, http.StatusCreated, resp)
 }
 
-func (h *PaymentHandler) Status(c echo.Context) error {
+func (h *PaymentController) Status(c echo.Context) error {
 	status, err := h.service.CheckPaymentStatus(c.Param("id"))
 	if err != nil {
 		return api.InternalError(c, err.Error())

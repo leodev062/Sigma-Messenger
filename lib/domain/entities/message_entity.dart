@@ -7,9 +7,13 @@ class MessageEntity {
   final String senderId;
   final String textContent;
   final MessageTypeEntity type;
-  final String? attachmentUrl;
+  
+  // E2EE Attachment Pointer Data
+  final String? attachmentId;
   final String? attachmentAesKey;
-  final String? attachmentMacKey;
+  final String? attachmentIv;
+  final String? attachmentDigest;
+  
   final int timestamp;
   final MessageStatusEntity status;
   final bool isFromMe;
@@ -20,9 +24,10 @@ class MessageEntity {
     required this.senderId,
     required this.textContent,
     required this.type,
-    this.attachmentUrl,
+    this.attachmentId,
     this.attachmentAesKey,
-    this.attachmentMacKey,
+    this.attachmentIv,
+    this.attachmentDigest,
     required this.timestamp,
     required this.status,
     required this.isFromMe,

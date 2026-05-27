@@ -5,6 +5,7 @@ abstract class ChatLocalDataSource {
   Stream<List<ChatDto>> watchChats();
   Stream<List<MessageDto>> watchMessages(String chatId);
   Future<MessageDto?> getMessage(String id);
+  Future<ChatDto?> findPrivateChat(String contactId);
   Future<void> saveMessage(MessagesCompanion message);
   Future<void> saveChat(ChatsCompanion chat);
 }
@@ -33,6 +34,12 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     final query = _db.select(_db.messages)..where((t) => t.id.equals(id));
     final result = await query.getSingleOrNull();
     return result != null ? MessageDto.fromDrift(result) : null;
+  }
+
+  @override
+  Future<ChatDto?> findPrivateChat(String contactId) async {
+    final chat = await _db.findPrivateChatByContactId(contactId);
+    return chat != null ? ChatDto.fromDrift(chat) : null;
   }
 
   @override

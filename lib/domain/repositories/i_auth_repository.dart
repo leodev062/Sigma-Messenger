@@ -4,5 +4,6 @@ abstract class IAuthRepository {
   Future<void> requestCode(String phone);
   Future<UserEntity?> verifyCode(String phone, String code);
   Future<UserEntity?> getCurrentUser();
+  Future<UserEntity> updateProfile({String? name, String? username, String? avatarUrl});
   Future<void> logout();
 }

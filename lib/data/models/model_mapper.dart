@@ -29,9 +29,10 @@ class ModelMapper {
       senderId: dto.senderId,
       textContent: dto.textContent,
       type: _mapMessageType(dto.type),
-      attachmentUrl: dto.attachmentUrl,
+      attachmentId: dto.attachmentId,
       attachmentAesKey: dto.attachmentAesKey,
-      attachmentMacKey: dto.attachmentMacKey,
+      attachmentIv: dto.attachmentIv,
+      attachmentDigest: dto.attachmentDigest,
       timestamp: dto.timestamp,
       status: _mapMessageStatus(dto.status),
       isFromMe: dto.isFromMe,
@@ -49,7 +50,7 @@ class ModelMapper {
     );
   }
 
-  // Drift to Entity (Alternative if needed, but guideline says Repos convert DTOs)
+  // Drift to Entity
   static UserEntity userFromDrift(drift.User user) {
     return UserEntity(
       id: user.id,

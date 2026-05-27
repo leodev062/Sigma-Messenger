@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"io"
@@ -12,15 +12,15 @@ import (
 	"sigma-server/ui/sigma/services"
 )
 
-type KeysHandler struct {
+type KeysController struct {
 	service *services.AccountService
 }
 
-func NewKeysHandler(service *services.AccountService) *KeysHandler {
-	return &KeysHandler{service: service}
+func NewKeysController(service *services.AccountService) *KeysController {
+	return &KeysController{service: service}
 }
 
-func (h *KeysHandler) PutKeys(c echo.Context) error {
+func (h *KeysController) PutKeys(c echo.Context) error {
 	userID, ok := middleware.UserIDFromContext(c)
 	if !ok {
 		return api.Unauthorized(c, "unauthorized")
@@ -46,7 +46,7 @@ func (h *KeysHandler) PutKeys(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *KeysHandler) GetKeys(c echo.Context) error {
+func (h *KeysController) GetKeys(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return api.BadRequest(c, "invalid id")

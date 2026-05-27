@@ -4,6 +4,7 @@ import 'package:sigma/features/auth/presentation/pages/welcome_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/permissions_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/login_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/verification_screen.dart';
+import 'package:sigma/features/auth/presentation/pages/profile_setup_screen.dart';
 import 'package:sigma/features/chat/presentation/pages/home_screen.dart';
 import 'package:sigma/features/chat/presentation/pages/chat_screen.dart';
 import 'package:sigma/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -25,12 +26,21 @@ GoRouter createRouter(AuthViewModel authViewModel) {
       final isPublicRoute = state.matchedLocation == '/login' || 
                             state.matchedLocation == '/verification' || 
                             state.matchedLocation == '/welcome' ||
-                            state.matchedLocation == '/permissions';
+                            state.matchedLocation == '/permissions' ||
+                            state.matchedLocation == '/profile_setup';
 
       if (authState.status == AuthStatus.unauthenticated || authState.status == AuthStatus.idle) {
         if (!isPublicRoute) {
           debugPrint('DEBUG Router: Redirecting to /welcome (private route)');
           return '/welcome';
+        }
+        return null;
+      }
+
+      if (authState.status == AuthStatus.authenticated) {
+        if (state.matchedLocation != '/profile_setup') {
+          debugPrint('DEBUG Router: Redirecting to /profile_setup');
+          return '/profile_setup';
         }
         return null;
       }
@@ -64,6 +74,10 @@ GoRouter createRouter(AuthViewModel authViewModel) {
           final phone = state.extra as String? ?? '';
           return VerificationScreen(phoneNumber: phone);
         },
+      ),
+      GoRoute(
+        path: '/profile_setup',
+        builder: (context, state) => const ProfileSetupScreen(),
       ),
       GoRoute(
         path: '/home',

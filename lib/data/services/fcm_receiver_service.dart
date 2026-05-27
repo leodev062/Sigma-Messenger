@@ -10,12 +10,12 @@ import 'package:sigma/domain/repositories/i_chat_repository.dart';
 /// Serviço que processa mensagens recebidas via FCM (Push Decrypt Job).
 /// Funciona tanto em Foreground quanto em Background (Isolate separado).
 class FcmReceiverService {
-  static const String TAG = "FcmReceiverService";
+  static const String _tag = "FcmReceiverService";
 
   /// Processa a mensagem vinda do Firebase.
   /// Se em background, inicializa as dependências críticas sob demanda.
   Future<void> handleMessage(RemoteMessage message, {bool isBackground = false}) async {
-    SigmaLog.d(TAG, "Processando mensagem FCM. Background: $isBackground");
+    SigmaLog.d(_tag, "Processando mensagem FCM. Background: $isBackground");
 
     final data = message.data;
     final senderId = data['sender_id'];
@@ -23,7 +23,7 @@ class FcmReceiverService {
     final envelope = data['envelope'];
 
     if (senderId == null || chatId == null || envelope == null) {
-      SigmaLog.w(TAG, "Mensagem FCM inválida ou incompleta. Ignorando.");
+      SigmaLog.w(_tag, "Mensagem FCM inválida ou incompleta. Ignorando.");
       return;
     }
 
@@ -54,9 +54,10 @@ class FcmReceiverService {
         text: decryptedText,
         isFromMe: false,
         status: MessageStatusEntity.read,
-        attachmentUrl: attachment?.url,
-        attachmentAesKey: attachment?.aesKeyBase64,
-        attachmentMacKey: attachment?.macKeyBase64,
+        attachmentUrl: attachment?.attachmentId,
+        attachmentAesKey: attachment?.aesKey,
+        attachmentIv: attachment?.iv,
+        attachmentMacKey: attachment?.digest,
       );
 
       await chatRepository.updateChatMetadata(
@@ -72,9 +73,9 @@ class FcmReceiverService {
         chatId: chatId,
       );
 
-      SigmaLog.i(TAG, "Mensagem FCM processada, salva e notificada.");
+      SigmaLog.i(_tag, "Mensagem FCM processada, salva e notificada.");
     } catch (e, stack) {
-      SigmaLog.e(TAG, "Erro ao processar push message", e, stack);
+      SigmaLog.e(_tag, "Erro ao processar push message", e, stack);
     }
   }
 }

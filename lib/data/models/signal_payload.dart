@@ -1,39 +1,43 @@
 import 'dart:convert';
 
-/// Ponteiro para um anexo encriptado.
+/// Ponteiro para um anexo encriptado (Baseado na estrutura do Signal).
 class AttachmentPointer {
-  final String url;
-  final String aesKeyBase64;
-  final String macKeyBase64;
+  final String attachmentId;
+  final String aesKey;
+  final String iv;
+  final String digest;
   final String? fileName;
   final int? size;
 
   AttachmentPointer({
-    required this.url,
-    required this.aesKeyBase64,
-    required this.macKeyBase64,
+    required this.attachmentId,
+    required this.aesKey,
+    required this.iv,
+    required this.digest,
     this.fileName,
     this.size,
   });
 
   Map<String, dynamic> toJson() => {
-    'url': url,
-    'aesKey': aesKeyBase64,
-    'macKey': macKeyBase64,
-    'fileName': fileName,
-    'size': size,
+    'attachmentId': attachmentId,
+    'aesKey': aesKey,
+    'iv': iv,
+    'digest': digest,
+    if (fileName != null) 'fileName': fileName,
+    if (size != null) 'size': size,
   };
 
   factory AttachmentPointer.fromJson(Map<String, dynamic> json) => AttachmentPointer(
-    url: json['url'] as String,
-    aesKeyBase64: json['aesKey'] as String,
-    macKeyBase64: json['macKey'] as String,
+    attachmentId: json['attachmentId'].toString(),
+    aesKey: json['aesKey'] as String,
+    iv: json['iv'] as String,
+    digest: json['digest'] as String,
     fileName: json['fileName'] as String?,
     size: json['size'] as int?,
   );
 }
 
-/// Estrutura de dados que vai dentro do envelope encriptado do Signal.
+/// Estrutura de dados que vai dentro do envelope encriptado do Signal Protocol.
 class SignalPayload {
   final String? text;
   final AttachmentPointer? attachment;

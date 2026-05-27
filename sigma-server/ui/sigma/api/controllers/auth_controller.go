@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"net/http"
@@ -10,15 +10,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type AuthHandler struct {
+type AuthController struct {
 	service *services.AuthService
 }
 
-func NewAuthHandler(service *services.AuthService) *AuthHandler {
-	return &AuthHandler{service: service}
+func NewAuthController(service *services.AuthService) *AuthController {
+	return &AuthController{service: service}
 }
 
-func (h *AuthHandler) RequestCode(c echo.Context) error {
+func (h *AuthController) RequestCode(c echo.Context) error {
 	var req dto.RequestCodeRequest
 	if err := c.Bind(&req); err != nil {
 		return api.BadRequest(c, "invalid request")
@@ -32,7 +32,7 @@ func (h *AuthHandler) RequestCode(c echo.Context) error {
 	return api.OK(c, http.StatusOK, map[string]string{"message": "verification code sent"})
 }
 
-func (h *AuthHandler) Login(c echo.Context) error {
+func (h *AuthController) Login(c echo.Context) error {
 	var req dto.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return api.BadRequest(c, "invalid request")
@@ -44,7 +44,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	response, err := h.service.Login(req)
 	if err != nil {
 		if err.Error() == "invalid verification code" {
-			return api.Unauthorized(c, err.Error())
+			return api.Fail(c, http.StatusUnauthorized, "invalid_verification_code", "invalid verification code")
 		}
 		return api.InternalError(c, err.Error())
 	}

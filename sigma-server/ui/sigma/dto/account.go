@@ -86,3 +86,10 @@ type SyncRecipientsRequest struct {
 type SyncRecipientsResponse struct {
 	Recipients []uuid.UUID `json:"recipients"`
 }
+
+type AccountSearchResult struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+	AvatarURL   string `json:"avatar_url"`
+}

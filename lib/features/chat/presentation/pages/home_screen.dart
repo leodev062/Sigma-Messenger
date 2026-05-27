@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chatViewModel = context.read<ChatViewModel>();
+    final chatViewModel = context.watch<ChatViewModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -43,6 +43,15 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: ContactSearchDelegate(chatViewModel),
+              );
+            },
+            icon: const Icon(Icons.search),
+          ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
       ),
@@ -80,11 +89,103 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {}, // Funcionalidade de nova mensagem removida temporariamente
+        onPressed: () {
+          showSearch(
+            context: context,
+            delegate: ContactSearchDelegate(chatViewModel),
+          );
+        },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.message),
       ),
+    );
+  }
+}
+
+class ContactSearchDelegate extends SearchDelegate {
+  final ChatViewModel chatViewModel;
+
+  ContactSearchDelegate(this.chatViewModel);
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+          chatViewModel.clearSearch();
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    chatViewModel.search(query);
+    return _buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.length > 2) {
+      chatViewModel.search(query);
+    }
+    return _buildSearchResults();
+  }
+
+  Widget _buildSearchResults() {
+    return ListenableBuilder(
+      listenable: chatViewModel,
+      builder: (context, _) {
+        if (chatViewModel.isSearching) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final results = chatViewModel.searchResults;
+
+        if (results.isEmpty) {
+          return Center(
+            child: Text(
+              query.isEmpty ? 'Procure por utilizadores...' : 'Nenhum utilizador encontrado.',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final user = results[index];
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text(user.name?[0] ?? user.username?[0] ?? '?'),
+              ),
+              title: Text(user.name ?? user.username ?? 'Sem nome'),
+              subtitle: Text(user.phone),
+              onTap: () async {
+                // Ao clicar, fecha a busca, garante que o chat existe e abre o chat
+                final chatId = await chatViewModel.openChatWithUser(user);
+                if (context.mounted) {
+                  close(context, null);
+                  context.push('/chat/$chatId');
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

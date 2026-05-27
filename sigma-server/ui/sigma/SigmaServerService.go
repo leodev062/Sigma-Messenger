@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sigma-server/ui/sigma/api/handlers"
+	apiControllers "sigma-server/ui/sigma/api/controllers"
 	"sigma-server/ui/sigma/auth"
 	"sigma-server/ui/sigma/controllers"
 	"sigma-server/ui/sigma/delivery"
@@ -77,6 +77,8 @@ func SigmaServerService(cfg *WhisperServerConfiguration) {
 
 	authService := services.NewAuthService(accountManager, jwtGenerator, phoneVerificationManager)
 	accountService := services.NewAccountService(accountManager)
+	directoryService := services.NewDirectoryService(accountManager)
+	profileService := services.NewProfileService(accountManager)
 	paymentService := services.NewPaymentService(telephonyManager, cfg.Payment.MercadoPagoAccessToken)
 
 	eventRouter := events.NewRouterWithDelivery(eventDelivery, nil, chatManager)
@@ -98,10 +100,13 @@ func SigmaServerService(cfg *WhisperServerConfiguration) {
 		}
 	}
 
-	authHandler := handlers.NewAuthHandler(authService)
-	accountHandler := handlers.NewAccountHandler(accountService, eventRouter)
-	keysHandler := handlers.NewKeysHandler(accountService)
-	paymentHandler := handlers.NewPaymentHandler(paymentService)
+	authController := apiControllers.NewAuthController(authService)
+	accountController := apiControllers.NewAccountController(accountService)
+	directoryController := apiControllers.NewDirectoryController(directoryService)
+	profileController := apiControllers.NewProfileController(profileService, eventRouter)
+	keysController := apiControllers.NewKeysController(accountService)
+	paymentController := apiControllers.NewPaymentController(paymentService)
+	attachmentController := apiControllers.NewAttachmentController()
 	keepAliveController := controllers.NewKeepAliveController(wsManager)
 	wsHandler := websocket.NewWebsocketHandler(wsManager, messageManager, pendingEventManager, jwtGenerator, accountService)
 
@@ -114,29 +119,34 @@ func SigmaServerService(cfg *WhisperServerConfiguration) {
 	}))
 
 	v1 := e.Group("/v1")
-	v1.POST("/auth/request-code", authHandler.RequestCode)
-	v1.POST("/auth/login", authHandler.Login)
+	v1.POST("/auth/request-code", authController.RequestCode)
+	v1.POST("/auth/login", authController.Login)
 
-	v1.POST("/accounts", accountHandler.Create)
-	v1.GET("/accounts/me", accountHandler.GetMe, middleware.JWTAuth(jwtGenerator))
-	v1.PUT("/accounts/me", accountHandler.Update, middleware.JWTAuth(jwtGenerator))
-	v1.DELETE("/accounts/me", accountHandler.Delete, middleware.JWTAuth(jwtGenerator))
-	v1.GET("/accounts/:id", accountHandler.GetByID)
-	v1.GET("/accounts/:id/keys", accountHandler.GetKeys)
-	v1.GET("/accounts/check-username/:username", accountHandler.CheckUsername)
-	v1.POST("/accounts/sync-contacts", accountHandler.SyncContacts)
-	v1.POST("/accounts/sync-recipients", accountHandler.SyncRecipients)
-	v1.PUT("/accounts/me/fcm", accountHandler.UpdateFCMToken, middleware.JWTAuth(jwtGenerator))
+	v1.POST("/accounts", accountController.Create)
+	v1.GET("/accounts/me", accountController.GetMe, middleware.JWTAuth(jwtGenerator))
+	v1.PUT("/accounts/me", profileController.Update, middleware.JWTAuth(jwtGenerator))
+	v1.DELETE("/accounts/me", accountController.Delete, middleware.JWTAuth(jwtGenerator))
+	v1.GET("/accounts/:id", profileController.GetByID)
+	v1.GET("/accounts/:id/keys", accountController.GetKeys)
+	v1.GET("/accounts/check-username/:username", directoryController.CheckUsername)
+	v1.GET("/accounts/search", directoryController.Search)
+	v1.POST("/accounts/sync-contacts", directoryController.SyncContacts)
+	v1.POST("/accounts/sync-recipients", profileController.SyncRecipients)
+	v1.PUT("/accounts/me/fcm", accountController.UpdateFCMToken, middleware.JWTAuth(jwtGenerator))
 
 	v2 := e.Group("/v2")
-	v2.PUT("/keys", keysHandler.PutKeys, middleware.JWTAuth(jwtGenerator))
-	v2.GET("/keys/:id", keysHandler.GetKeys)
+	v2.PUT("/keys", keysController.PutKeys, middleware.JWTAuth(jwtGenerator))
+	v2.GET("/keys/:id", keysController.GetKeys)
 
 	v1.GET("/keepalive", keepAliveController.Get, middleware.JWTAuth(jwtGenerator))
 	v1.GET("/keepalive/provisioning", keepAliveController.Provisioning)
 
-	v1.POST("/payments", paymentHandler.Create)
-	v1.GET("/payments/:id", paymentHandler.Status)
+	v1.POST("/payments", paymentController.Create)
+	v1.GET("/payments/:id", paymentController.Status)
+
+	// Register attachment endpoints for blind encrypted media uploads.
+	// These endpoints are intentionally storage-agnostic and never decrypt user media.
+	attachmentController.RegisterRoutes(v1)
 
 	e.GET("/ws", wsHandler.Handle)
 	e.GET("/", func(c echo.Context) error {

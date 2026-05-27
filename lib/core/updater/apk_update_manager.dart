@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:sigma/core/network/sigma_network_access.dart';
 
 class UpdateInfo {
   final int versionCode;
@@ -33,19 +34,19 @@ class UpdateInfo {
 }
 
 class ApkUpdateManager {
-  final Dio _dio;
+  final SigmaNetworkAccess _networkAccess;
 
-  ApkUpdateManager(this._dio);
+  ApkUpdateManager(this._networkAccess);
 
   Future<UpdateInfo?> checkForUpdate() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersionCode = int.parse(packageInfo.buildNumber);
 
-      // Backend v1: Serve o JSON de atualização na pasta estática
-      final response = await _dio.get('apk/update.json');
+      // Usamos o API Client para checagem rápida
+      final dio = _networkAccess.getApiClient();
+      final response = await dio.get('apk/update.json');
       if (response.statusCode == 200) {
-        // Trata resposta que pode vir como bytes (devido ao ResponseType global)
         final data = _parseResponse(response.data);
         final updateInfo = UpdateInfo.fromJson(data);
         if (updateInfo.versionCode > currentVersionCode) {
@@ -73,8 +74,9 @@ class ApkUpdateManager {
     final tempDir = await getTemporaryDirectory();
     final filePath = '${tempDir.path}/sigma_update.apk';
     
-    // 1. Download do APK
-    await _dio.download(
+    // 1. Download do APK usando o Media Client (timeout longo)
+    final dio = _networkAccess.getMediaClient();
+    await dio.download(
       url,
       filePath,
       onReceiveProgress: onProgress,

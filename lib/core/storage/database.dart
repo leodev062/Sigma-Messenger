@@ -45,9 +45,13 @@ class Messages extends Table {
   TextColumn get senderId => text().references(Users, #id)();
   TextColumn get textContent => text()();
   IntColumn get type => intEnum<MessageType>().withDefault(Constant(MessageType.text.index))();
+  
+  // E2EE Attachment Columns
   TextColumn get attachmentUrl => text().nullable()();
   TextColumn get attachmentAesKey => text().nullable()();
+  TextColumn get attachmentIv => text().nullable()();
   TextColumn get attachmentMacKey => text().nullable()();
+  
   IntColumn get timestamp => integer()();
   IntColumn get status => intEnum<MessageStatus>().withDefault(Constant(MessageStatus.pending.index))();
   BoolColumn get isFromMe => boolean()();
@@ -105,7 +109,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5; // Incrementado para incluir chaves de anexo E2EE
+  int get schemaVersion => 6; // Incrementado para incluir attachmentIv
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(() async {
@@ -125,6 +129,18 @@ class AppDatabase extends _$AppDatabase {
     });
   }
   
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onUpgrade: (m, from, to) async {
+        if (from < 6) {
+          // Adiciona a coluna attachment_iv se ela não existir
+          await m.addColumn(messages, messages.attachmentIv);
+        }
+      },
+    );
+  }
+
   // User Operations
   Future<int> upsertUser(UsersCompanion user) => into(users).insertOnConflictUpdate(user);
   Stream<User> watchUser(String id) => (select(users)..where((t) => t.id.equals(id))).watchSingle();

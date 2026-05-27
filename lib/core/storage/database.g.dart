@@ -1125,6 +1125,17 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _attachmentIvMeta = const VerificationMeta(
+    'attachmentIv',
+  );
+  @override
+  late final GeneratedColumn<String> attachmentIv = GeneratedColumn<String>(
+    'attachment_iv',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _attachmentMacKeyMeta = const VerificationMeta(
     'attachmentMacKey',
   );
@@ -1180,6 +1191,7 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     type,
     attachmentUrl,
     attachmentAesKey,
+    attachmentIv,
     attachmentMacKey,
     timestamp,
     status,
@@ -1247,6 +1259,15 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         ),
       );
     }
+    if (data.containsKey('attachment_iv')) {
+      context.handle(
+        _attachmentIvMeta,
+        attachmentIv.isAcceptableOrUnknown(
+          data['attachment_iv']!,
+          _attachmentIvMeta,
+        ),
+      );
+    }
     if (data.containsKey('attachment_mac_key')) {
       context.handle(
         _attachmentMacKeyMeta,
@@ -1311,6 +1332,10 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         DriftSqlType.string,
         data['${effectivePrefix}attachment_aes_key'],
       ),
+      attachmentIv: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}attachment_iv'],
+      ),
       attachmentMacKey: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}attachment_mac_key'],
@@ -1351,6 +1376,7 @@ class Message extends DataClass implements Insertable<Message> {
   final MessageType type;
   final String? attachmentUrl;
   final String? attachmentAesKey;
+  final String? attachmentIv;
   final String? attachmentMacKey;
   final int timestamp;
   final MessageStatus status;
@@ -1363,6 +1389,7 @@ class Message extends DataClass implements Insertable<Message> {
     required this.type,
     this.attachmentUrl,
     this.attachmentAesKey,
+    this.attachmentIv,
     this.attachmentMacKey,
     required this.timestamp,
     required this.status,
@@ -1383,6 +1410,9 @@ class Message extends DataClass implements Insertable<Message> {
     }
     if (!nullToAbsent || attachmentAesKey != null) {
       map['attachment_aes_key'] = Variable<String>(attachmentAesKey);
+    }
+    if (!nullToAbsent || attachmentIv != null) {
+      map['attachment_iv'] = Variable<String>(attachmentIv);
     }
     if (!nullToAbsent || attachmentMacKey != null) {
       map['attachment_mac_key'] = Variable<String>(attachmentMacKey);
@@ -1410,6 +1440,9 @@ class Message extends DataClass implements Insertable<Message> {
       attachmentAesKey: attachmentAesKey == null && nullToAbsent
           ? const Value.absent()
           : Value(attachmentAesKey),
+      attachmentIv: attachmentIv == null && nullToAbsent
+          ? const Value.absent()
+          : Value(attachmentIv),
       attachmentMacKey: attachmentMacKey == null && nullToAbsent
           ? const Value.absent()
           : Value(attachmentMacKey),
@@ -1434,6 +1467,7 @@ class Message extends DataClass implements Insertable<Message> {
       ),
       attachmentUrl: serializer.fromJson<String?>(json['attachmentUrl']),
       attachmentAesKey: serializer.fromJson<String?>(json['attachmentAesKey']),
+      attachmentIv: serializer.fromJson<String?>(json['attachmentIv']),
       attachmentMacKey: serializer.fromJson<String?>(json['attachmentMacKey']),
       timestamp: serializer.fromJson<int>(json['timestamp']),
       status: $MessagesTable.$converterstatus.fromJson(
@@ -1455,6 +1489,7 @@ class Message extends DataClass implements Insertable<Message> {
       ),
       'attachmentUrl': serializer.toJson<String?>(attachmentUrl),
       'attachmentAesKey': serializer.toJson<String?>(attachmentAesKey),
+      'attachmentIv': serializer.toJson<String?>(attachmentIv),
       'attachmentMacKey': serializer.toJson<String?>(attachmentMacKey),
       'timestamp': serializer.toJson<int>(timestamp),
       'status': serializer.toJson<int>(
@@ -1472,6 +1507,7 @@ class Message extends DataClass implements Insertable<Message> {
     MessageType? type,
     Value<String?> attachmentUrl = const Value.absent(),
     Value<String?> attachmentAesKey = const Value.absent(),
+    Value<String?> attachmentIv = const Value.absent(),
     Value<String?> attachmentMacKey = const Value.absent(),
     int? timestamp,
     MessageStatus? status,
@@ -1488,6 +1524,7 @@ class Message extends DataClass implements Insertable<Message> {
     attachmentAesKey: attachmentAesKey.present
         ? attachmentAesKey.value
         : this.attachmentAesKey,
+    attachmentIv: attachmentIv.present ? attachmentIv.value : this.attachmentIv,
     attachmentMacKey: attachmentMacKey.present
         ? attachmentMacKey.value
         : this.attachmentMacKey,
@@ -1510,6 +1547,9 @@ class Message extends DataClass implements Insertable<Message> {
       attachmentAesKey: data.attachmentAesKey.present
           ? data.attachmentAesKey.value
           : this.attachmentAesKey,
+      attachmentIv: data.attachmentIv.present
+          ? data.attachmentIv.value
+          : this.attachmentIv,
       attachmentMacKey: data.attachmentMacKey.present
           ? data.attachmentMacKey.value
           : this.attachmentMacKey,
@@ -1529,6 +1569,7 @@ class Message extends DataClass implements Insertable<Message> {
           ..write('type: $type, ')
           ..write('attachmentUrl: $attachmentUrl, ')
           ..write('attachmentAesKey: $attachmentAesKey, ')
+          ..write('attachmentIv: $attachmentIv, ')
           ..write('attachmentMacKey: $attachmentMacKey, ')
           ..write('timestamp: $timestamp, ')
           ..write('status: $status, ')
@@ -1546,6 +1587,7 @@ class Message extends DataClass implements Insertable<Message> {
     type,
     attachmentUrl,
     attachmentAesKey,
+    attachmentIv,
     attachmentMacKey,
     timestamp,
     status,
@@ -1562,6 +1604,7 @@ class Message extends DataClass implements Insertable<Message> {
           other.type == this.type &&
           other.attachmentUrl == this.attachmentUrl &&
           other.attachmentAesKey == this.attachmentAesKey &&
+          other.attachmentIv == this.attachmentIv &&
           other.attachmentMacKey == this.attachmentMacKey &&
           other.timestamp == this.timestamp &&
           other.status == this.status &&
@@ -1576,6 +1619,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<MessageType> type;
   final Value<String?> attachmentUrl;
   final Value<String?> attachmentAesKey;
+  final Value<String?> attachmentIv;
   final Value<String?> attachmentMacKey;
   final Value<int> timestamp;
   final Value<MessageStatus> status;
@@ -1589,6 +1633,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.type = const Value.absent(),
     this.attachmentUrl = const Value.absent(),
     this.attachmentAesKey = const Value.absent(),
+    this.attachmentIv = const Value.absent(),
     this.attachmentMacKey = const Value.absent(),
     this.timestamp = const Value.absent(),
     this.status = const Value.absent(),
@@ -1603,6 +1648,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.type = const Value.absent(),
     this.attachmentUrl = const Value.absent(),
     this.attachmentAesKey = const Value.absent(),
+    this.attachmentIv = const Value.absent(),
     this.attachmentMacKey = const Value.absent(),
     required int timestamp,
     this.status = const Value.absent(),
@@ -1622,6 +1668,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Expression<int>? type,
     Expression<String>? attachmentUrl,
     Expression<String>? attachmentAesKey,
+    Expression<String>? attachmentIv,
     Expression<String>? attachmentMacKey,
     Expression<int>? timestamp,
     Expression<int>? status,
@@ -1636,6 +1683,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       if (type != null) 'type': type,
       if (attachmentUrl != null) 'attachment_url': attachmentUrl,
       if (attachmentAesKey != null) 'attachment_aes_key': attachmentAesKey,
+      if (attachmentIv != null) 'attachment_iv': attachmentIv,
       if (attachmentMacKey != null) 'attachment_mac_key': attachmentMacKey,
       if (timestamp != null) 'timestamp': timestamp,
       if (status != null) 'status': status,
@@ -1652,6 +1700,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Value<MessageType>? type,
     Value<String?>? attachmentUrl,
     Value<String?>? attachmentAesKey,
+    Value<String?>? attachmentIv,
     Value<String?>? attachmentMacKey,
     Value<int>? timestamp,
     Value<MessageStatus>? status,
@@ -1666,6 +1715,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       type: type ?? this.type,
       attachmentUrl: attachmentUrl ?? this.attachmentUrl,
       attachmentAesKey: attachmentAesKey ?? this.attachmentAesKey,
+      attachmentIv: attachmentIv ?? this.attachmentIv,
       attachmentMacKey: attachmentMacKey ?? this.attachmentMacKey,
       timestamp: timestamp ?? this.timestamp,
       status: status ?? this.status,
@@ -1700,6 +1750,9 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     if (attachmentAesKey.present) {
       map['attachment_aes_key'] = Variable<String>(attachmentAesKey.value);
     }
+    if (attachmentIv.present) {
+      map['attachment_iv'] = Variable<String>(attachmentIv.value);
+    }
     if (attachmentMacKey.present) {
       map['attachment_mac_key'] = Variable<String>(attachmentMacKey.value);
     }
@@ -1730,6 +1783,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
           ..write('type: $type, ')
           ..write('attachmentUrl: $attachmentUrl, ')
           ..write('attachmentAesKey: $attachmentAesKey, ')
+          ..write('attachmentIv: $attachmentIv, ')
           ..write('attachmentMacKey: $attachmentMacKey, ')
           ..write('timestamp: $timestamp, ')
           ..write('status: $status, ')
@@ -3691,6 +3745,7 @@ typedef $$MessagesTableCreateCompanionBuilder =
       Value<MessageType> type,
       Value<String?> attachmentUrl,
       Value<String?> attachmentAesKey,
+      Value<String?> attachmentIv,
       Value<String?> attachmentMacKey,
       required int timestamp,
       Value<MessageStatus> status,
@@ -3706,6 +3761,7 @@ typedef $$MessagesTableUpdateCompanionBuilder =
       Value<MessageType> type,
       Value<String?> attachmentUrl,
       Value<String?> attachmentAesKey,
+      Value<String?> attachmentIv,
       Value<String?> attachmentMacKey,
       Value<int> timestamp,
       Value<MessageStatus> status,
@@ -3786,6 +3842,11 @@ class $$MessagesTableFilterComposer
 
   ColumnFilters<String> get attachmentAesKey => $composableBuilder(
     column: $table.attachmentAesKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get attachmentIv => $composableBuilder(
+    column: $table.attachmentIv,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3891,6 +3952,11 @@ class $$MessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get attachmentIv => $composableBuilder(
+    column: $table.attachmentIv,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get attachmentMacKey => $composableBuilder(
     column: $table.attachmentMacKey,
     builder: (column) => ColumnOrderings(column),
@@ -3985,6 +4051,11 @@ class $$MessagesTableAnnotationComposer
 
   GeneratedColumn<String> get attachmentAesKey => $composableBuilder(
     column: $table.attachmentAesKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get attachmentIv => $composableBuilder(
+    column: $table.attachmentIv,
     builder: (column) => column,
   );
 
@@ -4084,6 +4155,7 @@ class $$MessagesTableTableManager
                 Value<MessageType> type = const Value.absent(),
                 Value<String?> attachmentUrl = const Value.absent(),
                 Value<String?> attachmentAesKey = const Value.absent(),
+                Value<String?> attachmentIv = const Value.absent(),
                 Value<String?> attachmentMacKey = const Value.absent(),
                 Value<int> timestamp = const Value.absent(),
                 Value<MessageStatus> status = const Value.absent(),
@@ -4097,6 +4169,7 @@ class $$MessagesTableTableManager
                 type: type,
                 attachmentUrl: attachmentUrl,
                 attachmentAesKey: attachmentAesKey,
+                attachmentIv: attachmentIv,
                 attachmentMacKey: attachmentMacKey,
                 timestamp: timestamp,
                 status: status,
@@ -4112,6 +4185,7 @@ class $$MessagesTableTableManager
                 Value<MessageType> type = const Value.absent(),
                 Value<String?> attachmentUrl = const Value.absent(),
                 Value<String?> attachmentAesKey = const Value.absent(),
+                Value<String?> attachmentIv = const Value.absent(),
                 Value<String?> attachmentMacKey = const Value.absent(),
                 required int timestamp,
                 Value<MessageStatus> status = const Value.absent(),
@@ -4125,6 +4199,7 @@ class $$MessagesTableTableManager
                 type: type,
                 attachmentUrl: attachmentUrl,
                 attachmentAesKey: attachmentAesKey,
+                attachmentIv: attachmentIv,
                 attachmentMacKey: attachmentMacKey,
                 timestamp: timestamp,
                 status: status,

@@ -44,6 +44,7 @@ class ChatRepositoryImpl implements IChatRepository {
     required MessageStatusEntity status,
     String? attachmentUrl,
     String? attachmentAesKey,
+    String? attachmentIv,
     String? attachmentMacKey,
   }) async {
     await _localDataSource.saveMessage(drift.MessagesCompanion(
@@ -53,6 +54,7 @@ class ChatRepositoryImpl implements IChatRepository {
       textContent: Value(text),
       attachmentUrl: Value(attachmentUrl),
       attachmentAesKey: Value(attachmentAesKey),
+      attachmentIv: Value(attachmentIv),
       attachmentMacKey: Value(attachmentMacKey),
       timestamp: Value(DateTime.now().millisecondsSinceEpoch),
       status: Value(_mapStatusToDrift(status)),
@@ -78,6 +80,22 @@ class ChatRepositoryImpl implements IChatRepository {
       id: Value(chatId),
       lastMessage: Value(lastMessage),
       lastMessageTimestamp: Value(timestamp),
+    ));
+  }
+
+  @override
+  Future<ChatEntity?> findPrivateChat(String contactId) async {
+    final dto = await _localDataSource.findPrivateChat(contactId);
+    return dto != null ? ModelMapper.chatFromDto(dto) : null;
+  }
+
+  @override
+  Future<void> saveChat(ChatEntity chat) async {
+    await _localDataSource.saveChat(drift.ChatsCompanion(
+      id: Value(chat.id),
+      contactId: Value(chat.recipientId),
+      title: Value(chat.title),
+      type: Value(drift.ChatType.user), // Por agora apenas user
     ));
   }
 

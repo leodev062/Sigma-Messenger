@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:workmanager/workmanager.dart';
-import 'package:sigma/core/network/api_service.dart';
+import 'package:sigma/core/updater/apk_update_manager.dart';
+import 'package:sigma/core/network/sigma_network_access.dart';
 import 'package:sigma/core/storage/sigma_store.dart';
 import 'package:sigma/app/locator.dart';
 import 'apk_update_download_manager_receiver.dart';
@@ -26,8 +28,8 @@ void callbackDispatcher() {
     setupLocator();
 
     if (task == ApkUpdateRefreshListener.taskName) {
-      final api = locator<ApiService>();
-      final update = await api.checkForUpdate();
+      final updateManager = ApkUpdateManager(locator<SigmaNetworkAccess>());
+      final update = await updateManager.checkForUpdate();
       
       if (update != null) {
         await locator<ApkUpdateDownloadManagerReceiver>().startDownload(update.url, update.sha256);
