@@ -28,6 +28,7 @@ class UserDto {
   final String id; // UUID
   final String? name;
   final String? username;
+  final String? bio;
   final String phone;
   final String? avatar_url;
   @JsonKey(name: 'is_verified', defaultValue: false)
@@ -47,6 +48,7 @@ class UserDto {
     required this.id,
     this.name,
     this.username,
+    this.bio,
     required this.phone,
     this.avatar_url,
     required this.isVerified,
@@ -65,6 +67,7 @@ class UserDto {
       id: id,
       name: name,
       username: username,
+      bio: bio,
       phone: phone,
       avatarUrl: avatar_url,
       isVerified: isVerified,

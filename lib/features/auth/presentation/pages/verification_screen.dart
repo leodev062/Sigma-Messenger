@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sigma/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:sigma/core/i18n/strings.dart';
 
 class VerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -18,13 +19,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     final state = authViewModel.state;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
           onPressed: () => context.pop(),
         ),
       ),
@@ -35,23 +39,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              const Text(
-                'Código de\nAcesso .',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  height: 1.1,
-                ),
+              Text(
+                context.translate('verification_title'),
+                style: textTheme.headlineLarge?.copyWith(color: colorScheme.onBackground),
               ),
               const SizedBox(height: 24),
               Text(
-                'Digite o código de 6 dígitos que enviamos para ${widget.phoneNumber}.',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black38,
-                  height: 1.5,
-                ),
+                context.translate('verification_subtitle', args: {'phone': widget.phoneNumber}),
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onBackground.withOpacity(0.38)),
               ),
               const SizedBox(height: 48),
               
@@ -60,7 +55,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 30),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7D8D0),
+                  color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -70,17 +65,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     textAlign: TextAlign.center,
                     maxLength: 6,
                     autofocus: true,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF8A7A77),
+                      color: colorScheme.onPrimaryContainer,
                       letterSpacing: 12,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       counterText: '',
                       hintText: '000000',
                       hintStyle: TextStyle(
-                        color: Color(0xFFC5B8B5),
+                        color: colorScheme.onPrimaryContainer.withOpacity(0.4),
                         letterSpacing: 12,
                       ),
                       border: InputBorder.none,
@@ -97,15 +92,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
               const SizedBox(height: 48),
               
               if (state.status == AuthStatus.loading)
-                const Center(child: CircularProgressIndicator())
+                Center(child: CircularProgressIndicator(color: colorScheme.primary))
               else ...[
                 if (state.status == AuthStatus.error)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 24.0),
                       child: Text(
-                        state.error ?? 'Código inválido',
-                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                        state.error ?? context.translate('invalid_code'),
+                        style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),
@@ -117,10 +112,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         : () {
                           // authViewModel.requestCode(widget.phoneNumber);
                         },
-                    child: const Text(
-                      'Reenviar código SMS',
+                    child: Text(
+                      context.translate('resend_sms'),
                       style: TextStyle(
-                        color: Colors.black26,
+                        color: colorScheme.onBackground.withOpacity(0.26),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.1,
                       ),

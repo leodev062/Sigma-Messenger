@@ -5,7 +5,7 @@ import 'package:sigma/features/auth/presentation/pages/permissions_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/login_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/verification_screen.dart';
 import 'package:sigma/features/auth/presentation/pages/profile_setup_screen.dart';
-import 'package:sigma/features/chat/presentation/pages/home_screen.dart';
+import 'package:sigma/features/home/presentation/pages/home_screen.dart';
 import 'package:sigma/features/chat/presentation/pages/chat_screen.dart';
 import 'package:sigma/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 

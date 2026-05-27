@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:sigma/core/network/socket_manager.dart';
+import 'package:sigma/domain/services/i_socket_service.dart';
 import 'package:sigma/core/network/pb/websocket.pb.dart' as ws_pb;
 import 'package:sigma/core/network/pb/envelope.pb.dart' as env_pb;
 
@@ -10,12 +10,12 @@ abstract class ChatRemoteDataSource {
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
-  final SocketManager _socketManager;
+  final ISocketService _socketService;
 
-  ChatRemoteDataSourceImpl(this._socketManager);
+  ChatRemoteDataSourceImpl(this._socketService);
 
   @override
-  Stream<ws_pb.WebSocketMessage> get messageStream => _socketManager.messages;
+  Stream<ws_pb.WebSocketMessage> get messageStream => _socketService.messages;
 
   @override
   void sendEnvelope(String chatId, String encryptedEnvelope) {
@@ -24,9 +24,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       ..type = env_pb.Envelope_Type.CIPHERTEXT
       ..content = utf8.encode(encryptedEnvelope); 
 
-    // 2. Enviar via SocketManager usando a rota v2 de mensagens
-    // Caminho extraído de extractDestinationFromPath em connection.go: v2/messages/{id}
-    _socketManager.sendRequest(
+    // 2. Enviar via SocketService usando a rota v2 de mensagens
+    _socketService.sendRequest(
       verb: 'PUT',
       path: 'v2/messages/$chatId',
       body: envelope.writeToBuffer(),
@@ -35,8 +34,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
   @override
   void acknowledgeReceipt(String requestId) {
-    // Rota definida no WebsocketRouter.go do servidor
-    _socketManager.sendRequest(
+    _socketService.sendRequest(
       verb: 'DELETE',
       path: 'api/v1/message',
       body: utf8.encode(jsonEncode({"message_id": requestId})),

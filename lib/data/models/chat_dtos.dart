@@ -3,6 +3,7 @@ import 'package:sigma/core/storage/database.dart' as drift;
 class ChatDto {
   final String id;
   final String? title;
+  final String? avatarUrl;
   final String type; // String representation from API or index from Drift
   final String? lastMessage;
   final int? lastMessageTimestamp;
@@ -15,6 +16,7 @@ class ChatDto {
   ChatDto({
     required this.id,
     this.title,
+    this.avatarUrl,
     required this.type,
     this.lastMessage,
     this.lastMessageTimestamp,
@@ -29,6 +31,7 @@ class ChatDto {
     return ChatDto(
       id: chat.id,
       title: chat.title,
+      avatarUrl: (chat as dynamic).avatarUrl,
       type: chat.type.name,
       lastMessage: chat.lastMessage,
       lastMessageTimestamp: chat.lastMessageTimestamp,

@@ -6,10 +6,11 @@ class UpdateProfileInteractor {
 
   UpdateProfileInteractor(this._repository);
 
-  Future<UserEntity> execute({String? name, String? username, String? avatarUrl}) {
+  Future<UserEntity> execute({String? name, String? username, String? bio, String? avatarUrl}) {
     return _repository.updateProfile(
       name: name,
       username: username,
+      bio: bio,
       avatarUrl: avatarUrl,
     );
   }

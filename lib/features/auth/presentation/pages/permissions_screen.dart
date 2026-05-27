@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sigma/core/i18n/strings.dart';
 
 class PermissionsScreen extends StatelessWidget {
   const PermissionsScreen({super.key});
@@ -18,12 +19,16 @@ class PermissionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
           onPressed: () => context.pop(),
         ),
       ),
@@ -35,26 +40,17 @@ class PermissionsScreen extends StatelessWidget {
             Icon(
               Icons.privacy_tip_outlined,
               size: 80,
-              color: Colors.grey.shade200,
+              color: colorScheme.onBackground.withOpacity(0.05),
             ),
             const SizedBox(height: 48),
-            const Text(
-              'Privacidade e\nPermissões .',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                height: 1.1,
-              ),
+            Text(
+              context.translate('permissions_title'),
+              style: textTheme.headlineLarge?.copyWith(color: colorScheme.onBackground),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Para funcionar corretamente, o Sigma precisa de acesso aos seus contatos para sincronizar conversas e notificações para te avisar de novas mensagens.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black38,
-                height: 1.5,
-              ),
+            Text(
+              context.translate('permissions_subtitle'),
+              style: textTheme.bodyMedium?.copyWith(color: colorScheme.onBackground.withOpacity(0.38)),
             ),
             const Spacer(),
             SizedBox(
@@ -62,18 +58,18 @@ class PermissionsScreen extends StatelessWidget {
               child: TextButton(
                 onPressed: () => _requestPermissions(context),
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: colorScheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'DAR PERMISSÃO',
+                child: Text(
+                  context.translate('btn_give_permission'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF38B6FF),
+                    color: colorScheme.onPrimary,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -83,10 +79,10 @@ class PermissionsScreen extends StatelessWidget {
             Center(
               child: TextButton(
                 onPressed: () => context.push('/login'),
-                child: const Text(
-                  'AGORA NÃO',
+                child: Text(
+                  context.translate('btn_not_now'),
                   style: TextStyle(
-                    color: Colors.black26,
+                    color: colorScheme.onBackground.withOpacity(0.26),
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                   ),

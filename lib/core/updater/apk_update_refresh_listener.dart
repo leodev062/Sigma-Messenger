@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:sigma/core/updater/apk_update_manager.dart';
 import 'package:sigma/core/network/sigma_network_access.dart';

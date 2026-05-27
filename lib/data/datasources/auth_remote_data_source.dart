@@ -10,7 +10,7 @@ abstract class AuthRemoteDataSource {
   Future<UserResponse?> verifyAndLogin(String phone, String code);
   Future<void> syncFcmToken(String userId);
   Future<bool> checkUsername(String username);
-  Future<UserResponse> updateProfile({String? name, String? username, String? avatarUrl});
+  Future<UserResponse> updateProfile({String? name, String? username, String? bio, String? avatarUrl});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -19,9 +19,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SearchManager _searchManager = locator<SearchManager>();
 
   @override
-  Future<UserResponse> updateProfile({String? name, String? username, String? avatarUrl}) async {
-    // Nota: O perfil do Signal-Android geralmente é atualizado no ProfileManager
-    return await _profileManager.updateProfile("me", name ?? "", avatarUrl);
+  Future<UserResponse> updateProfile({String? name, String? username, String? bio, String? avatarUrl}) async {
+    return await _profileManager.updateProfile(
+      name: name,
+      username: username,
+      bio: bio,
+      avatarUrl: avatarUrl,
+    );
   }
 
   @override
@@ -39,8 +43,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        // O ProfileManager ou AccountManager poderia lidar com isso, mas mantemos a lógica aqui chamando o dio diretamente ou estendendo um manager.
-        // Para simplificar, assumimos que o token é enviado no updateProfile ou um novo método no ProfileManager.
+        // Implementar no futuro se necessário
       }
     } catch (e) {
       // Silencioso

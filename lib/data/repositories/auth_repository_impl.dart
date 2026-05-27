@@ -6,7 +6,7 @@ import 'package:sigma/data/models/model_mapper.dart';
 import 'package:sigma/core/util/sigma_log.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
-  static const String TAG = "AuthRepository";
+  static const String _tag = "AuthRepository";
 
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
@@ -18,7 +18,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> requestCode(String phone) async {
-    SigmaLog.d(TAG, "Solicitando código para $phone");
+    SigmaLog.d(_tag, "Solicitando código para $phone");
     final response = await remoteDataSource.requestCode(phone);
     if (response.status != 'SUCCESS') {
       throw Exception(response.message ?? 'Erro ao solicitar código');
@@ -27,7 +27,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<UserEntity?> verifyCode(String phone, String code) async {
-    SigmaLog.d(TAG, "Verificando código para $phone");
+    SigmaLog.d(_tag, "Verificando código para $phone");
     final response = await remoteDataSource.verifyAndLogin(phone, code);
     
     if (response != null && response.status == 'SUCCESS' && response.token != null && response.user != null) {
@@ -47,20 +47,20 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> logout() async {
-    SigmaLog.i(TAG, "Realizando logout");
+    SigmaLog.i(_tag, "Realizando logout");
     await localDataSource.logout();
   }
 
   @override
-  Future<UserEntity> updateProfile({String? name, String? username, String? avatarUrl}) async {
+  Future<UserEntity> updateProfile({String? name, String? username, String? bio, String? avatarUrl}) async {
     final response = await remoteDataSource.updateProfile(
       name: name,
       username: username,
+      bio: bio,
       avatarUrl: avatarUrl,
     );
 
     if (response.status == 'SUCCESS' && response.user != null) {
-      // O token não muda no update, então mantemos o atual
       final currentToken = await localDataSource.getToken();
       if (currentToken != null) {
         await localDataSource.saveSession(response.user!, currentToken);
@@ -69,5 +69,10 @@ class AuthRepositoryImpl implements IAuthRepository {
     } else {
       throw Exception(response.message ?? 'Erro ao atualizar perfil');
     }
+  }
+
+  @override
+  Future<bool> isUsernameAvailable(String username) async {
+    return await remoteDataSource.checkUsername(username);
   }
 }

@@ -15,6 +15,7 @@ class Users extends Table {
   TextColumn get id => text()();
   TextColumn get name => text().nullable()();
   TextColumn get username => text().nullable()();
+  TextColumn get bio => text().nullable()();
   TextColumn get phone => text()();
   TextColumn get avatarUrl => text().nullable()();
   BoolColumn get isMe => boolean().withDefault(const Constant(false))();
@@ -27,6 +28,7 @@ class Chats extends Table {
   TextColumn get id => text()();
   TextColumn get contactId => text().nullable().references(Users, #id)();
   TextColumn get title => text().nullable()();
+  TextColumn get avatarUrl => text().nullable()();
   IntColumn get type => intEnum<ChatType>().withDefault(Constant(ChatType.user.index))();
   TextColumn get lastMessage => text().nullable()();
   IntColumn get lastMessageTimestamp => integer().nullable()();
@@ -109,7 +111,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6; // Incrementado para incluir attachmentIv
+  int get schemaVersion => 8; // Incrementado para incluir bio no User e avatarUrl no Chat
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(() async {
@@ -134,8 +136,13 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       onUpgrade: (m, from, to) async {
         if (from < 6) {
-          // Adiciona a coluna attachment_iv se ela não existir
           await m.addColumn(messages, messages.attachmentIv);
+        }
+        if (from < 7) {
+          await m.addColumn(users, (users as dynamic).bio);
+        }
+        if (from < 8) {
+          await m.addColumn(chats, (chats as dynamic).avatarUrl);
         }
       },
     );

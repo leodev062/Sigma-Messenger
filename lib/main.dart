@@ -7,14 +7,18 @@ import 'package:sigma/app/locator.dart';
 import 'package:sigma/app/router.dart';
 import 'package:sigma/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:sigma/features/chat/presentation/viewmodels/chat_viewmodel.dart';
+import 'package:sigma/features/home/presentation/viewmodels/home_viewmodel.dart';
+import 'package:sigma/features/contacts/presentation/viewmodels/contacts_viewmodel.dart';
+import 'package:sigma/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:sigma/features/updater/update_viewmodel.dart';
-import 'package:sigma/core/network/socket_manager.dart';
+import 'package:sigma/domain/services/i_socket_service.dart';
 import 'package:sigma/domain/repositories/i_chat_repository.dart';
 import 'package:sigma/domain/repositories/i_recipient_repository.dart';
 import 'package:sigma/core/updater/apk_update_notifications.dart';
 import 'package:sigma/core/updater/apk_update_refresh_listener.dart';
 import 'package:sigma/core/notifications/notification_service.dart';
 import 'package:sigma/data/services/fcm_receiver_service.dart';
+import 'package:sigma/core/theme/app_theme.dart';
 import 'firebase_options.dart';
 
 /// Top-level handler para mensagens FCM em background/killed state.
@@ -53,19 +57,22 @@ void main() async {
   await locator<ApkUpdateNotifications>().init();
   locator<ApkUpdateRefreshListener>().schedulePeriodicChecks();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: locator<SocketManager>()),
-        ChangeNotifierProvider.value(value: locator<AuthViewModel>()),
-        ChangeNotifierProvider.value(value: locator<ChatViewModel>()),
-        ChangeNotifierProvider.value(value: locator<UpdateViewModel>()),
-        Provider.value(value: locator<IChatRepository>()),
-        Provider.value(value: locator<IRecipientRepository>()),
-      ],
-      child: const SigmaApp(),
-    ),
-  );
+    runApp(
+      MultiProvider(
+        providers: [
+          Provider<ISocketService>.value(value: locator<ISocketService>()),
+          ChangeNotifierProvider.value(value: locator<AuthViewModel>()),
+          ChangeNotifierProvider.value(value: locator<HomeViewModel>()),
+          ChangeNotifierProvider.value(value: locator<ChatViewModel>()),
+          ChangeNotifierProvider.value(value: locator<ContactsViewModel>()),
+          ChangeNotifierProvider.value(value: locator<SettingsViewModel>()),
+          ChangeNotifierProvider.value(value: locator<UpdateViewModel>()),
+          Provider.value(value: locator<IChatRepository>()),
+          Provider.value(value: locator<IRecipientRepository>()),
+        ],
+        child: const SigmaApp(),
+      ),
+    );
 }
 
 class SigmaApp extends StatelessWidget {
@@ -74,14 +81,15 @@ class SigmaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authViewModel = locator<AuthViewModel>();
+    final settingsViewModel = context.watch<SettingsViewModel>();
 
     return MaterialApp.router(
       title: 'Sigma',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: settingsViewModel.themeMode,
+      locale: settingsViewModel.locale,
       routerConfig: createRouter(authViewModel),
     );
   }

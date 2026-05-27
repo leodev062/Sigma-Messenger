@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:dio/dio.dart';
 import 'package:sigma/core/config/app_config.dart';
 import 'package:sigma/core/storage/database.dart';
 import 'package:sigma/core/network/keys_manager.dart';
@@ -8,7 +7,10 @@ import 'package:sigma/core/network/account_manager.dart';
 import 'package:sigma/core/network/profile_manager.dart';
 import 'package:sigma/core/network/attachment_manager.dart';
 import 'package:sigma/core/network/sigma_network_access.dart';
-import 'package:sigma/core/network/socket_manager.dart';
+import 'package:sigma/domain/services/i_connectivity_service.dart';
+import 'package:sigma/data/services/connectivity_service_impl.dart';
+import 'package:sigma/domain/services/i_socket_service.dart';
+import 'package:sigma/data/services/socket_service_impl.dart';
 import 'package:sigma/core/crypto/crypto_manager.dart';
 import 'package:sigma/core/crypto/media_crypto_service.dart';
 import 'package:sigma/core/jobs/job_manager.dart';
@@ -41,12 +43,14 @@ import 'package:sigma/data/datasources/crypto/drift_signal_protocol_store.dart';
 
 // Services
 import 'package:sigma/data/services/incoming_message_processor.dart';
-import 'package:sigma/data/services/message_sender_service.dart';
 import 'package:sigma/data/services/fcm_receiver_service.dart';
 
 // Presentation
 import 'package:sigma/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:sigma/features/chat/presentation/viewmodels/chat_viewmodel.dart';
+import 'package:sigma/features/home/presentation/viewmodels/home_viewmodel.dart';
+import 'package:sigma/features/contacts/presentation/viewmodels/contacts_viewmodel.dart';
+import 'package:sigma/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:sigma/features/updater/update_viewmodel.dart';
 
 // Core Util
@@ -73,7 +77,11 @@ void _initCoreModule() {
   
   // Rede
   locator.registerLazySingleton(() => SigmaNetworkAccess(locator<AppConfig>()));
-  locator.registerLazySingleton(() => SocketManager(locator<AppConfig>()));
+  locator.registerLazySingleton<IConnectivityService>(() => ConnectivityServiceImpl());
+  locator.registerLazySingleton<ISocketService>(() => SocketServiceImpl(
+    locator<AppConfig>(),
+    locator<IConnectivityService>(),
+  ));
   
   locator.registerLazySingleton(() => AppDatabase());
   locator.registerLazySingleton(() => AccountManager(locator<SigmaNetworkAccess>().getApiClient()));
@@ -86,7 +94,7 @@ void _initCoreModule() {
   locator.registerLazySingleton(() => NotificationService());
 
   // JobManager para processamento confiável em background
-  locator.registerLazySingleton(() => JobManager(locator<SocketManager>()));
+  locator.registerLazySingleton(() => JobManager(locator<ISocketService>()));
 
   // DataSources de Criptografia
   locator.registerLazySingleton(() => DriftSignalProtocolStore(locator<AppDatabase>()));
@@ -120,14 +128,14 @@ void _initAuthModule() {
     locator<VerifyCodeInteractor>(),
     locator<UpdateProfileInteractor>(),
     locator<IAuthRepository>(),
-    locator<SocketManager>(),
+    locator<ISocketService>(),
   ));
 }
 
 void _initChatModule() {
   // DataSources
   locator.registerLazySingleton<ChatLocalDataSource>(() => ChatLocalDataSourceImpl(locator<AppDatabase>()));
-  locator.registerLazySingleton<ChatRemoteDataSource>(() => ChatRemoteDataSourceImpl(locator<SocketManager>()));
+  locator.registerLazySingleton<ChatRemoteDataSource>(() => ChatRemoteDataSourceImpl(locator<ISocketService>()));
   locator.registerLazySingleton<RecipientLocalDataSource>(() => RecipientLocalDataSourceImpl(locator<AppDatabase>()));
   locator.registerLazySingleton<RecipientRemoteDataSource>(() => RecipientRemoteDataSourceImpl(locator<SearchManager>()));
 
@@ -145,18 +153,16 @@ void _initChatModule() {
     locator<CryptoManager>(),
   ));
   
-  locator.registerLazySingleton(() => MessageSenderService(
-    locator<IChatRepository>(),
-    locator<JobManager>(),
-  ));
-
   locator.registerLazySingleton(() => FcmReceiverService());
 
   // Interactors
   locator.registerLazySingleton(() => WatchChatsInteractor(locator<IChatRepository>()));
   locator.registerLazySingleton(() => WatchMessagesInteractor(locator<IChatRepository>()));
   locator.registerLazySingleton(() => SearchUsersInteractor(locator<IRecipientRepository>()));
-  locator.registerLazySingleton(() => SendMessageInteractor(locator<MessageSenderService>()));
+  locator.registerLazySingleton(() => SendMessageInteractor(
+    locator<IChatRepository>(),
+    locator<JobManager>(),
+  ));
   locator.registerLazySingleton(() => SendMediaInteractor(
     locator<MediaCryptoService>(),
     locator<AttachmentManager>(),
@@ -166,6 +172,7 @@ void _initChatModule() {
   ));
 
   // ViewModel
+  locator.registerLazySingleton(() => HomeViewModel(locator<ISocketService>()));
   locator.registerLazySingleton(() => ChatViewModel(
     locator<WatchChatsInteractor>(),
     locator<WatchMessagesInteractor>(),
@@ -174,6 +181,8 @@ void _initChatModule() {
     locator<IChatRepository>(),
     locator<IRecipientRepository>(),
   ));
+  locator.registerLazySingleton(() => ContactsViewModel(locator<IRecipientRepository>()));
+  locator.registerLazySingleton(() => SettingsViewModel());
 }
 
 void _initUpdaterModule() {

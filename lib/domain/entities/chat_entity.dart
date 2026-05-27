@@ -3,6 +3,7 @@ enum ChatTypeEntity { user, group, channel, bot }
 class ChatEntity {
   final String id;
   final String? title;
+  final String? avatarUrl;
   final ChatTypeEntity type;
   final String? lastMessage;
   final int? lastMessageTimestamp;
@@ -15,6 +16,7 @@ class ChatEntity {
   ChatEntity({
     required this.id,
     this.title,
+    this.avatarUrl,
     required this.type,
     this.lastMessage,
     this.lastMessageTimestamp,

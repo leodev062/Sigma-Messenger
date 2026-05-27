@@ -32,8 +32,10 @@ class ChatViewModel extends ChangeNotifier {
     this._recipientRepository,
   );
 
+  /// Stream reativa de conversas vinda direto do Banco de Dados (SSOT)
   Stream<List<ChatEntity>> get chats => _watchChatsInteractor.execute();
 
+  /// Stream reativa de mensagens de um chat vinda direto do Banco de Dados (SSOT)
   Stream<List<MessageEntity>> watchMessages(String chatId) {
     return _watchMessagesInteractor.execute(chatId);
   }
@@ -60,33 +62,25 @@ class ChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> openChatWithUser(UserEntity user) async {
-    // 1. Verificar se o chat já existe localmente
+  Future<void> openChatWithUser(UserEntity user) async {
     var chat = await _chatRepository.findPrivateChat(user.id);
     
     if (chat == null) {
-      // 2. Se não, criar um novo chat local
-      // Nota: Podemos usar o user.id como chatId para chats privados
       chat = ChatEntity(
         id: user.id,
         recipientId: user.id,
         title: user.name ?? user.username ?? user.phone,
         type: ChatTypeEntity.user,
         unreadCount: 0,
-        isVerified: false,
-        isPinned: false,
-        isArchived: false,
       );
       await _chatRepository.saveChat(chat);
-      
-      // Salvar o utilizador nos contactos locais também
       await _recipientRepository.saveRecipient(user);
     }
-    
-    return chat.id;
   }
 
   Future<void> sendMessage(String chatId, String senderId, String text) async {
+    // O Interactor salva no banco e enfileira o Job.
+    // A UI atualizará automaticamente via Stream.
     await _sendMessageInteractor.execute(
       chatId: chatId, 
       senderId: senderId, 

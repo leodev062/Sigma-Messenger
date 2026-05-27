@@ -11,6 +11,7 @@ class ModelMapper {
     return ChatEntity(
       id: dto.id,
       title: dto.title,
+      avatarUrl: dto.avatarUrl,
       type: _mapChatType(dto.type),
       lastMessage: dto.lastMessage,
       lastMessageTimestamp: dto.lastMessageTimestamp,
@@ -44,6 +45,7 @@ class ModelMapper {
       id: user.id,
       name: user.name,
       username: user.username,
+      bio: user.bio,
       phone: user.phone,
       avatarUrl: user.avatar_url,
       isVerified: user.isVerified,
@@ -56,6 +58,7 @@ class ModelMapper {
       id: user.id,
       name: user.name,
       username: user.username,
+      bio: (user as dynamic).bio,
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       isVerified: false,

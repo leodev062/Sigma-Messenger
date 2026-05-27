@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:crypto/crypto.dart';
 import 'package:sigma/core/config/app_config.dart';
 import 'package:sigma/core/network/interceptors/user_agent_interceptor.dart';
 import 'package:sigma/core/storage/sigma_store.dart';
@@ -74,33 +73,31 @@ class SigmaNetworkAccess {
         // No Signal, TLS 1.2+ é obrigatório.
         // O Dart HttpClient já tenta as versões mais altas por padrão.
 
-        // Validação de Certificate Pinning
+        // Validação de Certificate Pinning (DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO)
+        /*
         client.badCertificateCallback = (X509Certificate cert, String host, int port) {
-          // Em um cenário real de Pinning, podemos extrair a chave pública ou o certificado DER.
-          // Aqui implementamos a verificação contra os hashes definidos no AppConfig.
           final bytes = cert.der;
           final hash = sha256.convert(bytes).toString();
           final pin = 'sha256/$hash';
 
           if (_config.certificatePins.contains(pin)) {
-            return true; // Pin coincide, aceitar conexão mesmo que o OS falhe (ex: self-signed confiável)
+            return true;
           }
-          
-          return false; // Rejeitar se não estiver no Pinning
+          return false;
         };
+        */
 
         return client;
       },
+      /*
       validateCertificate: (cert, host, port) {
         if (cert == null) return false;
-
-        // Verificação redundante para garantir o Pinning em todas as camadas
         final bytes = cert.der;
         final hash = sha256.convert(bytes).toString();
         final pin = 'sha256/$hash';
-
         return _config.certificatePins.contains(pin);
       },
+      */
     );
   }
 }

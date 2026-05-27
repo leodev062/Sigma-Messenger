@@ -10,7 +10,6 @@ class ProfileManager {
   /// Busca o perfil de um usuário (Backend v1 - JSON)
   Future<UserResponse> getProfile(String userId) async {
     try {
-      // No Signal, 'me' ou o ID específico é usado. Aqui usamos v1/accounts/$userId
       final response = await _dio.get("v1/accounts/$userId");
       return UserResponse.fromJson(_flattenEnvelope(_parseResponse(response.data)));
     } catch (e) {
@@ -18,14 +17,21 @@ class ProfileManager {
     }
   }
 
-  /// Atualiza o perfil do utilizador (Backend v1 - JSON)
-  Future<UserResponse> updateProfile(String userId, String name, String? avatarPath) async {
+  /// Atualiza o perfil completo do utilizador (Backend v1 - JSON)
+  Future<UserResponse> updateProfile({
+    String? name,
+    String? username,
+    String? bio,
+    String? avatarUrl,
+  }) async {
     try {
       final response = await _dio.put(
         "v1/accounts/me",
         data: {
-          'name': name,
-          if (avatarPath != null) 'avatar_url': avatarPath,
+          if (name != null) 'name': name,
+          if (username != null) 'username': username,
+          if (bio != null) 'bio': bio,
+          if (avatarUrl != null) 'avatar_url': avatarUrl,
         },
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
@@ -48,7 +54,6 @@ class ProfileManager {
       final data = response['data'];
       if (data != null && data is Map) {
         final dataMap = Map<String, dynamic>.from(data);
-        // Se a data for o próprio objeto de usuário (comum em PUT /me)
         if (dataMap.containsKey('id') || dataMap.containsKey('phone')) {
           result['user'] = dataMap;
         }

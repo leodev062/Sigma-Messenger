@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sigma/core/i18n/strings.dart';
 import 'update_viewmodel.dart';
 
 class UpdateBanner extends StatelessWidget {
@@ -10,27 +11,28 @@ class UpdateBanner extends StatelessWidget {
     return Consumer<UpdateViewModel>(
       builder: (context, viewModel, child) {
         if (!viewModel.updateAvailable) return const SizedBox.shrink();
+        final colorScheme = Theme.of(context).colorScheme;
 
         return Container(
           width: double.infinity,
-          color: Theme.of(context).colorScheme.primaryContainer,
+          color: colorScheme.primaryContainer,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  Icon(Icons.system_update, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  Icon(Icons.system_update, color: colorScheme.onPrimaryContainer),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Versão ${viewModel.updateInfo?.versionName} disponível',
+                          context.translate('update_available', args: {'version': viewModel.updateInfo?.versionName ?? ''}),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                         if (viewModel.updateInfo?.releaseNotes.isNotEmpty ?? false)
@@ -38,7 +40,7 @@ class UpdateBanner extends StatelessWidget {
                             viewModel.updateInfo!.releaseNotes,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.8),
+                              color: colorScheme.onPrimaryContainer.withOpacity(0.8),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -59,16 +61,16 @@ class UpdateBanner extends StatelessWidget {
                   else ...[
                     TextButton(
                       onPressed: viewModel.dismissBanner,
-                      child: const Text('IGNORAR'),
+                      child: Text(context.translate('btn_ignore')),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: viewModel.performUpdate,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
                       ),
-                      child: const Text('ATUALIZAR'),
+                      child: Text(context.translate('btn_update')),
                     ),
                   ],
                 ],
