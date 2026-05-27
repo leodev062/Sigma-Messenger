@@ -28,7 +28,7 @@ func NewDatabaseFactory(cfg config.PostgresConfiguration) (*gorm.DB, error) {
 	}
 
 	// TODO: Migrar para golang-migrate/liquibase (semelhante ao Signal)
-	if err := db.AutoMigrate(&entities.Account{}, &entities.PreKey{}, &entities.PendingMessage{}, &entities.PendingEvent{}); err != nil {
+	if err := db.AutoMigrate(&entities.Account{}, &entities.PreKey{}, &entities.KeyBundle{}, &entities.PendingMessage{}, &entities.PendingEvent{}); err != nil {
 		log.Printf("warning: failed to run auto migration: %v", err)
 	}
 

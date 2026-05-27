@@ -39,8 +39,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
+        // Backend v1: v1/accounts/me/fcm espera apenas fcm_token (userId vem do JWT)
         await _apiService.updateFcmToken({
-          "user_id": userId,
           "fcm_token": token,
         });
       }

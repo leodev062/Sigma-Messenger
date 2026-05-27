@@ -100,6 +100,7 @@ func SigmaServerService(cfg *WhisperServerConfiguration) {
 
 	authHandler := handlers.NewAuthHandler(authService)
 	accountHandler := handlers.NewAccountHandler(accountService, eventRouter)
+	keysHandler := handlers.NewKeysHandler(accountService)
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
 	keepAliveController := controllers.NewKeepAliveController(wsManager)
 	wsHandler := websocket.NewWebsocketHandler(wsManager, messageManager, pendingEventManager, jwtGenerator, accountService)
@@ -126,6 +127,10 @@ func SigmaServerService(cfg *WhisperServerConfiguration) {
 	v1.POST("/accounts/sync-contacts", accountHandler.SyncContacts)
 	v1.POST("/accounts/sync-recipients", accountHandler.SyncRecipients)
 	v1.PUT("/accounts/me/fcm", accountHandler.UpdateFCMToken, middleware.JWTAuth(jwtGenerator))
+
+	v2 := e.Group("/v2")
+	v2.PUT("/keys", keysHandler.PutKeys, middleware.JWTAuth(jwtGenerator))
+	v2.GET("/keys/:id", keysHandler.GetKeys)
 
 	v1.GET("/keepalive", keepAliveController.Get, middleware.JWTAuth(jwtGenerator))
 	v1.GET("/keepalive/provisioning", keepAliveController.Provisioning)

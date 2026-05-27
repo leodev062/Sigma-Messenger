@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:sigma/core/crypto/crypto_manager.dart';
 import 'package:sigma/core/util/sigma_log.dart';
 import 'package:sigma/core/util/exceptions.dart';
 import 'package:sigma/data/datasources/chat/chat_remote_data_source.dart';
 import 'package:sigma/domain/repositories/i_chat_repository.dart';
 import 'package:sigma/domain/entities/message_entity.dart';
+import 'package:sigma/core/network/pb/websocket.pb.dart' as ws_pb;
+import 'package:sigma/core/network/pb/envelope.pb.dart' as env_pb;
 
-/// Serviço responsável por processar envelopes vindos do socket.
+/// Serviço responsável por processar envelopes vindos do socket (Protobuf v1).
 /// Desencripta e persiste no banco via Repositório.
 class IncomingMessageProcessor {
   static const String TAG = "IncomingMessageProcessor";
@@ -28,7 +31,7 @@ class IncomingMessageProcessor {
     _subscription = _remoteDataSource.messageStream.listen((msg) {
       _processIncomingData(msg);
     });
-    SigmaLog.i(TAG, "Processor inicializado e escutando socket.");
+    SigmaLog.i(TAG, "Processor inicializado e escutando socket (Protobuf v1).");
   }
 
   void stop() {
@@ -36,20 +39,28 @@ class IncomingMessageProcessor {
     _subscription = null;
   }
 
-  void _processIncomingData(dynamic data) async {
+  void _processIncomingData(ws_pb.WebSocketMessage data) async {
     try {
-      if (data.type == 1 && data.request != null) {
-        final request = data.request!;
-        if (request.verb == "PUT" && request.path == "/api/v1/message") {
-          final body = request.body;
-          final chatId = body['chat_id'];
-          final senderId = body['sender_id'];
-          final encryptedEnvelope = body['envelope'];
+      // No backend v1, mensagens entre usuários chegam como REQUEST ou MESSAGE
+      if ((data.type == ws_pb.WebSocketMessage_Type.REQUEST || data.type == ws_pb.WebSocketMessage_Type.MESSAGE) && data.hasRequest()) {
+        final request = data.request;
+        
+        // Caminho esperado conforme connection.go: v2/messages/{id}
+        if (request.verb == "PUT" && request.path.contains("v2/messages")) {
+          // O body do request contém o Envelope binário
+          final envelope = env_pb.Envelope.fromBuffer(request.body);
+          
+          final senderId = envelope.source;
+          final encryptedEnvelope = base64Encode(envelope.content);
 
-          SigmaLog.d(TAG, "Envelope recebido de $senderId. Iniciando abertura.");
+          SigmaLog.d(TAG, "Envelope recebido de $senderId via Protobuf. Iniciando abertura.");
           
           try {
             await _cryptoManager.init();
+            
+            // O chatId para mensagens recebidas é o ID do remetente
+            final chatId = senderId; 
+            
             final payload = await _cryptoManager.decryptMessage(senderId, encryptedEnvelope);
 
             final now = DateTime.now().millisecondsSinceEpoch;
@@ -83,11 +94,12 @@ class IncomingMessageProcessor {
             SigmaLog.e(TAG, "Erro ao descriptografar/salvar mensagem", e);
           }
 
+          // Confirma recebimento para o servidor
           _remoteDataSource.acknowledgeReceipt(request.id);
         }
       }
     } catch (e) {
-      SigmaLog.e(TAG, "Erro crítico no processamento de socket", e);
+      SigmaLog.e(TAG, "Erro crítico no processamento de socket Protobuf v1", e);
     }
   }
 }

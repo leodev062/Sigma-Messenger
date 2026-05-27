@@ -12,6 +12,7 @@ const (
 	UnknownType  WebsocketMessageType = "UNKNOWN"
 	RequestType  WebsocketMessageType = "REQUEST"
 	ResponseType WebsocketMessageType = "RESPONSE"
+	MessageType  WebsocketMessageType = "MESSAGE"
 )
 
 type WebsocketMessage struct {
@@ -66,8 +67,11 @@ func fromProto(payload *sigmapb.WebSocketMessage) *WebsocketMessage {
 	case sigmapb.WebSocketMessage_RESPONSE:
 		message.Type = ResponseType
 		message.Response = fromProtoResponse(payload.GetResponse())
-	default:
+	case sigmapb.WebSocketMessage_TYPE_UNKNOWN:
 		message.Type = UnknownType
+	default:
+		message.Type = MessageType
+		message.Request = fromProtoRequest(payload.GetRequest())
 	}
 
 	return message
@@ -79,12 +83,10 @@ func fromProtoRequest(request *sigmapb.WebSocketRequestMessage) *WebsocketReques
 	}
 
 	return &WebsocketRequestMessage{
-		Verb:        request.GetVerb(),
-		Path:        request.GetPath(),
-		Id:          request.GetId(),
-		Destination: request.GetDestination(),
-		Headers:     append([]string(nil), request.GetHeaders()...),
-		Body:        append([]byte(nil), request.GetBody()...),
+		Verb: request.GetVerb(),
+		Path: request.GetPath(),
+		Id:   request.GetId(),
+		Body: append([]byte(nil), request.GetBody()...),
 	}
 }
 
@@ -94,12 +96,10 @@ func fromProtoResponse(response *sigmapb.WebSocketResponseMessage) *WebsocketRes
 	}
 
 	return &WebsocketResponseMessage{
-		Id:          response.GetId(),
-		Status:      int(response.GetStatus()),
-		Message:     response.GetMessage(),
-		Destination: response.GetDestination(),
-		Headers:     append([]string(nil), response.GetHeaders()...),
-		Body:        append([]byte(nil), response.GetBody()...),
+		Id:      response.GetId(),
+		Status:  int(response.GetStatus()),
+		Message: response.GetMessage(),
+		Body:    append([]byte(nil), response.GetBody()...),
 	}
 }
 
@@ -117,6 +117,9 @@ func toProto(message *WebsocketMessage) *sigmapb.WebSocketMessage {
 	case ResponseType:
 		payload.Type = sigmapb.WebSocketMessage_RESPONSE
 		payload.Response = toProtoResponse(message.Response)
+	case MessageType:
+		payload.Type = sigmapb.WebSocketMessage_Type(3)
+		payload.Request = toProtoRequest(message.Request)
 	default:
 		payload.Type = sigmapb.WebSocketMessage_TYPE_UNKNOWN
 	}
@@ -130,12 +133,10 @@ func toProtoRequest(request *WebsocketRequestMessage) *sigmapb.WebSocketRequestM
 	}
 
 	return &sigmapb.WebSocketRequestMessage{
-		Id:          request.Id,
-		Verb:        request.Verb,
-		Path:        request.Path,
-		Destination: request.Destination,
-		Headers:     append([]string(nil), request.Headers...),
-		Body:        append([]byte(nil), request.Body...),
+		Id:   request.Id,
+		Verb: request.Verb,
+		Path: request.Path,
+		Body: append([]byte(nil), request.Body...),
 	}
 }
 
@@ -145,11 +146,9 @@ func toProtoResponse(response *WebsocketResponseMessage) *sigmapb.WebSocketRespo
 	}
 
 	return &sigmapb.WebSocketResponseMessage{
-		Id:          response.Id,
-		Status:      int32(response.Status),
-		Message:     response.Message,
-		Destination: response.Destination,
-		Headers:     append([]string(nil), response.Headers...),
-		Body:        append([]byte(nil), response.Body...),
+		Id:      response.Id,
+		Status:  int32(response.Status),
+		Message: response.Message,
+		Body:    append([]byte(nil), response.Body...),
 	}
 }

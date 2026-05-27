@@ -35,7 +35,7 @@ GoRouter createRouter(AuthViewModel authViewModel) {
         return null;
       }
 
-      if (authState.status == AuthStatus.success || authState.status == AuthStatus.verified) {
+      if (authState.status == AuthStatus.verified) {
         if (isPublicRoute) {
           debugPrint('DEBUG Router: Redirecting to /home');
           return '/home';

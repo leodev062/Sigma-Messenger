@@ -57,13 +57,13 @@ type Account struct {
 	ParticipantCount      int        `gorm:"column:participant_count;default:0" json:"participant_count"`
 	CreatedAt             time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt             time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	IdentityKey           *string    `gorm:"column:identity_key" json:"identity_key"`
-	SignedPreKey          *string    `gorm:"column:signed_pre_key" json:"signed_pre_key"`
+	IdentityKey           []byte     `gorm:"column:identity_key;type:bytea" json:"identity_key,omitempty"`
+	SignedPreKey          []byte     `gorm:"column:signed_pre_key;type:bytea" json:"signed_pre_key,omitempty"`
 	RegistrationID        *int64     `gorm:"column:registration_id" json:"registration_id"`
 	SignedPreKeyID        *int       `gorm:"column:signed_pre_key_id" json:"signed_pre_key_id"`
-	SignedPreKeyPublic    *string    `gorm:"column:signed_pre_key_public" json:"signed_pre_key_public"`
-	SignedPreKeySignature *string    `gorm:"column:signed_pre_key_signature" json:"signed_pre_key_signature"`
-	PreKeys               PreKeyList `gorm:"type:jsonb;column:pre_keys" json:"pre_keys"`
+	SignedPreKeyPublic    []byte     `gorm:"column:signed_pre_key_public;type:bytea" json:"signed_pre_key_public,omitempty"`
+	SignedPreKeySignature []byte     `gorm:"column:signed_pre_key_signature;type:bytea" json:"signed_pre_key_signature,omitempty"`
+	PreKeys               PreKeyList `gorm:"-" json:"pre_keys,omitempty"`
 }
 
 func (Account) TableName() string {

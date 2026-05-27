@@ -9,6 +9,10 @@ class DioClient {
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
+      responseType: ResponseType.bytes, // Evita parse automático de JSON
+      headers: {
+        'Accept': 'application/x-protobuf, application/json',
+      },
     ));
 
     dio.interceptors.add(InterceptorsWrapper(

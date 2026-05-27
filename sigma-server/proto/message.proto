@@ -4,23 +4,4 @@ package sigmapb;
 
 option go_package = "sigma-server/proto;sigmapb";
 
-message Envelope {
-  enum Type {
-    TYPE_UNKNOWN = 0;
-    CIPHERTEXT = 1;
-    PREKEY_BUNDLE = 2;
-    PLAINTEXT_CONTENT = 3;
-  }
-
-  Type type = 1;
-  string server_guid = 2;
-  string source_service_id = 3;
-  string destination_service_id = 4;
-  int64 client_timestamp = 5;
-  int64 server_timestamp = 6;
-  bytes content = 7;
-  bool ephemeral = 8;
-  bool urgent = 9;
-  bool story = 10;
-  bytes report_spam_token = 11;
-}
+import "envelope.proto";

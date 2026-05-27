@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -41,17 +42,27 @@ class ApkUpdateManager {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersionCode = int.parse(packageInfo.buildNumber);
 
-      final response = await _dio.get('api/update');
+      // Backend v1: Serve o JSON de atualização na pasta estática
+      final response = await _dio.get('apk/update.json');
       if (response.statusCode == 200) {
-        final updateInfo = UpdateInfo.fromJson(response.data);
+        // Trata resposta que pode vir como bytes (devido ao ResponseType global)
+        final data = _parseResponse(response.data);
+        final updateInfo = UpdateInfo.fromJson(data);
         if (updateInfo.versionCode > currentVersionCode) {
           return updateInfo;
         }
       }
     } catch (e) {
-      // Falha na verificação silenciosa
+      // Silencioso
     }
     return null;
+  }
+
+  dynamic _parseResponse(dynamic data) {
+    if (data is List<int>) {
+      return jsonDecode(utf8.decode(data));
+    }
+    return data;
   }
 
   Future<String> downloadAndVerifyApk(

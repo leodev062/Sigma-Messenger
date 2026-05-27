@@ -89,7 +89,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> verifyCode(String phone, String code) async {
+  void verifyCode(String phone, String code) async {
     _updateState(status: AuthStatus.loading);
     try {
       final user = await _verifyCodeInteractor.execute(phone, code);
@@ -107,6 +107,11 @@ class AuthViewModel extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
+  }
+
+  void resetState() {
+    _state = _state.copyWith(status: AuthStatus.unauthenticated);
+    notifyListeners();
   }
 
   void _updateState({AuthStatus? status, String? error}) {

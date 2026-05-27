@@ -40,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (state.status == AuthStatus.success) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Reseta o estado para idle para não disparar o push novamente se o usuário voltar
+        authViewModel.resetState();
         context.push('/verification', extra: '+${_codeController.text}${_phoneController.text}');
       });
     }

@@ -26,12 +26,10 @@ func (PendingMessage) TableName() string {
 
 func (m *PendingMessage) SetPayload(payload []byte) {
 	envelope := &sigmapb.Envelope{
-		Type:                 sigmapb.Envelope_CIPHERTEXT,
-		ServerGuid:           uuid.NewString(),
-		DestinationServiceId: m.DestinationID.String(),
-		ClientTimestamp:      m.Timestamp,
-		ServerTimestamp:      m.Timestamp,
-		Content:              append([]byte(nil), payload...),
+		Type:      sigmapb.Envelope_CIPHERTEXT,
+		Source:    m.DestinationID.String(),
+		Timestamp: uint64(m.Timestamp),
+		Content:   append([]byte(nil), payload...),
 	}
 
 	serialized, err := proto.Marshal(envelope)

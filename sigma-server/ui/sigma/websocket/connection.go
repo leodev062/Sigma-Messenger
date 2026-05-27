@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -108,12 +109,17 @@ func (c *WebsocketConnection) readPump() {
 	}()
 
 	for {
-		_, raw, err := c.Conn.ReadMessage()
+		messageType, raw, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("WebsocketConnection read error user=%s: %v", c.Client.UserID, err)
 			}
 			return
+		}
+
+		if messageType != websocket.BinaryMessage {
+			log.Printf("WebsocketConnection ignoring non-binary message user=%s", c.Client.UserID)
+			continue
 		}
 
 		if c.manager != nil {
@@ -149,12 +155,7 @@ func (c *WebsocketConnection) writePump() {
 				return
 			}
 
-			messageType := websocket.BinaryMessage
-			if !isProtoPayload(message) {
-				messageType = websocket.TextMessage
-			}
-
-			if err := c.Conn.WriteMessage(messageType, message); err != nil {
+			if err := c.Conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				return
 			}
 
@@ -179,11 +180,6 @@ func (c *WebsocketConnection) send(payload []byte) {
 	}
 }
 
-func isProtoPayload(payload []byte) bool {
-	_, err := DecodeWebsocketMessage(payload)
-	return err == nil
-}
-
 func (c *WebsocketConnection) sendResponse(requestID string, status int, body []byte) {
 	if c == nil {
 		return
@@ -192,9 +188,10 @@ func (c *WebsocketConnection) sendResponse(requestID string, status int, body []
 	payload := &WebsocketMessage{
 		Type: ResponseType,
 		Response: &WebsocketResponseMessage{
-			Id:     requestID,
-			Status: status,
-			Body:   append([]byte(nil), body...),
+			Id:      requestID,
+			Status:  status,
+			Message: "",
+			Body:    append([]byte(nil), body...),
 		},
 	}
 
@@ -207,33 +204,42 @@ func (c *WebsocketConnection) sendResponse(requestID string, status int, body []
 	c.send(encoded)
 }
 
+func extractDestinationFromPath(rawPath string) (string, bool) {
+	parsed := parseWebsocketPath(rawPath)
+	segments := strings.Split(strings.Trim(parsed, "/"), "/")
+	if len(segments) == 3 && strings.EqualFold(segments[0], "v2") && strings.EqualFold(segments[1], "messages") {
+		return segments[2], true
+	}
+	return "", false
+}
+
 func (c *WebsocketConnection) handleMessage(raw []byte, message *WebsocketMessage) {
-	if message.Type == ResponseType && message.Response != nil && message.Response.Destination != "" {
-		c.manager.Dispatch(message.Response.Destination, raw)
+	if message == nil {
 		return
 	}
 
-	if message.Type != RequestType || message.Request == nil {
-		log.Printf("WebsocketConnection ignored unsupported message user=%s type=%s", c.Client.UserID, message.Type)
-		return
-	}
+	if (message.Type == RequestType || message.Type == MessageType) && message.Request != nil {
+		recipientID, ok := extractDestinationFromPath(message.Request.Path)
+		if !ok {
+			c.sendResponse(message.Request.Id, 404, []byte("unsupported websocket route"))
+			return
+		}
+		if recipientID == "" {
+			c.sendResponse(message.Request.Id, 400, []byte("invalid destination"))
+			return
+		}
 
-	if c.router != nil {
-		if route, _ := c.router.Match(message.Request); route != nil {
-			body, status, err := c.router.Handle(c, message.Request)
-			if err != nil {
-				c.sendResponse(message.Request.Id, 500, marshalError(500, err.Error()))
-				return
-			}
-			c.sendResponse(message.Request.Id, status, body)
+		if c.manager != nil {
+			c.manager.Dispatch(recipientID, raw)
+			c.sendResponse(message.Request.Id, 202, nil)
 			return
 		}
 	}
 
-	if message.Request.Destination != "" {
-		c.manager.Dispatch(message.Request.Destination, raw)
+	if message.Type == ResponseType && message.Response != nil {
+		log.Printf("WebsocketConnection ignored response message from user=%s", c.Client.UserID)
 		return
 	}
 
-	c.sendResponse(message.Request.Id, 404, marshalError(404, "unsupported websocket route"))
+	log.Printf("WebsocketConnection ignored unsupported message user=%s type=%s", c.Client.UserID, message.Type)
 }

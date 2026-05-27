@@ -1,64 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
+import 'package:sigma/core/network/pb/websocket.pb.dart' as sigmapb;
 
 enum SocketStatus { disconnected, connecting, connected }
-
-/// Modelos para Multiplexação de WebSocket (Estilo Signal/Telegram)
-class SignalMessage {
-  final int type; // 1 = Request, 2 = Response, 3 = Push, 4 = Ping, 5 = Pong
-  final SignalRequest? request;
-  final dynamic body;
-
-  SignalMessage({required this.type, this.request, this.body});
-
-  Map<String, dynamic> toJson() => {
-    'type': type,
-    if (request != null) 'request': request!.toJson(),
-    if (body != null) 'body': body,
-  };
-
-  factory SignalMessage.fromJson(Map<String, dynamic> json) {
-    return SignalMessage(
-      type: json['type'] as int,
-      request: json['request'] != null ? SignalRequest.fromJson(json['request']) : null,
-      body: json['body'],
-    );
-  }
-}
-
-class SignalRequest {
-  final String id;
-  final String verb;
-  final String path;
-  final dynamic body;
-
-  SignalRequest({
-    required this.id,
-    required this.verb,
-    required this.path,
-    required this.body,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'verb': verb,
-    'path': path,
-    'body': body,
-  };
-
-  factory SignalRequest.fromJson(Map<String, dynamic> json) {
-    return SignalRequest(
-      id: json['id'] as String,
-      verb: json['verb'] as String,
-      path: json['path'] as String,
-      body: json['body'],
-    );
-  }
-}
 
 class SocketManager extends ChangeNotifier {
   WebSocketChannel? _channel;
@@ -68,8 +16,8 @@ class SocketManager extends ChangeNotifier {
   SocketStatus get status => _status;
   bool get isConnected => _status == SocketStatus.connected;
   
-  final _messageController = StreamController<SignalMessage>.broadcast();
-  Stream<SignalMessage> get messages => _messageController.stream;
+  final _messageController = StreamController<sigmapb.WebSocketMessage>.broadcast();
+  Stream<sigmapb.WebSocketMessage> get messages => _messageController.stream;
 
   String? _currentUserId;
   final String _baseUrl = "ws://192.99.236.216:3000/ws";
@@ -93,7 +41,7 @@ class SocketManager extends ChangeNotifier {
     if (_currentUserId == null) return;
 
     try {
-      debugPrint("📡 WebSocket: Tentando conectar ao servidor...");
+      debugPrint("📡 WebSocket: Conectando via Protobuf v1...");
       _channel = WebSocketChannel.connect(
         Uri.parse("$_baseUrl?userId=$_currentUserId"),
       );
@@ -115,7 +63,7 @@ class SocketManager extends ChangeNotifier {
       _reconnectAttempts = 0;
       _startHeartbeat();
       notifyListeners();
-      debugPrint("✅ WebSocket conectado: User $_currentUserId");
+      debugPrint("✅ WebSocket conectado (Protobuf)");
     } catch (e) {
       debugPrint("❌ WebSocket Connection Exception: $e");
       _onDisconnected();
@@ -125,16 +73,13 @@ class SocketManager extends ChangeNotifier {
   void _onMessageReceived(dynamic data) {
     _status = SocketStatus.connected;
     try {
-      final decoded = jsonDecode(data as String);
-      final signalMsg = SignalMessage.fromJson(decoded as Map<String, dynamic>);
+      // Backend v1 envia bytes binários (Protobuf)
+      final bytes = data as Uint8List;
+      final msg = sigmapb.WebSocketMessage.fromBuffer(bytes);
       
-      if (signalMsg.type == 5) { // Pong
-        debugPrint("💓 WebSocket: Pong recebido");
-      } else {
-        _messageController.add(signalMsg);
-      }
+      _messageController.add(msg);
     } catch (e) {
-      debugPrint("⚠️ WebSocket Parse Error: $e");
+      debugPrint("⚠️ WebSocket Decode Error (Protobuf): $e");
     }
     notifyListeners();
   }
@@ -152,11 +97,9 @@ class SocketManager extends ChangeNotifier {
     
     _reconnectTimer?.cancel();
     
-    // Backoff exponencial
     final delay = min(pow(2, _reconnectAttempts).toInt(), _maxReconnectDelay);
     _reconnectAttempts++;
 
-    debugPrint("🔄 WebSocket: Reconectando em $delay segundos (Tentativa $_reconnectAttempts)...");
     _reconnectTimer = Timer(Duration(seconds: delay), () {
       if (_status == SocketStatus.disconnected) {
         _establishConnection();
@@ -179,34 +122,33 @@ class SocketManager extends ChangeNotifier {
 
   void sendPing() {
     if (isConnected) {
-      final ping = SignalMessage(type: 4);
-      _channel!.sink.add(jsonEncode(ping.toJson()));
-      debugPrint("💓 WebSocket: Ping enviado");
+      // Backend v1: WebSocketMessage de tipo MESSAGE sem corpo funciona como keepalive
+      final ping = sigmapb.WebSocketMessage()..type = sigmapb.WebSocketMessage_Type.MESSAGE;
+      _channel!.sink.add(ping.writeToBuffer());
     }
   }
 
+  /// Envia um request estruturado (Protobuf v1)
   void sendRequest({
     required String verb,
     required String path,
-    required dynamic body,
+    required List<int> body,
     String? id,
   }) {
     if (isConnected && _channel != null) {
       final requestId = id ?? _generateRandomId();
       
-      final signalMessage = SignalMessage(
-        type: 1, // Request
-        request: SignalRequest(
-          id: requestId,
-          verb: verb,
-          path: path,
-          body: body,
-        ),
-      );
+      final msg = sigmapb.WebSocketMessage()
+        ..type = sigmapb.WebSocketMessage_Type.REQUEST
+        ..request = (sigmapb.WebSocketRequestMessage()
+          ..id = requestId
+          ..verb = verb
+          ..path = path
+          ..body = body);
 
-      _channel!.sink.add(jsonEncode(signalMessage.toJson()));
+      _channel!.sink.add(msg.writeToBuffer());
     } else {
-      debugPrint("⚠️ WebSocket: Não foi possível enviar request - Desconectado");
+      debugPrint("⚠️ WebSocket: Request falhou - Desconectado");
     }
   }
 
@@ -215,7 +157,6 @@ class SocketManager extends ChangeNotifier {
   }
 
   void disconnect() {
-    debugPrint("🔌 WebSocket: Desconectando manualmente...");
     _currentUserId = null;
     _reconnectTimer?.cancel();
     _stopHeartbeat();

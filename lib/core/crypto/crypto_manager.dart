@@ -9,7 +9,6 @@ import 'package:sigma/data/models/signal_payload.dart';
 
 /// Gerenciador de Criptografia de Ponta-a-Ponta (E2EE)
 /// Utiliza o protocolo Signal para selar e abrir envelopes de mensagens.
-/// Agora utiliza persistência em banco de dados blindado (SQLCipher).
 class CryptoManager {
   static const String TAG = "CryptoManager";
   
@@ -18,10 +17,7 @@ class CryptoManager {
 
   CryptoManager(this._apiService, this._protocolStore);
 
-  /// Inicialização simplificada: a persistência é gerida pelo DriftSignalProtocolStore.
   Future<void> init() async {
-    // Agora o store é injetado e auto-gerido via Drift.
-    // Verificamos apenas se a identidade local existe.
     final identity = await _protocolStore.getIdentityKeyPair();
     SigmaLog.d(TAG, "CryptoManager inicializado. Local Identity: ${identity.getPublicKey().serialize().length} bytes");
   }
@@ -32,20 +28,34 @@ class CryptoManager {
     
     if (await _protocolStore.containsSession(address)) return;
 
-    SigmaLog.i(TAG, "Construindo nova sessão persistente para $remoteUserId");
+    SigmaLog.i(TAG, "Construindo nova sessão persistente para $remoteUserId (via Protobuf)");
     
-    // Busca o PreKeyBundle do servidor Go
-    final keyData = await _apiService.getUserKeys(remoteUserId);
+    // Busca o PreKeyBundle do servidor em formato Protobuf v1
+    final bundleProto = await _apiService.getUserKeys(remoteUserId);
+
+    // Ajuste de campos conforme pb.dart (keys.proto)
+    // O bundleProto tem campos como identityKey, signedPreKeyPublic, etc.
+    // E uma lista de preKeys (PreKeyRecord).
     
+    int? preKeyId;
+    Uint8List? preKeyPublic;
+    
+    if (bundleProto.preKeys.isNotEmpty) {
+      final firstPreKey = bundleProto.preKeys.first;
+      preKeyId = firstPreKey.id;
+      preKeyPublic = Uint8List.fromList(firstPreKey.publicKey);
+    }
+    
+    // Converte de Protobuf para objetos da libsignal
     final bundle = PreKeyBundle(
-      int.parse(keyData['registration_id'].toString()),
+      bundleProto.registrationId,
       1, // deviceId
-      int.parse(keyData['pre_key_id'].toString()),
-      Curve.decodePoint(base64Decode(keyData['pre_key_public']), 0),
-      int.parse(keyData['signed_pre_key_id'].toString()),
-      Curve.decodePoint(base64Decode(keyData['signed_pre_key_public']), 0),
-      base64Decode(keyData['signed_pre_key_signature']),
-      IdentityKey(Curve.decodePoint(base64Decode(keyData['identity_key']), 0)),
+      preKeyId ?? 0,
+      preKeyPublic != null ? Curve.decodePoint(preKeyPublic, 0) : null,
+      bundleProto.signedPreKeyId,
+      Curve.decodePoint(Uint8List.fromList(bundleProto.signedPreKeyPublic), 0),
+      Uint8List.fromList(bundleProto.signedPreKeySignature),
+      IdentityKey(Curve.decodePoint(Uint8List.fromList(bundleProto.identityKey), 0)),
     );
 
     final sessionBuilder = SessionBuilder.fromSignalStore(_protocolStore, address);
@@ -65,7 +75,6 @@ class CryptoManager {
   }
 
   /// Desencripta um envelope Base64 recebido para um SignalPayload.
-  /// Implementa o padrão de Session Reset em caso de falha.
   Future<SignalPayload> decryptMessage(String remoteUserId, String base64Ciphertext) async {
     final address = SignalProtocolAddress(remoteUserId, 1);
     final sessionCipher = SessionCipher.fromStore(_protocolStore, address);

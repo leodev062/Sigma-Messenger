@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/base64"
 	"errors"
 	"strings"
 
@@ -20,6 +21,26 @@ func NewAccountService(repo *storage.AccountManager) *AccountService {
 	return &AccountService{repo: repo}
 }
 
+func decodeBinaryKey(value string) []byte {
+	if value == "" {
+		return nil
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return []byte(value)
+	}
+
+	return decoded
+}
+
+func encodeBinaryKey(value []byte) string {
+	if len(value) == 0 {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(value)
+}
+
 func (s *AccountService) CreateAccount(req dto.CreateAccountRequest) (*entities.Account, error) {
 	account := &entities.Account{
 		Type:                  "individual",
@@ -28,10 +49,10 @@ func (s *AccountService) CreateAccount(req dto.CreateAccountRequest) (*entities.
 		Username:              &req.Username,
 		AvatarURL:             &req.AvatarURL,
 		Bio:                   &req.Bio,
-		IdentityKey:           &req.IdentityKey,
+		IdentityKey:           decodeBinaryKey(req.IdentityKey),
 		SignedPreKeyID:        nil,
-		SignedPreKeyPublic:    &req.SignedPreKeyPublic,
-		SignedPreKeySignature: &req.SignedPreKeySignature,
+		SignedPreKeyPublic:    decodeBinaryKey(req.SignedPreKeyPublic),
+		SignedPreKeySignature: decodeBinaryKey(req.SignedPreKeySignature),
 		PreKeys:               make(entities.PreKeyList, 0, len(req.PreKeys)),
 	}
 	if req.Email != "" {
@@ -121,20 +142,17 @@ func (s *AccountService) UpdateAccount(userID uuid.UUID, req dto.UpdateAccountRe
 		account.RelativeID = &relativeID
 	}
 	if req.IdentityKey != "" {
-		key := req.IdentityKey
-		account.IdentityKey = &key
+		account.IdentityKey = decodeBinaryKey(req.IdentityKey)
 	}
 	if req.SignedPreKeyID != 0 {
 		id := req.SignedPreKeyID
 		account.SignedPreKeyID = &id
 	}
 	if req.SignedPreKeyPublic != "" {
-		key := req.SignedPreKeyPublic
-		account.SignedPreKeyPublic = &key
+		account.SignedPreKeyPublic = decodeBinaryKey(req.SignedPreKeyPublic)
 	}
 	if req.SignedPreKeySignature != "" {
-		sig := req.SignedPreKeySignature
-		account.SignedPreKeySignature = &sig
+		account.SignedPreKeySignature = decodeBinaryKey(req.SignedPreKeySignature)
 	}
 	if req.RegistrationID != 0 {
 		account.RegistrationID = &req.RegistrationID
@@ -192,7 +210,7 @@ func (s *AccountService) GetProfile(userID uuid.UUID) (*entities.Account, error)
 }
 
 func (s *AccountService) GetKeys(userID uuid.UUID) (*dto.KeysResponse, error) {
-	account, err := s.repo.FindByID(userID)
+	account, preKeys, err := s.repo.FetchKeyBundle(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -204,26 +222,37 @@ func (s *AccountService) GetKeys(userID uuid.UUID) (*dto.KeysResponse, error) {
 	if account.SignedPreKeyID != nil {
 		response.SignedPreKeyID = *account.SignedPreKeyID
 	}
-	if account.SignedPreKeyPublic != nil {
-		response.SignedPreKeyPublic = *account.SignedPreKeyPublic
+	if len(account.SignedPreKeyPublic) > 0 {
+		response.SignedPreKeyPublic = encodeBinaryKey(account.SignedPreKeyPublic)
 	}
-	if account.SignedPreKeySignature != nil {
-		response.SignedPreKeySignature = *account.SignedPreKeySignature
+	if len(account.SignedPreKeySignature) > 0 {
+		response.SignedPreKeySignature = encodeBinaryKey(account.SignedPreKeySignature)
 	}
-	if account.IdentityKey != nil {
-		response.IdentityKey = *account.IdentityKey
+	if len(account.IdentityKey) > 0 {
+		response.IdentityKey = encodeBinaryKey(account.IdentityKey)
 	}
 
-	if len(account.PreKeys) > 0 {
-		response.PreKeyID = account.PreKeys[0].ID
-		response.PreKeyPublic = account.PreKeys[0].Key
-		account.PreKeys = account.PreKeys[1:]
-		if err := s.repo.Update(account); err != nil {
+	if len(preKeys) > 0 {
+		preKey, err := s.repo.ConsumePreKey(userID)
+		if err != nil {
 			return nil, err
 		}
+		response.PreKeyID = preKey.KeyID
+		response.PreKeyPublic = encodeBinaryKey(preKey.PublicKey)
 	}
 
 	return response, nil
+}
+
+func (s *AccountService) SavePreKeyBundle(userID uuid.UUID, payload []byte) error {
+	if len(payload) == 0 {
+		return errors.New("prekey payload is required")
+	}
+	return s.repo.SaveKeyBundle(userID, append([]byte(nil), payload...))
+}
+
+func (s *AccountService) GetPreKeyBundle(userID uuid.UUID) ([]byte, error) {
+	return s.repo.FetchRawKeyBundle(userID)
 }
 
 func (s *AccountService) CheckUsername(username string) bool {

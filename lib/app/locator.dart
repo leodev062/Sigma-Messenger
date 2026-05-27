@@ -40,6 +40,9 @@ import 'package:sigma/features/updater/update_viewmodel.dart';
 
 // Core Util
 import 'package:sigma/core/updater/apk_update_manager.dart';
+import 'package:sigma/core/updater/apk_update_notifications.dart';
+import 'package:sigma/core/updater/apk_update_refresh_listener.dart';
+import 'package:sigma/core/updater/apk_update_download_manager_receiver.dart';
 
 final locator = GetIt.instance;
 
@@ -131,6 +134,13 @@ void _initChatModule() {
 }
 
 void _initUpdaterModule() {
+  locator.registerLazySingleton(() => ApkUpdateNotifications());
+  locator.registerLazySingleton(() => ApkUpdateRefreshListener());
+  locator.registerLazySingleton(() => ApkUpdateDownloadManagerReceiver(
+    DioClient.getDio(),
+    locator<ApkUpdateNotifications>(),
+  ));
+
   locator.registerLazySingleton(() => UpdateViewModel(
     ApkUpdateManager(DioClient.getDio()),
   ));

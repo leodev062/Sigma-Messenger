@@ -76,7 +76,7 @@ func (m *AccountManager) FindByIDs(ids []uuid.UUID) ([]entities.Account, error) 
 	return accounts, err
 }
 
-func (m *AccountManager) UpdatePreKeys(accountID uuid.UUID, keys []string) error {
+func (m *AccountManager) UpdatePreKeys(accountID uuid.UUID, keys [][]byte) error {
 	return m.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("recipient_id = ?", accountID).Delete(&entities.PreKey{}).Error; err != nil {
 			return err
@@ -86,7 +86,7 @@ func (m *AccountManager) UpdatePreKeys(accountID uuid.UUID, keys []string) error
 			preKey := entities.PreKey{
 				RecipientID: accountID,
 				KeyID:       i + 1,
-				PublicKey:   key,
+				PublicKey:   append([]byte(nil), key...),
 			}
 			if err := tx.Create(&preKey).Error; err != nil {
 				return err
@@ -95,4 +95,66 @@ func (m *AccountManager) UpdatePreKeys(accountID uuid.UUID, keys []string) error
 
 		return nil
 	})
+}
+
+func (m *AccountManager) SaveKeyBundle(accountID uuid.UUID, payload []byte) error {
+	return m.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&entities.Account{ID: accountID}).Error; err != nil {
+			return err
+		}
+
+		bundle := entities.KeyBundle{
+			AccountID: accountID,
+			Payload:   append([]byte(nil), payload...),
+		}
+
+		if err := tx.Where("account_id = ?", accountID).Delete(&entities.KeyBundle{}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(&bundle).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (m *AccountManager) FetchRawKeyBundle(accountID uuid.UUID) ([]byte, error) {
+	var bundle entities.KeyBundle
+	if err := m.db.Where("account_id = ?", accountID).First(&bundle).Error; err != nil {
+		return nil, err
+	}
+	return append([]byte(nil), bundle.Payload...), nil
+}
+
+func (m *AccountManager) FetchKeyBundle(accountID uuid.UUID) (*entities.Account, []entities.PreKey, error) {
+	var account entities.Account
+	if err := m.db.First(&account, "id = ?", accountID).Error; err != nil {
+		return nil, nil, err
+	}
+
+	var preKeys []entities.PreKey
+	if err := m.db.Where("recipient_id = ?", accountID).Order("key_id asc").Find(&preKeys).Error; err != nil {
+		return &account, nil, err
+	}
+
+	return &account, preKeys, nil
+}
+
+func (m *AccountManager) ConsumePreKey(accountID uuid.UUID) (*entities.PreKey, error) {
+	var preKey entities.PreKey
+	err := m.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("recipient_id = ?", accountID).Order("key_id asc").First(&preKey).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&preKey).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &preKey, nil
 }

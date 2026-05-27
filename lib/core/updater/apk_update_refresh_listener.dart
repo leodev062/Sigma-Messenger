@@ -1,5 +1,6 @@
 import 'package:workmanager/workmanager.dart';
 import 'package:sigma/core/network/api_service.dart';
+import 'package:sigma/core/storage/sigma_store.dart';
 import 'package:sigma/app/locator.dart';
 import 'apk_update_download_manager_receiver.dart';
 
@@ -20,8 +21,11 @@ class ApkUpdateRefreshListener {
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // Inicialização essencial para Background Isolate
+    await SigmaStore.instance.init();
+    setupLocator();
+
     if (task == ApkUpdateRefreshListener.taskName) {
-      // Nota: o locator deve ser acessível aqui
       final api = locator<ApiService>();
       final update = await api.checkForUpdate();
       

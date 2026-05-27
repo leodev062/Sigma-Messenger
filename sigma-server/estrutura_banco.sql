@@ -197,12 +197,59 @@ CREATE TABLE public.recipients (
     participant_count integer DEFAULT 0,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    identity_key text,
-    signed_pre_key text,
-    registration_id bigint,
-    pre_keys text
+    identity_key bytea,
+    signed_pre_key bytea,
+    signed_pre_key_public bytea,
+    signed_pre_key_signature bytea,
+    registration_id bigint
 );
 
+CREATE TABLE public.pre_keys (
+    id integer NOT NULL,
+    recipient_id uuid NOT NULL,
+    key_id integer NOT NULL,
+    public_key bytea NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.pre_keys OWNER TO postgres;
+
+CREATE SEQUENCE public.pre_keys_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER TABLE ONLY public.pre_keys ALTER COLUMN id SET DEFAULT nextval('public.pre_keys_id_seq'::regclass);
+
+ALTER SEQUENCE public.pre_keys_id_seq OWNER TO postgres;
+
+ALTER TABLE ONLY public.pre_keys ADD CONSTRAINT pre_keys_pkey PRIMARY KEY (id);
+
+CREATE TABLE public.key_bundles (
+    id integer NOT NULL,
+    account_id uuid NOT NULL,
+    payload bytea NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.key_bundles OWNER TO postgres;
+
+CREATE SEQUENCE public.key_bundles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER TABLE ONLY public.key_bundles ALTER COLUMN id SET DEFAULT nextval('public.key_bundles_id_seq'::regclass);
+
+ALTER SEQUENCE public.key_bundles_id_seq OWNER TO postgres;
+
+ALTER TABLE ONLY public.key_bundles ADD CONSTRAINT key_bundles_pkey PRIMARY KEY (id);
 
 ALTER TABLE public.recipients OWNER TO postgres;
 
