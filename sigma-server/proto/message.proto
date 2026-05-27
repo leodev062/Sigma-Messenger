@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package sigmapb;
-
-option go_package = "sigma-server/proto;sigmapb";
-
-import "envelope.proto";
