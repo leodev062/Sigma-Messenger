@@ -1,0 +1,15 @@
+import 'package:sigma_core/sigma_core.dart';
+
+abstract class IAuthRepository {
+  /// Obter usuário atual
+  Future<Recipient?> getCurrentUser();
+
+  /// Logout
+  Future<void> logout();
+
+  /// Listar dispositivos ativos
+  Future<List<UserDeviceSessionDto>> getActiveDevices();
+
+  /// Remover um dispositivo
+  Future<void> removeDevice(String id);
+}
