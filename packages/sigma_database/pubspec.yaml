@@ -1,0 +1,25 @@
+name: sigma_database
+description: Database layer for Sigma Messenger
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sigma_core:
+    path: ../sigma_core
+  drift: ^2.33.0
+  drift_flutter: ^0.3.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlcipher_flutter_libs: ^0.7.0+eol
+  path: ^1.9.0
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  drift_dev: ^2.33.0
+  build_runner: ^2.4.13

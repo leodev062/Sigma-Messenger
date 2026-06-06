@@ -4,41 +4,51 @@ A nova era da comunicação privada e segura. Simples, rápido e elegante.
 
 ## 🏗️ Arquitetura do Projeto
 
-O Sigma foi desenvolvido utilizando princípios de **Clean Architecture** combinados com o padrão de apresentação **MVVM (Model-View-ViewModel)**, seguindo as melhores práticas recomendadas pela Google e pela comunidade Flutter.
+O Sigma foi desenvolvido utilizando princípios de **Clean Architecture**, **Side Effects** e **POO**, combinados com o padrão de apresentação **MVVM (Model-View-ViewModel)**. O projeto é modularizado em pacotes independentes para garantir alta escalabilidade e manutenibilidade.
 
-### 🛡️ Single Source of Truth (SSOT)
+### 📦 Estrutura de Módulos (Packages)
 
-A arquitetura do Sigma foi projetada para que o **Banco de Dados Local (Drift/SQLite)** seja a única autoridade (Fonte de Verdade) para os dados exibidos na interface.
+O projeto utiliza uma estrutura multi-repo interna localizada no diretório `packages/`:
 
-*   **Reatividade Total**: A UI não espera respostas de rede para se atualizar. Ela observa Streams vindas diretamente do banco de dados.
-*   **Offline-First**: Mensagens enviadas sem conexão são salvas instantaneamente como `pendentes` no banco. O sistema de **Background Jobs** encarrega-se da entrega assim que a rede for restabelecida.
-*   **Integridade**: Dados recebidos via WebSocket são processados em background e persistidos no banco. A interface reage automaticamente a essas inserções, garantindo uma experiência fluida e consistente.
+*   **`sigma_core`**: O coração do app. Contém utilitários globais, infraestrutura de rede segura (`SigmaNetworkAccess`), sistema de logs e tratamento de erros.
+*   **`sigma_auth`**: Módulo de autenticação e registro, refatorado para Clean Architecture. Gerencia sessões, verificação de SMS e onboarding.
+*   **`sigma_database`**: Camada de persistência criptografada utilizando **Drift** e **SQLCipher** (AES-256).
+*   **`sigma_ui`**: Biblioteca de componentes visuais, serviços de feedback (`FeedbackService`, `SigmaDialogService`) e indicadores de progresso customizados.
+*   **`sigma_chat`, `sigma_profile`, `sigma_contacts`, `sigma_settings`**: Módulos de funcionalidades específicas desacoplados.
 
-### 📐 Estrutura de Camadas
+### 🛡️ Single Source of Truth (SSOT) & Reatividade
 
-O projeto está dividido em camadas para garantir a separação de responsabilidades:
+*   **Banco de Dados como Autoridade**: A UI observa Streams vindas diretamente do banco local. Não há espera por respostas de rede para atualizar a interface.
+*   **Offline-First**: Mensagens e ações são salvas localmente e sincronizadas via **Background Jobs** (SigmaJobManager).
+*   **EffectStream Pattern**: Introduzimos um sistema de fluxos para efeitos colaterais (SnackBars, Diálogos, Navegação) que evita loops de reconstrução de UI e garante estabilidade.
 
-1.  **Core (`lib/core/`)**: Lógicas globais, rede segura (`SigmaNetworkAccess`), temas e sistema de logs.
-2.  **Domain (`lib/domain/`)**: Camada pura com **Entities**, **Interfaces** e **Interactors**. Define *o que* o app faz.
-3.  **Data (`lib/data/`)**: Implementações de repositórios e fontes de dados. Define *como* os dados são persistidos e recuperados.
-4.  **Presentation (`lib/features/`)**: UI e ViewModels. Responsáveis pela interação com o utilizador.
+## 📱 Experiência de Usuário e UI
 
-## ⚡ Tecnologias Utilizadas
+*   **Adaptive UI**: Telas de registro e chat totalmente responsivas que se ajustam para **Android, iOS, Web e Windows** (Modos One-Pane e Two-Pane).
+*   **Premium Visuals**: Indicadores de progresso circular e linear com design exclusivo de ondas senoidais ("Wavy").
+*   **Smart Onboarding**: Suporte a preenchimento automático (Auto-fill) de cartões SIM e formatação inteligente de números de telefone baseada no motor do Google.
 
-*   **Gerenciamento de Estado**: Provider
-*   **Injeção de Dependências**: GetIt (Service Locator)
-*   **Banco de Dados**: Drift (SQLite reativo com SQLCipher)
-*   **Comunicação de Rede**: Dio (HTTP) + WebSocket (Protobuf)
-*   **Conectividade**: Monitoramento inteligente de rede para economia de bateria.
-*   **Segurança**: Inspirado no Signal (Criptografia End-to-End, E2EE).
+## ⚡ Conectividade e Rede
+
+*   **Fail-Fast Interceptor**: Bloqueio instantâneo de requisições quando o dispositivo está offline para economizar bateria e evitar timeouts.
+*   **Connectivity Banner**: Notificação global não intrusiva de status de conexão integrada ao núcleo do app.
+
+## 🛠️ Tecnologias Utilizadas
+
+*   **Gerenciamento de Estado**: Provider + ViewModel Reativo.
+*   **Injeção de Dependências**: GetIt (Service Locator).
+*   **Persistência**: Drift + SQLCipher (Criptografia de nível militar).
+*   **Comunicação**: Dio (HTTP/JSON) + WebSockets (Protobuf para E2EE).
+*   **Validação**: Phone Numbers Parser (Google standard).
 
 ## 🚀 Como Iniciar
 
 1. Certifique-se de ter o Flutter instalado (`flutter doctor`).
 2. Clone o repositório.
-3. Execute `flutter pub get`.
-4. Gere o código do banco: `dart run build_runner build`.
-5. Para rodar: `flutter run`.
+3. No diretório raiz, execute `flutter pub get`.
+4. Devido à modularização, execute `flutter pub get` dentro dos pacotes em `packages/` se necessário (ou use um script de bootstrap).
+5. Gere o código necessário: `dart run build_runner build`.
+6. Para rodar: `flutter run`.
 
 ---
-*Este projeto é focado em privacidade, segurança e alta performance.*
+*Focado em privacidade absoluta, segurança inabalável e performance excepcional.*

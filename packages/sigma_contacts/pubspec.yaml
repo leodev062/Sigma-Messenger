@@ -1,0 +1,26 @@
+name: sigma_contacts
+description: Contacts management for Sigma Messenger
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sigma_core:
+    path: ../sigma_core
+  sigma_database:
+    path: ../sigma_database
+  provider: ^6.1.5+1
+  sigma_ui:
+    path: ../sigma_ui
+
+dev_dependencies:
+  build_runner: ^2.4.13
+  retrofit_generator: ^10.2.6
+  json_serializable: ^6.9.4
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

@@ -1,0 +1,19 @@
+name: sigma_ui
+description: UI library for Sigma Messenger.
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sigma_core:
+    path: ../sigma_core
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
