@@ -6,10 +6,10 @@ import (
 )
 
 type DirectoryService struct {
-	repo *storage.AccountManager
+	repo *storage.UserManager
 }
 
-func NewDirectoryService(repo *storage.AccountManager) *DirectoryService {
+func NewDirectoryService(repo *storage.UserManager) *DirectoryService {
 	return &DirectoryService{repo: repo}
 }
 
@@ -18,10 +18,10 @@ func (s *DirectoryService) CheckUsername(username string) bool {
 	return err != nil
 }
 
-func (s *DirectoryService) SyncContacts(phones []string) ([]entities.Account, error) {
+func (s *DirectoryService) SyncContacts(phones []string) ([]entities.User, error) {
 	return s.repo.FindByPhones(phones)
 }
 
-func (s *DirectoryService) SearchAccounts(term string, limit int) ([]entities.Account, error) {
+func (s *DirectoryService) SearchAccounts(term string, limit int) ([]entities.User, error) {
 	return s.repo.Search(term, limit)
 }

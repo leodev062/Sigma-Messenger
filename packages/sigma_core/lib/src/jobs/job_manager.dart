@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:sigma_database/sigma_database.dart';
 import 'package:sigma_core/src/domain/services/i_socket_service.dart';
 import 'package:sigma_core/src/util/sigma_log.dart';
@@ -17,7 +17,7 @@ typedef JobFactory =
 /// SigmaJobManager - Refatorado para POO com Mixin Loggable.
 /// Gerencia o ciclo de vida e a resiliência de tarefas em background.
 class SigmaJobManager with Loggable {
-  final JobDatabase _jobDatabase;
+  final JobDao _jobDao;
   final ISocketService _socketService;
   final GetIt _locator;
   final Map<String, JobFactory> _factories = {};
@@ -30,9 +30,8 @@ class SigmaJobManager with Loggable {
   StreamSubscription? _statusSubscription;
   StreamSubscription? _incomingMessagesSubscription;
 
-  SigmaJobManager(this._jobDatabase, this._socketService, this._locator) {
-    // Recuperação de Falhas: Destrava jobs que ficaram presos em 'isRunning' por crash/fechamento forçado
-    _jobDatabase.resetAllJobsStatus();
+  SigmaJobManager(this._jobDao, this._socketService, this._locator) {
+    _jobDao.resetAllJobsStatus();
 
     _statusSubscription = _socketService.status.listen((status) {
       logI("🔄 JobManager: Socket status mudou para $status");
@@ -71,12 +70,13 @@ class SigmaJobManager with Loggable {
     _factories[key] = factory;
   }
 
+  Future<bool> hasJob(String queueKey) => _jobDao.hasPendingJob(queueKey);
+
   /// Enfileira uma cadeia de trabalhos.
   Future<void> addChain(JobChain chain) async {
     final jobs = chain.build();
     if (jobs.isEmpty) return;
 
-    // Conectamos os jobs na cadeia via nextJobKey/nextJobData
     for (int i = 0; i < jobs.length - 1; i++) {
       final current = jobs[i];
       final next = jobs[i + 1];
@@ -90,12 +90,12 @@ class SigmaJobManager with Loggable {
 
   /// Enfileira um novo trabalho de forma encapsulada.
   Future<void> add(Job job) async {
-    final id = await _jobDatabase.insertJob(
+    final id = await _jobDao.insertJob(
       JobsCompanion.insert(
         factoryKey: job.factoryKey,
         queueKey: Value(job.queueKey),
         data: jsonEncode(job.serialize()),
-        priority: Value(job.priority.value),
+        priority: Value(job.priority.index),
         createTime: DateTime.now().millisecondsSinceEpoch,
         nextRunAttemptTime: DateTime.now().millisecondsSinceEpoch,
       ),
@@ -118,12 +118,12 @@ class SigmaJobManager with Loggable {
       "📌 addRaw($factoryKey): Enfileirando novo job com priority=$priority",
     );
 
-    final id = await _jobDatabase.insertJob(
+    final id = await _jobDao.insertJob(
       JobsCompanion.insert(
         factoryKey: factoryKey,
         queueKey: Value(queueKey),
         data: jsonEncode(data),
-        priority: Value(priority.value),
+        priority: Value(priority.index),
         createTime: DateTime.now().millisecondsSinceEpoch,
         nextRunAttemptTime: DateTime.now().millisecondsSinceEpoch,
       ),
@@ -134,7 +134,6 @@ class SigmaJobManager with Loggable {
   }
 
   Future<void> _processPendingJobs() async {
-    // Fila Única: Se já estiver processando, aguarda ou ignora
     if (_isProcessing) {
       logD(
         "⏳ Processamento de Jobs já em andamento. Ignorando chamada redundante.",
@@ -155,7 +154,7 @@ class SigmaJobManager with Loggable {
           break;
         }
 
-        final pendingData = await _jobDatabase.getPendingJobs();
+        final pendingData = await _jobDao.getPendingJobs();
         if (pendingData.isEmpty) {
           logD("✓ Nenhum Job pendente encontrado.");
           break;
@@ -165,7 +164,6 @@ class SigmaJobManager with Loggable {
         for (final data in pendingData) {
           if (!_socketService.isConnected) break;
 
-          // Ignora se ainda não chegou o tempo da re-tentativa (Exponential Backoff)
           final now = DateTime.now().millisecondsSinceEpoch;
           if (now < data.nextRunAttemptTime) {
             continue;
@@ -176,14 +174,13 @@ class SigmaJobManager with Loggable {
             logE(
               "Nenhum factory registrado para ${data.factoryKey}. Deletando Job órfão.",
             );
-            await _jobDatabase.deleteJob(data.id);
+            await _jobDao.deleteJob(data.id);
             processedAny = true;
             continue;
           }
 
           final job = factory(jsonDecode(data.data), data.id, _locator);
 
-          // Execução SEQUENCIAL para evitar travas de banco por concorrência excessiva
           await _runJob(job, data);
           processedAny = true;
         }
@@ -198,8 +195,8 @@ class SigmaJobManager with Loggable {
     }
   }
 
-  Future<void> _runJob(Job job, JobData data) async {
-    await _jobDatabase.markJobRunning(data.id, true);
+  Future<void> _runJob(Job job, JobRecord data) async {
+    await _jobDao.markJobRunning(data.id, true);
 
     final stopwatch = Stopwatch()..start();
     try {
@@ -211,9 +208,8 @@ class SigmaJobManager with Loggable {
       logI(
         "<< Job ${job.factoryKey} (ID: ${data.id}) concluído com sucesso em ${stopwatch.elapsedMilliseconds}ms",
       );
-      await _jobDatabase.deleteJob(data.id);
+      await _jobDao.deleteJob(data.id);
 
-      // CAA/Signal-Android: Suporte a encadeamento de Jobs (Job Chains)
       if (job.nextJobKey != null) {
         logI("Encadeando próximo Job: ${job.nextJobKey}");
         _processChain(job);
@@ -240,18 +236,17 @@ class SigmaJobManager with Loggable {
     }
   }
 
-  Future<void> _handleJobFailure(Job job, JobData data, Object error) async {
+  Future<void> _handleJobFailure(Job job, JobRecord data, Object error) async {
     final attemptCount = data.runAttempt + 1;
 
     if (job.shouldRetry(error) && attemptCount < job.maxAttempts) {
-      // Backoff Exponencial (POO: A lógica de tempo poderia ser delegada, mas mantida aqui por simplicidade)
       final delay = pow(2, attemptCount).toInt() * 5000;
       final nextAttempt = DateTime.now().millisecondsSinceEpoch + delay;
 
-      await _jobDatabase.updateRetry(data.id, nextAttempt, attemptCount);
+      await _jobDao.updateRetry(data.id, nextAttempt, attemptCount);
       logW("Job ${data.id} falhou. Reagendado para +${delay / 1000}s");
     } else {
-      await _jobDatabase.deleteJob(data.id);
+      await _jobDao.deleteJob(data.id);
       logE("Job ${data.id} falhou permanentemente.", error);
     }
   }

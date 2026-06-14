@@ -10,26 +10,24 @@ class SendMessageInteractor with Loggable {
   SendMessageInteractor(this._chatRepository, this._jobManager);
 
   Future<void> execute(
-    int threadId,
+    String conversationId,
     String chatId,
     String senderId,
     String text,
   ) async {
     try {
-      // A lógica de criação foi movida para o método da classe MessageEntity (Factory POO)
       final message = MessageEntity.createTextOutgoing(
-        threadId: threadId,
-        chatId: chatId,
+        conversationId: conversationId,
         senderId: senderId,
         text: text,
       );
 
-      logD("Iniciando envio local: \${message.id}");
+      logD("Iniciando envio local: ${message.id}");
 
       // 1. Persistência local imediata e atualização de metadados da thread (Atômico)
       await _chatRepository.saveMessageAndMetadata(message);
       
-      logI("Mensagem salva localmente: \${message.id}");
+      logI("Mensagem salva localmente: ${message.id}");
 
       // 2. Entrega assíncrona garantida via Jobs
       _jobManager.add(PushTextSendJob(messageId: message.id));

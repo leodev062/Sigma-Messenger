@@ -192,7 +192,7 @@ class ThreadTile extends StatelessWidget {
             ),
           ),
           if (thread.unreadCount > 0)
-            _UnreadBadge(count: thread.unreadCount),
+            _UnreadBadge(count: thread.unreadCount, isMuted: thread.isMuted),
         ],
       ),
     );
@@ -202,7 +202,8 @@ class ThreadTile extends StatelessWidget {
 /// Widget interno para o Badge de não lidas.
 class _UnreadBadge extends StatelessWidget {
   final int count;
-  const _UnreadBadge({required this.count});
+  final bool isMuted;
+  const _UnreadBadge({required this.count, this.isMuted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +212,16 @@ class _UnreadBadge extends StatelessWidget {
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: colorScheme.primary,
+        color: isMuted ? colorScheme.onSurface.withValues(alpha: 0.2) : colorScheme.primary,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         '$count',
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: isMuted ? colorScheme.onSurface.withValues(alpha: 0.6) : Colors.white, 
+          fontSize: 11, 
+          fontWeight: FontWeight.bold
+        ),
       ),
     );
   }
@@ -243,13 +248,13 @@ extension RecipientTypeUiExtensions on RecipientType {
     IconData? icon;
     switch (this) {
       case RecipientType.group:
-        icon = Icons.group_outlined;
+        icon = Icons.group;
         break;
       case RecipientType.channel:
-        icon = Icons.campaign_outlined;
+        icon = Icons.campaign;
         break;
       case RecipientType.bot:
-        icon = Icons.smart_toy_outlined;
+        icon = Icons.smart_toy;
         break;
       case RecipientType.individual:
         return const SizedBox.shrink();

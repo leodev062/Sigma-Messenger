@@ -54,10 +54,11 @@ func (r *BotRepository) CreateBot(ownerID uuid.UUID, displayName, username strin
 	}
 
 	bot := &entities.Account{
-		Type:        string(valueobjects.RecipientBot),
-		DisplayName: &displayName,
-		OwnerID:     &ownerID,
-		BotToken:    &token,
+		Type:             string(valueobjects.RecipientBot),
+		DisplayName:      &displayName,
+		OwnerID:          &ownerID,
+		BotToken:         &token,
+		VerificationType: "none",
 	}
 	if username != "" {
 		clean := strings.TrimPrefix(strings.TrimSpace(username), "@")
@@ -84,10 +85,11 @@ func (r *BotRepository) EnsureBotFather(displayName, username string) (*entities
 	name := displayName
 	user := strings.TrimPrefix(username, "@")
 	bot := &entities.Account{
-		Type:        string(valueobjects.RecipientBot),
-		DisplayName: &name,
-		Username:    &user,
-		BotToken:    &token,
+		Type:             string(valueobjects.RecipientBot),
+		DisplayName:      &name,
+		Username:         &user,
+		BotToken:         &token,
+		VerificationType: "verified",
 	}
 	if err := r.db.Create(bot).Error; err != nil {
 		return nil, err

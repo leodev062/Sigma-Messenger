@@ -5,7 +5,7 @@ class ArchiveThreadInteractor {
 
   ArchiveThreadInteractor(this._repository);
 
-  Future<void> execute(int threadId, bool archived) async {
+  Future<void> execute(String threadId, bool archived) async {
     await _repository.archiveThread(threadId, archived);
   }
 }

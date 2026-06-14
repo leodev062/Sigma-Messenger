@@ -26,16 +26,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final ValueNotifier<bool> _showScrollToBottom = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _isWriting = ValueNotifier<bool>(false);
   
-  late final int _threadId;
-
   @override
   void initState() {
     super.initState();
-    _threadId = int.tryParse(widget.chatId) ?? 0;
     
     // Inicia o carregamento instantâneo do banco de dados (Sem atrasos)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatViewModel>().setupChat(_threadId);
+      context.read<ChatViewModel>().setupChat(widget.chatId);
     });
 
     _scrollController.addListener(_onScroll);
@@ -75,7 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     
-    context.read<ChatViewModel>().sendMessage(_threadId, text);
+    context.read<ChatViewModel>().sendMessage(widget.chatId, text);
 
     _messageController.clear();
     _scrollToBottom();
@@ -87,11 +84,11 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: Colors.transparent,
       builder: (bottomSheetContext) => AttachmentBottomSheet(
         onMediaSelected: (asset) {
-          context.read<ChatViewModel>().sendMediaAsset(_threadId, asset);
+          context.read<ChatViewModel>().sendMediaAsset(widget.chatId, asset);
         },
         onLocationRequested: () {
           Navigator.pop(bottomSheetContext);
-          context.read<ChatViewModel>().sendCurrentLocation(_threadId);
+          context.read<ChatViewModel>().sendCurrentLocation(widget.chatId);
         },
         onPollCreated: (question, options, allowMultiple) {
           print("DEBUG: ChatScreen.onPollCreated callback triggered");
@@ -99,7 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
             // Usando 'context' da ChatScreen, não o do BottomSheet que foi fechado
             final vm = context.read<ChatViewModel>();
             print("DEBUG: ChatScreen.onPollCreated - ViewModel obtained, calling sendPoll");
-            vm.sendPoll(_threadId, question, options, allowMultipleVotes: allowMultiple);
+            vm.sendPoll(widget.chatId, question, options, allowMultipleVotes: allowMultiple);
           } catch (e) {
             print("DEBUG: ChatScreen.onPollCreated - ERROR: $e");
           }
@@ -179,7 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: theme.colorScheme.surface,
       surfaceTintColor: theme.colorScheme.surface,
       title: StreamBuilder<ThreadEntity?>(
-        stream: vm.watchThread(_threadId),
+        stream: vm.watchThread(widget.chatId),
         builder: (context, snapshot) {
           final recipient = snapshot.data?.recipient;
           if (recipient == null) return const SizedBox.shrink();

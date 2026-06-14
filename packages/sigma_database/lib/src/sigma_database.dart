@@ -5,55 +5,46 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sigma_core/sigma_core.dart';
 
-// Tabelas especializadas (Padrão Signal-Android)
-import 'package:sigma_database/src/recipient_database.dart';
-import 'package:sigma_database/src/thread_table.dart';
-import 'package:sigma_database/src/message_table.dart';
-import 'package:sigma_database/src/job_database.dart';
-import 'package:sigma_database/src/key_value_database.dart';
-import 'package:sigma_database/src/attachment_table.dart';
-import 'package:sigma_database/src/poll_table.dart';
+import 'user_table.dart';
+import 'conversation_table.dart';
+import 'message_table.dart';
+import 'poll_table.dart';
+import 'sync_table.dart';
 
 part 'sigma_database.g.dart';
 
-enum RecipientTypeDb { individual, group, channel, bot }
-enum MessageStatusDb { pending, sent, delivered, read }
-enum MessageTypeDb { text, image, video, audio, file, location, gif, poll }
-
 @DriftDatabase(
   tables: [
-    Recipients, 
-    Threads, 
-    Messages, 
-    MessageSearch,
-    Jobs,
-    KeyValues,
-    Attachments,
+    Users,
+    Accounts,
+    Devices,
+    Conversations,
+    ConversationMembers,
+    Messages,
     Reactions,
-    MessageReceipts,
-    SignalSessions, 
-    SignalPreKeys, 
-    SignalSignedPreKeys, 
-    SignalIdentities,
+    MessageLocations,
+    DeliveryLogs,
     Polls,
     PollOptions,
     PollVotes,
+    OutboxQueue,
+    KeyValues,
+    Jobs,
   ],
   daos: [
-    RecipientDatabase,
-    ThreadTable,
-    MessageTable,
-    JobDatabase,
-    KeyValueDatabase,
-    AttachmentTable,
-    PollTable,
+    UserDao,
+    ConversationDao,
+    MessageDao,
+    PollDao,
+    KeyValueDao,
+    JobDao,
   ],
 )
 class SigmaDatabase extends _$SigmaDatabase {
   SigmaDatabase(KeyStore keyStore) : super(_openConnection(keyStore));
 
   @override
-  int get schemaVersion => 4; // Incrementar para disparar a migração
+  int get schemaVersion => 1; // Reset para nova arquitetura
 
   static QueryExecutor _openConnection(KeyStore keyStore) {
     return LazyDatabase(() async {
@@ -75,10 +66,7 @@ class SigmaDatabase extends _$SigmaDatabase {
     return MigrationStrategy(
       onCreate: (m) async => await m.createAll(),
       onUpgrade: (m, from, to) async {
-        if (from < 2) {
-          // Adiciona a coluna priority na tabela jobs
-          await m.addColumn(jobs, jobs.priority);
-        }
+        // Nova arquitetura começa do zero
       },
     );
   }
@@ -91,10 +79,4 @@ class SigmaDatabase extends _$SigmaDatabase {
       }
     });
   }
-}
-
-class ThreadRecord {
-  final ThreadData thread;
-  final RecipientData recipient;
-  ThreadRecord(this.thread, this.recipient);
 }

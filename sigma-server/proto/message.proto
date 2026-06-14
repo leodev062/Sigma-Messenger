@@ -1,103 +1,98 @@
 syntax = "proto3";
 
-package sigmapb;
+package messaging;
 
 option go_package = "sigma-server/proto;sigmapb";
 
-message Content {
-  oneof content {
-    DataMessage dataMessage = 1;
-    ReceiptMessage receipt = 2;
-    TypingMessage typing = 3;
-    SyncMessage sync = 4;
-  }
+enum MessageType {
+  TEXT = 0;
+  IMAGE = 1;
+  VIDEO = 2;
+  AUDIO = 3;
+  POLL = 4;
+  REPLY = 5;
+  REACTION = 6;
 }
 
-message DataMessage {
-  string body = 1;
-  AttachmentPointer attachment = 2;
-  Reaction reaction = 3;
-  Location location = 4;
-  PollCreate pollCreate = 5;
-  PollVote pollVote = 6;
-  PollTerminate pollTerminate = 7;
+enum MessageStatus {
+  PENDING = 0;
+  SENT = 1;
+  DELIVERED = 2;
+  READ = 3;
+  FAILED = 4;
 }
 
-message PollCreate {
+message TextContent {
+  string text = 1;
+}
+
+message ImageContent {
+  string url = 1;
+  string thumbnail = 2;
+  int32 width = 3;
+  int32 height = 4;
+}
+
+message VideoContent {
+  string url = 1;
+  string thumbnail = 2;
+  int64 duration = 3;
+}
+
+message AudioContent {
+  string url = 1;
+  int64 duration = 2;
+}
+
+message PollOption {
+  string id = 1;
+  string text = 2;
+  int32 votes = 3;
+}
+
+message PollContent {
   string question = 1;
-  repeated string options = 2;
-  bool allow_multiple_votes = 3;
+  repeated PollOption options = 2;
+  bool multipleChoice = 3;
+}
+
+message ReplyContent {
+  string messageId = 1;
+  string previewText = 2;
+}
+
+message ReactionContent {
+  string messageId = 1;
+  string emoji = 2;
 }
 
 message PollVote {
-  string target_author_aci = 1;
-  uint64 target_sent_timestamp = 2;
-  repeated uint32 option_indexes = 3;
-  uint32 vote_count = 4;
+  string pollId = 1;
+  string optionId = 2;
+  string userId = 3;
 }
 
-message PollTerminate {
-  uint64 target_sent_timestamp = 1;
-}
-
-message AttachmentPointer {
+message Message {
   string id = 1;
-  bytes key = 2;
-  bytes iv = 3;
-  bytes digest = 4;
-  string fileName = 5;
-  uint32 size = 6;
-}
+  string conversationId = 2;
+  string senderId = 3;
+  string receiverId = 4;
 
-message Reaction {
-  string emoji = 1;
-  bool remove = 2;
-  string targetAuthorAci = 3;
-  uint64 targetTimestamp = 4;
-}
+  MessageType type = 5;
 
-message Location {
-  double latitude = 1;
-  double longitude = 2;
-  string address = 3;
-}
+  int64 timestamp = 6;
+  int64 updatedAt = 7;
 
-// ReceiptMessage para confirmações de entrega/leitura
-message ReceiptMessage {
-  enum ReceiptType {
-    UNKNOWN = 0;
-    DELIVERY = 1;  // Delivered
-    READ = 2;       // Read
+  MessageStatus status = 8;
+
+  oneof content {
+    TextContent text = 9;
+    ImageContent image = 10;
+    VideoContent video = 11;
+    AudioContent audio = 12;
+    PollContent poll = 13;
+    ReplyContent reply = 14;
+    ReactionContent reaction = 15;
+    PollVote pollVote = 16;
   }
-  ReceiptType type = 1;
-  string messageId = 2;           // UUID da mensagem sendo confirmada
-  string senderId = 3;            // UUID de quem enviou a mensagem original
-  uint64 timestamp = 4;           // Timestamp quando foi confirmado
-  uint32 messageCount = 5;        // Quantas mensagens confirmadas
-}
-
-// TypingMessage para indicadores de digitação
-message TypingMessage {
-  enum TypingState {
-    STARTED = 0;
-    STOPPED = 1;
-  }
-  TypingState state = 1;
-  uint64 timestamp = 2;
-}
-
-// SyncMessage para sincronização de status/eventos
-message SyncMessage {
-  enum SyncType {
-    UNKNOWN = 0;
-    MESSAGE_STATUS_UPDATE = 1;  // Status de mensagem enviada
-    THREAD_UPDATE = 2;          // Atualização de thread
-    CONTACT_UPDATE = 3;         // Atualização de contato
-  }
-  SyncType type = 1;
-  string messageId = 2;
-  int32 status = 3;  // 0=PENDING, 1=SENT, 2=DELIVERED, 3=READ, 4=FAILED
-  string error = 4;
-  uint64 timestamp = 5;
-  repeated string targetIds = 6;  // Para sincronização em grupo
 }

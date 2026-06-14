@@ -15,34 +15,26 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'envelope.pbenum.dart';
-
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
-
-export 'envelope.pbenum.dart';
 
 class Envelope extends $pb.GeneratedMessage {
   factory Envelope({
-    Envelope_Type? type,
-    $core.String? source,
-    $core.int? sourceDevice,
-    $fixnum.Int64? timestamp,
-    $core.List<$core.int>? content,
-    $core.List<$core.int>? signature,
-    $core.String? clientId,
-    $core.int? ttl,
-    $core.Iterable<$core.String>? groupIds,
+    $core.String? envelopeId,
+    $core.String? from,
+    $core.String? to,
+    $core.List<$core.int>? payload,
+    $core.String? status,
+    $fixnum.Int64? createdAt,
+    $fixnum.Int64? deliverAt,
   }) {
     final result = create();
-    if (type != null) result.type = type;
-    if (source != null) result.source = source;
-    if (sourceDevice != null) result.sourceDevice = sourceDevice;
-    if (timestamp != null) result.timestamp = timestamp;
-    if (content != null) result.content = content;
-    if (signature != null) result.signature = signature;
-    if (clientId != null) result.clientId = clientId;
-    if (ttl != null) result.ttl = ttl;
-    if (groupIds != null) result.groupIds.addAll(groupIds);
+    if (envelopeId != null) result.envelopeId = envelopeId;
+    if (from != null) result.from = from;
+    if (to != null) result.to = to;
+    if (payload != null) result.payload = payload;
+    if (status != null) result.status = status;
+    if (createdAt != null) result.createdAt = createdAt;
+    if (deliverAt != null) result.deliverAt = deliverAt;
     return result;
   }
 
@@ -57,23 +49,16 @@ class Envelope extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Envelope',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aE<Envelope_Type>(1, _omitFieldNames ? '' : 'type',
-        enumValues: Envelope_Type.values)
-    ..aOS(2, _omitFieldNames ? '' : 'source')
-    ..aI(3, _omitFieldNames ? '' : 'sourceDevice',
-        fieldType: $pb.PbFieldType.OU3)
-    ..a<$fixnum.Int64>(
-        4, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(1, _omitFieldNames ? '' : 'envelopeId', protoName: 'envelopeId')
+    ..aOS(2, _omitFieldNames ? '' : 'from')
+    ..aOS(3, _omitFieldNames ? '' : 'to')
     ..a<$core.List<$core.int>>(
-        5, _omitFieldNames ? '' : 'content', $pb.PbFieldType.OY)
-    ..a<$core.List<$core.int>>(
-        6, _omitFieldNames ? '' : 'signature', $pb.PbFieldType.OY)
-    ..aOS(7, _omitFieldNames ? '' : 'clientId', protoName: 'clientId')
-    ..aI(8, _omitFieldNames ? '' : 'ttl', fieldType: $pb.PbFieldType.OU3)
-    ..pPS(9, _omitFieldNames ? '' : 'groupIds', protoName: 'groupIds')
+        4, _omitFieldNames ? '' : 'payload', $pb.PbFieldType.OY)
+    ..aOS(5, _omitFieldNames ? '' : 'status')
+    ..aInt64(6, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
+    ..aInt64(7, _omitFieldNames ? '' : 'deliverAt', protoName: 'deliverAt')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -95,79 +80,67 @@ class Envelope extends $pb.GeneratedMessage {
   static Envelope? _defaultInstance;
 
   @$pb.TagNumber(1)
-  Envelope_Type get type => $_getN(0);
+  $core.String get envelopeId => $_getSZ(0);
   @$pb.TagNumber(1)
-  set type(Envelope_Type value) => $_setField(1, value);
+  set envelopeId($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasType() => $_has(0);
+  $core.bool hasEnvelopeId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearType() => $_clearField(1);
+  void clearEnvelopeId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get source => $_getSZ(1);
+  $core.String get from => $_getSZ(1);
   @$pb.TagNumber(2)
-  set source($core.String value) => $_setString(1, value);
+  set from($core.String value) => $_setString(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasSource() => $_has(1);
+  $core.bool hasFrom() => $_has(1);
   @$pb.TagNumber(2)
-  void clearSource() => $_clearField(2);
+  void clearFrom() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.int get sourceDevice => $_getIZ(2);
+  $core.String get to => $_getSZ(2);
   @$pb.TagNumber(3)
-  set sourceDevice($core.int value) => $_setUnsignedInt32(2, value);
+  set to($core.String value) => $_setString(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasSourceDevice() => $_has(2);
+  $core.bool hasTo() => $_has(2);
   @$pb.TagNumber(3)
-  void clearSourceDevice() => $_clearField(3);
+  void clearTo() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $fixnum.Int64 get timestamp => $_getI64(3);
+  $core.List<$core.int> get payload => $_getN(3);
   @$pb.TagNumber(4)
-  set timestamp($fixnum.Int64 value) => $_setInt64(3, value);
+  set payload($core.List<$core.int> value) => $_setBytes(3, value);
   @$pb.TagNumber(4)
-  $core.bool hasTimestamp() => $_has(3);
+  $core.bool hasPayload() => $_has(3);
   @$pb.TagNumber(4)
-  void clearTimestamp() => $_clearField(4);
+  void clearPayload() => $_clearField(4);
 
   @$pb.TagNumber(5)
-  $core.List<$core.int> get content => $_getN(4);
+  $core.String get status => $_getSZ(4);
   @$pb.TagNumber(5)
-  set content($core.List<$core.int> value) => $_setBytes(4, value);
+  set status($core.String value) => $_setString(4, value);
   @$pb.TagNumber(5)
-  $core.bool hasContent() => $_has(4);
+  $core.bool hasStatus() => $_has(4);
   @$pb.TagNumber(5)
-  void clearContent() => $_clearField(5);
+  void clearStatus() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $core.List<$core.int> get signature => $_getN(5);
+  $fixnum.Int64 get createdAt => $_getI64(5);
   @$pb.TagNumber(6)
-  set signature($core.List<$core.int> value) => $_setBytes(5, value);
+  set createdAt($fixnum.Int64 value) => $_setInt64(5, value);
   @$pb.TagNumber(6)
-  $core.bool hasSignature() => $_has(5);
+  $core.bool hasCreatedAt() => $_has(5);
   @$pb.TagNumber(6)
-  void clearSignature() => $_clearField(6);
+  void clearCreatedAt() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $core.String get clientId => $_getSZ(6);
+  $fixnum.Int64 get deliverAt => $_getI64(6);
   @$pb.TagNumber(7)
-  set clientId($core.String value) => $_setString(6, value);
+  set deliverAt($fixnum.Int64 value) => $_setInt64(6, value);
   @$pb.TagNumber(7)
-  $core.bool hasClientId() => $_has(6);
+  $core.bool hasDeliverAt() => $_has(6);
   @$pb.TagNumber(7)
-  void clearClientId() => $_clearField(7);
-
-  @$pb.TagNumber(8)
-  $core.int get ttl => $_getIZ(7);
-  @$pb.TagNumber(8)
-  set ttl($core.int value) => $_setUnsignedInt32(7, value);
-  @$pb.TagNumber(8)
-  $core.bool hasTtl() => $_has(7);
-  @$pb.TagNumber(8)
-  void clearTtl() => $_clearField(8);
-
-  @$pb.TagNumber(9)
-  $pb.PbList<$core.String> get groupIds => $_getList(8);
+  void clearDeliverAt() => $_clearField(7);
 }
 
 const $core.bool _omitFieldNames =

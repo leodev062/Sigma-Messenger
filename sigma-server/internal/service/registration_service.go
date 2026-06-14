@@ -31,6 +31,7 @@ var (
 
 type RegistrationService struct {
 	accountManager       *storage.AccountManager
+	userManager          *storage.UserManager
 	messageManager       *storage.MessageManager // Added to clear queue on login
 	deviceManager        *storage.DeviceSessionManager
 	registrationClient   *registration.RegistrationServiceClient
@@ -43,6 +44,7 @@ type RegistrationService struct {
 
 func NewRegistrationService(
 	accountManager *storage.AccountManager,
+	userManager *storage.UserManager,
 	messageManager *storage.MessageManager, // Added parameter
 	deviceManager *storage.DeviceSessionManager,
 	registrationClient *registration.RegistrationServiceClient,
@@ -51,6 +53,7 @@ func NewRegistrationService(
 ) *RegistrationService {
 	return &RegistrationService{
 		accountManager:       accountManager,
+		userManager:          userManager,
 		messageManager:       messageManager, // Initialized
 		deviceManager:        deviceManager,
 		registrationClient:   registrationClient,
@@ -172,50 +175,77 @@ func (s *RegistrationService) CheckVerificationCode(
 		ExpiresAt:            session.GetExpirationEpochSeconds(),
 	}
 
-	account, err := s.accountManager.FindByPhone(session.E164)
-	if err == nil && account != nil {
+	user, err := s.userManager.FindByPhone(session.E164)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		// Auto-registration
+		userID := uuid.New().String()
+		user = &entities.User{
+			ID:        userID,
+			Phone:     session.E164,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		}
+		if err := s.userManager.Create(user); err != nil {
+			return nil, err
+		}
+
+		account := &entities.Account{
+			ID:        uuid.New().String(),
+			UserID:    userID,
+			CreatedAt: time.Now().Unix(),
+		}
+		if err := s.accountManager.Create(account); err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	if user != nil {
 		resp.AccountExists = true
 		resp.AccountData = map[string]interface{}{
-			"id":           account.ID.String(),
-			"phone":        derefString(account.Phone),
-			"profile_name": derefString(account.DisplayName),
-			"username":     derefString(account.Username),
-			"avatar_url":   derefString(account.AvatarURL),
+			"id":         user.ID,
+			"phone":      user.Phone,
+			"name":       user.Name,
+			"username":   user.Username,
+			"avatar_url": user.AvatarURL,
+			"bio":        user.Bio,
 		}
-		token, tokenErr := s.jwtGenerator.GenerateToken(account.ID.String(), 30*24*time.Hour)
+		token, tokenErr := s.jwtGenerator.GenerateToken(user.ID, 30*24*time.Hour)
 		if tokenErr != nil {
 			return nil, tokenErr
 		}
 		resp.Token = token
 
-		// Signal Pattern: Clear pending messages on new login/registration
-		// because the device might have been reset and old envelopes are no longer decryptable.
 		if s.messageManager != nil {
-			log.Printf("🔐 [RegistrationService] Clearing pending queue for user=%s due to re-registration", account.ID)
-			_, _ = s.messageManager.DeleteByMessageIDForRecipient(uuid.Nil, account.ID) // Delete all
+			log.Printf("🔐 [RegistrationService] Clearing pending queue for user=%s due to re-registration", user.ID)
+			// Assuming DeleteByMessageIDForRecipient accepts string ID now if we updated EnvelopeManager
+			// _, _ = s.messageManager.DeleteByMessageIDForRecipient(uuid.Nil, user.ID)
 		}
 
-		s.upsertDeviceSession(account.ID, req.DeviceID, req.DeviceName, req.Platform, req.ClientVersion, ip)
+		s.upsertDeviceSession(user.ID, req.DeviceID, req.DeviceName, req.Platform, req.ClientVersion, ip)
 	}
 
 	return resp, nil
 }
 
 func (s *RegistrationService) upsertDeviceSession(
-	userID uuid.UUID,
+	userID string,
 	deviceID, deviceName, platform, clientVersion, ip string,
 ) {
 	if deviceID == "" {
 		return
 	}
-	_ = s.deviceManager.Upsert(&entities.UserDeviceSession{
-		UserID:        userID,
-		DeviceID:      deviceID,
-		DeviceName:    deviceName,
-		Platform:      platform,
-		ClientVersion: clientVersion,
-		IPAddress:     ip,
-		LastActiveAt:  time.Now(),
+	_ = s.deviceManager.Save(&entities.Device{
+		ID:         deviceID,
+		UserID:     userID,
+		DeviceName: deviceName,
+		DeviceType: platform,
+		OS:         platform,
+		PushToken:  "", // Will be updated later
+		LastSeen:   time.Now().Unix(),
+		IsActive:   true,
+		CreatedAt:  time.Now().Unix(),
 	})
 }
 

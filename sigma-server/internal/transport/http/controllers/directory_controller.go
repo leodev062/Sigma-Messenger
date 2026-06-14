@@ -59,19 +59,19 @@ func (c *DirectoryController) Search(ctx echo.Context) error {
 		limit = 100
 	}
 
-	accounts, err := c.service.SearchAccounts(term, limit)
+	users, err := c.service.SearchAccounts(term, limit)
 	if err != nil {
 		return httpx.InternalError(ctx, err.Error())
 	}
 
-	results := make([]dto.AccountSearchResult, 0, len(accounts))
-	for _, account := range accounts {
+	results := make([]dto.AccountSearchResult, 0, len(users))
+	for _, user := range users {
 		results = append(results, dto.AccountSearchResult{
-			ID:        account.ID.String(),
-			Username:  safeString(account.Username),
-			Name:      safeString(account.DisplayName),
-			Phone:     safeString(account.Phone),
-			AvatarURL: safeString(account.AvatarURL),
+			ID:        user.ID,
+			Username:  user.Username,
+			Name:      user.Name,
+			Phone:     user.Phone,
+			AvatarURL: user.AvatarURL,
 		})
 	}
 

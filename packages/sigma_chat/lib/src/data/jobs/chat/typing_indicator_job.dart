@@ -1,11 +1,11 @@
-import 'package:fixnum/fixnum.dart' as $fixnum;
+import 'package:fixnum/fixnum.dart' as fixnum;
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
-/// TypingIndicatorJob - Envia indicadores de digitação em tempo real.
-/// Usa WebSocket direto (não encriptado inicialmente).
-class TypingIndicatorJob extends Job {
+/// TypingIndicatorJob - Envia indicadores de digitação Relay.
+class TypingIndicatorJob extends core.Job {
   static const String KEY = "TypingIndicatorJob";
 
   final String chatId;
@@ -13,14 +13,12 @@ class TypingIndicatorJob extends Job {
   final bool isTyping; // true = começou, false = parou
 
   final SignalServiceMessageSender? messageSender;
-  final CryptoManager? cryptoManager;
 
   TypingIndicatorJob({
     required this.chatId,
     required this.recipientId,
     required this.isTyping,
     this.messageSender,
-    this.cryptoManager,
     int? databaseId,
   }) : super(
          databaseId: databaseId,
@@ -36,13 +34,12 @@ class TypingIndicatorJob extends Job {
     'isTyping': isTyping,
   };
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return TypingIndicatorJob(
       chatId: data['chatId'],
       recipientId: data['recipientId'],
       isTyping: data['isTyping'] ?? true,
       messageSender: locator<SignalServiceMessageSender>(),
-      cryptoManager: locator<CryptoManager>(),
       databaseId: databaseId,
     );
   }
@@ -50,44 +47,27 @@ class TypingIndicatorJob extends Job {
   @override
   Future<void> run() async {
     try {
-      await cryptoManager!.init();
+      final relayMessage = sigmapb.Message()
+        ..id = "typing_${DateTime.now().millisecondsSinceEpoch}"
+        ..conversationId = recipientId
+        ..senderId = "me"
+        ..receiverId = recipientId
+        ..type = sigmapb.MessageType.TEXT 
+        ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
 
-      // Criar TypingMessage protobuf
-      final typing = sigmapb.TypingMessage()
-        ..state = isTyping
-            ? sigmapb.TypingMessage_TypingState.STARTED
-            : sigmapb.TypingMessage_TypingState.STOPPED
-        ..timestamp = $fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
-
-      // Encapsular em Content
-      final content = sigmapb.Content()..typing = typing;
-
-      // Encriptar
-      final encryptedEnvelope = await cryptoManager!.encryptMessage(
-        recipientId,
-        content,
-      );
-
-      // Enviar via WebSocket
-      messageSender!.sendEnvelope(recipientId, encryptedEnvelope);
-
-      SigmaLog.d(
-        KEY,
-        "Typing indicator ${isTyping ? 'started' : 'stopped'} para $recipientId",
-      );
+      messageSender!.sendUnencryptedEnvelope(recipientId, relayMessage);
     } catch (e, stack) {
-      SigmaLog.e(KEY, "Erro ao enviar typing indicator: $e", e, stack);
-      // Não rethrow para typing - não é crítico
+      SigmaLog.e(KEY, "Erro ao enviar typing indicator Relay: $e", e, stack);
     }
   }
 
   @override
   bool shouldRetry(Object error) {
-    return false; // Typing indicators não precisam de retry
+    return false;
   }
 
   @override
   void onRunError(Object error, StackTrace stackTrace) {
-    SigmaLog.w(KEY, "Falha no envio de typing indicator: $error");
+    SigmaLog.w(KEY, "Falha no envio de typing indicator Relay: $error");
   }
 }

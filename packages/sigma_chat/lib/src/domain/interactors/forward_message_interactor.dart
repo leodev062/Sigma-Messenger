@@ -14,9 +14,9 @@ class ForwardMessageInteractor {
     required String senderId,
   }) async {
     for (final chatId in targetChatIds) {
-      final threadId = await _chatRepository.getOrCreateThread(chatId);
+      final conversationId = await _chatRepository.getOrCreateThread(chatId);
       await _sendMessageInteractor.execute(
-        threadId,
+        conversationId,
         chatId,
         senderId,
         message.textContent,

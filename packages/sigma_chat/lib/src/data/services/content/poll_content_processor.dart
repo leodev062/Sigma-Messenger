@@ -9,31 +9,28 @@ class PollContentProcessor implements MessageContentProcessor {
   PollContentProcessor(this._chatRepository);
 
   @override
-  bool canProcess(sigmapb.Content payload) => 
-      payload.hasDataMessage() && payload.dataMessage.hasPollCreate();
+  bool canProcess(sigmapb.Message payload) => payload.hasPoll();
 
   @override
   Future<void> process({
     required String messageId,
     required String senderId,
-    required sigmapb.Content payload,
+    required sigmapb.Message payload,
     required int timestamp,
   }) async {
-    final poll = payload.dataMessage.pollCreate;
+    final poll = payload.poll;
     
     final message = MessageEntity(
       id: messageId,
-      threadId: 0,
-      chatId: senderId,
-      senderRecipientId: senderId,
-      textContent: "📊 Enquete: ${poll.question}",
+      conversationId: senderId,
+      senderId: senderId,
+      textContent: "📊 Enquete: \${poll.question}",
       type: MessageTypeEntity.poll,
       timestamp: timestamp,
-      status: MessageStatusEntity.read,
-      isFromMe: false,
+      status: MessageStatusEntity.delivered,
       pollQuestion: poll.question,
-      pollOptions: poll.options,
-      allowMultipleVotes: poll.allowMultipleVotes,
+      pollOptions: poll.options.map((o) => o.text).toList(),
+      multipleChoice: poll.multipleChoice,
     );
 
     await _chatRepository.saveMessageAndMetadata(message);

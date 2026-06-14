@@ -24,49 +24,23 @@ type AccountFinder interface {
 	FindByID(id uuid.UUID) (*entities.Account, error)
 }
 
-type MessageStore interface {
-	Save(message *entities.PendingMessage) error
+type EnvelopeStore interface {
+	Save(envelope *entities.Envelope) error
 }
 
 type EventStore interface {
 	Save(event *entities.PendingEvent) error
 }
 
-type PresenceService struct {
-	broadcaster PresenceBroadcaster
-}
-
-func NewPresenceService(broadcaster PresenceBroadcaster) *PresenceService {
-	return &PresenceService{broadcaster: broadcaster}
-}
-
-func (s *PresenceService) IsOnline(userID string) bool {
-	if s == nil || s.broadcaster == nil {
-		return false
-	}
-	return s.broadcaster.IsOnline(userID)
-}
-
-func (s *PresenceService) Send(userID string, payload []byte) bool {
-	if s == nil || s.broadcaster == nil {
-		return false
-	}
-	return s.broadcaster.Send(userID, payload)
-}
-
-func (s *PresenceService) Deliver(userID string, payload []byte) bool {
-	return s.Send(userID, payload)
-}
-
 type MessageDeliveryService struct {
 	presence PresenceBroadcaster
-	store    MessageStore
+	store    EnvelopeStore
 	accounts AccountFinder
 	push     WakeupPusher
 	logger   *log.Logger
 }
 
-func NewMessageDeliveryService(presence PresenceBroadcaster, store MessageStore, accounts AccountFinder, push WakeupPusher, logger *log.Logger) *MessageDeliveryService {
+func NewMessageDeliveryService(presence PresenceBroadcaster, store EnvelopeStore, accounts AccountFinder, push WakeupPusher, logger *log.Logger) *MessageDeliveryService {
 	if logger == nil {
 		logger = log.Default()
 	}
@@ -103,15 +77,13 @@ func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, payload [
 			continue
 		}
 
-		// ALWAYS persist first to ensure at-least-once delivery (Signal pattern)
-		// This also ensures that if the realtime delivery fails, the message is already in DB.
+		// ALWAYS persist first to ensure at-least-once delivery (Relay Engine pattern)
 		if err := s.persistAndNotify(recipientID, payload, notify); err != nil {
 			s.logger.Printf("delivery: failed to persist for recipient=%s: %v", recipientID, err)
 			return err
 		}
 
-		// Try realtime delivery. If successful, we don't need to wait for reconnect.
-		// Note: The client MUST send a DELETE/receipt to remove it from the DB.
+		// Try realtime delivery.
 		if s.presence != nil && s.presence.IsOnline(recipientID) {
 			if s.presence.Send(recipientID, payload) {
 				s.logger.Printf("delivery: realtime delivery initiated for recipient=%s", recipientID)
@@ -123,7 +95,7 @@ func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, payload [
 
 func (s *MessageDeliveryService) persistAndNotify(recipientID string, payload []byte, notify bool) error {
 	if s.store == nil {
-		return errors.New("message store is not configured")
+		return errors.New("envelope store is not configured")
 	}
 
 	uid, err := uuid.Parse(recipientID)
@@ -131,11 +103,23 @@ func (s *MessageDeliveryService) persistAndNotify(recipientID string, payload []
 		return err
 	}
 
-	pending := &entities.PendingMessage{
-		DestinationID: uid,
-		Timestamp:     time.Now().UnixMilli(),
+	// NEW: Unmarshal payload to extract Envelope metadata for proper storage
+	// We expect payload to be the serialized Protobuf Envelope from the client.
+	// (Actually in Relay mode, the client sends Envelope bytes, and we store them).
+
+	// For simple Relay persistence, we just store it as an Envelope record.
+	// Since we don't necessarily want to unmarshal EVERY message for performance,
+	// we use a simple approach:
+
+	now := time.Now().UnixMilli()
+	pending := &entities.Envelope{
+		EnvelopeID:    uuid.New().String(), // Unique ID for deletion/ACK
+		DestinationID: uid.String(),
+		Payload:       append([]byte(nil), payload...),
+		Status:        "pending",
+		CreatedAt:     now,
+		DeliverAt:     now,
 	}
-	pending.SetPayload(payload)
 
 	if err := s.store.Save(pending); err != nil {
 		return err

@@ -3,32 +3,30 @@
 part of 'message_table.dart';
 
 // ignore_for_file: type=lint
-mixin _$MessageTableMixin on DatabaseAccessor<SigmaDatabase> {
-  $RecipientsTable get recipients => attachedDatabase.recipients;
-  $ThreadsTable get threads => attachedDatabase.threads;
+mixin _$MessageDaoMixin on DatabaseAccessor<SigmaDatabase> {
   $MessagesTable get messages => attachedDatabase.messages;
-  $MessageSearchTable get messageSearch => attachedDatabase.messageSearch;
   $ReactionsTable get reactions => attachedDatabase.reactions;
-  $MessageReceiptsTable get messageReceipts => attachedDatabase.messageReceipts;
-  MessageTableManager get managers => MessageTableManager(this);
+  $MessageLocationsTable get messageLocations =>
+      attachedDatabase.messageLocations;
+  $DeliveryLogsTable get deliveryLogs => attachedDatabase.deliveryLogs;
+  $ConversationsTable get conversations => attachedDatabase.conversations;
+  MessageDaoManager get managers => MessageDaoManager(this);
 }
 
-class MessageTableManager {
-  final _$MessageTableMixin _db;
-  MessageTableManager(this._db);
-  $$RecipientsTableTableManager get recipients =>
-      $$RecipientsTableTableManager(_db.attachedDatabase, _db.recipients);
-  $$ThreadsTableTableManager get threads =>
-      $$ThreadsTableTableManager(_db.attachedDatabase, _db.threads);
+class MessageDaoManager {
+  final _$MessageDaoMixin _db;
+  MessageDaoManager(this._db);
   $$MessagesTableTableManager get messages =>
       $$MessagesTableTableManager(_db.attachedDatabase, _db.messages);
-  $$MessageSearchTableTableManager get messageSearch =>
-      $$MessageSearchTableTableManager(_db.attachedDatabase, _db.messageSearch);
   $$ReactionsTableTableManager get reactions =>
       $$ReactionsTableTableManager(_db.attachedDatabase, _db.reactions);
-  $$MessageReceiptsTableTableManager get messageReceipts =>
-      $$MessageReceiptsTableTableManager(
+  $$MessageLocationsTableTableManager get messageLocations =>
+      $$MessageLocationsTableTableManager(
         _db.attachedDatabase,
-        _db.messageReceipts,
+        _db.messageLocations,
       );
+  $$DeliveryLogsTableTableManager get deliveryLogs =>
+      $$DeliveryLogsTableTableManager(_db.attachedDatabase, _db.deliveryLogs);
+  $$ConversationsTableTableManager get conversations =>
+      $$ConversationsTableTableManager(_db.attachedDatabase, _db.conversations);
 }

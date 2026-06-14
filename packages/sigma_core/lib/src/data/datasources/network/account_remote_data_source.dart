@@ -8,7 +8,6 @@ abstract class AccountRemoteDataSource {
   Future<Result<UserDto, Failure>> createAccount(Map<String, dynamic> data);
   Future<Result<UserDto, Failure>> getMe();
   Future<Result<void, Failure>> deleteAccount();
-  Future<Result<dynamic, Failure>> getAccountKeys(String id);
   Future<Result<void, Failure>> updateFCMToken(String token);
   Future<Result<List<UserDeviceSessionDto>, Failure>> getDevices();
   Future<Result<void, Failure>> deleteDevice(String id);
@@ -32,11 +31,6 @@ class AccountRemoteDataSourceImpl with NetworkErrorHandler implements AccountRem
   @override
   Future<Result<void, Failure>> deleteAccount() {
     return safeCall(() => _service.deleteAccount());
-  }
-
-  @override
-  Future<Result<dynamic, Failure>> getAccountKeys(String id) {
-    return safeCall(() => _service.getAccountKeys(id));
   }
 
   @override

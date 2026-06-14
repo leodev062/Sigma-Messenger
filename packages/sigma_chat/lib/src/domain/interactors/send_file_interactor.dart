@@ -13,14 +13,17 @@ class SendFileInteractor {
     required File file,
     required MessageTypeEntity type,
   }) async {
-    final threadId = await _chatRepository.getOrCreateThread(chatId);
+    final conversationId = await _chatRepository.getOrCreateThread(chatId);
 
-    final message = MessageEntity.createMediaOutgoing(
-      threadId: threadId,
-      chatId: chatId,
+    final message = MessageEntity(
+      id: "msg_${DateTime.now().millisecondsSinceEpoch}",
+      conversationId: conversationId,
       senderId: senderId,
       textContent: file.path.split('/').last,
       type: type,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      status: MessageStatusEntity.pending,
+      url: file.path,
     );
 
     await _chatRepository.saveMessageWithAttachment(
@@ -35,7 +38,6 @@ class SendFileInteractor {
       case MessageTypeEntity.image: return "image/jpeg";
       case MessageTypeEntity.video: return "video/mp4";
       case MessageTypeEntity.audio: return "audio/mpeg";
-      case MessageTypeEntity.gif: return "image/gif";
       default: return "application/octet-stream";
     }
   }

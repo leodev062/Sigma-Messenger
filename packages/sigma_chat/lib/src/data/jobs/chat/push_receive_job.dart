@@ -1,8 +1,9 @@
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 
 /// PushReceiveJob - Responsável por processar envelopes recebidos.
-class PushReceiveJob extends Job {
+class PushReceiveJob extends core.Job {
   static const String KEY = "PushReceiveJob";
   final List<int> envelopeBytes;
   final PushMessageProcessor _processor;
@@ -21,7 +22,7 @@ class PushReceiveJob extends Job {
   @override
   Map<String, dynamic> serialize() => {'bytes': envelopeBytes};
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PushReceiveJob(
       envelopeBytes: List<int>.from(data['bytes']),
       processor: locator<PushMessageProcessor>(),

@@ -8,7 +8,6 @@ import 'package:sigma_core/src/domain/entities/reaction_entity.dart';
 import 'package:sigma_core/src/data/models/user_response.dart' as api;
 
 /// ModelMapper - Centraliza as conversões entre camadas (API -> Domain, Drift -> Domain).
-/// Refatorado para o Padrão Signal-Android (Snapshot & Precedência).
 class ModelMapper {
   static Recipient recipientFromDto(api.UserDto dto) {
     return Recipient(
@@ -24,148 +23,120 @@ class ModelMapper {
     );
   }
 
-  static ThreadEntity threadFromDrift(drift.ThreadRecord record) {
+  static ThreadEntity threadFromDrift(drift.Conversation data, [drift.User? recipientData]) {
     return ThreadEntity(
-      id: record.thread.id,
-      recipient: recipientFromDrift(record.recipient),
-      snippet: record.thread.snippet,
-      date: record.thread.date,
-      unreadCount: record.thread.unreadCount,
-      isArchived: record.thread.isArchived,
-      pinnedOrder: record.thread.pinnedOrder,
+      id: data.id,
+      recipient: recipientData != null 
+          ? recipientFromDrift(recipientData) 
+          : Recipient.createUnknown(data.id),
+      snippet: data.lastMessageId, // Snippet could be more complex
+      date: data.updatedAt ?? 0,
+      unreadCount: data.unreadCount,
+      isArchived: data.isArchived,
+      isMuted: data.isMuted,
+      pinnedOrder: data.isPinned ? 1 : 0,
     );
   }
 
-  static Recipient recipientFromDrift(drift.RecipientData data) {
+  static Recipient recipientFromDrift(drift.User data) {
     return Recipient(
       id: data.id,
-      aci: data.aci,
-      pni: data.pni,
-      type: data.type.toDomain(),
-      phone: data.phone,
+      type: data.isBot ? RecipientType.bot : RecipientType.individual,
       username: data.username,
-      systemDisplayName: data.systemDisplayName,
-      profileName: data.profileName,
+      profileName: data.name,
       avatarUrl: data.avatarUrl,
       bio: data.bio,
-      isOnline: data.isOnline,
-      lastSeen: data.lastSeen,
-      fallbackColor: _parseColor(data.fallbackColor),
     );
   }
 
   static ReactionEntity reactionFromDrift(drift.Reaction data) {
     return ReactionEntity(
-      authorId: data.authorId,
-      emoji: data.emoji,
-      dateSent: data.dateSent,
-      dateReceived: data.dateReceived,
+      authorId: data.userId ?? "unknown",
+      emoji: data.emoji ?? "",
+      dateSent: data.createdAt ?? 0,
+      dateReceived: data.createdAt ?? 0,
     );
   }
 
   static MessageEntity messageFromDrift(drift.Message data, [List<drift.Reaction> reactions = const []]) {
     return MessageEntity(
       id: data.id,
-      threadId: data.threadId,
-      chatId: data.chatId,
-      senderRecipientId: data.senderRecipientId,
-      textContent: data.textContent,
-      type: data.type.toDomain(),
-      timestamp: data.timestamp,
-      status: data.status.toDomain(),
-      isFromMe: data.isFromMe,
+      conversationId: data.conversationId ?? "",
+      senderId: data.senderId ?? "",
+      textContent: data.content ?? "",
+      type: (data.type ?? "text").toMessageTypeEntity(),
+      timestamp: data.createdAt ?? 0,
+      updatedAt: data.updatedAt ?? (data.createdAt ?? 0),
+      status: (data.status ?? "pending").toMessageStatusEntity(),
       reactions: reactions.map((r) => reactionFromDrift(r)).toList(),
-      attachmentUrl: data.attachmentUrl,
-      attachmentAesKey: data.attachmentAesKey,
-      attachmentIv: data.attachmentIv,
-      attachmentMacKey: data.attachmentMacKey,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      pollQuestion: data.pollQuestion,
-      pollOptions: data.pollOptions,
-      allowMultipleVotes: data.allowMultipleVotes,
+      relatedMessageId: data.replyToMessageId,
     );
   }
+}
 
-  static Color _parseColor(String hex) {
-    try {
-      return Color(int.parse(hex.replaceFirst('#', '0xff')));
-    } catch (e) {
-      return const Color(0xFF1C6689);
+extension StringToMessageType on String {
+  MessageTypeEntity toMessageTypeEntity() {
+    switch (toLowerCase()) {
+      case 'text': return MessageTypeEntity.text;
+      case 'image': return MessageTypeEntity.image;
+      case 'video': return MessageTypeEntity.video;
+      case 'audio': return MessageTypeEntity.audio;
+      case 'poll': return MessageTypeEntity.poll;
+      case 'reply': return MessageTypeEntity.reply;
+      case 'reaction': return MessageTypeEntity.reaction;
+      case 'location': return MessageTypeEntity.location;
+      default: return MessageTypeEntity.text;
     }
   }
 }
 
-/// Extensions para mapeamento bidirecional entre Domain e Data.
-extension MessageTypeMapping on MessageTypeEntity {
-  drift.MessageTypeDb toDrift() => drift.MessageTypeDb.values.byName(name);
+extension StringToMessageStatus on String {
+  MessageStatusEntity toMessageStatusEntity() {
+    switch (toLowerCase()) {
+      case 'pending': return MessageStatusEntity.pending;
+      case 'sent': return MessageStatusEntity.sent;
+      case 'delivered': return MessageStatusEntity.delivered;
+      case 'read': return MessageStatusEntity.read;
+      case 'failed': return MessageStatusEntity.failed;
+      default: return MessageStatusEntity.pending;
+    }
+  }
 }
 
-extension MessageTypeDbMapping on drift.MessageTypeDb {
-  MessageTypeEntity toDomain() => MessageTypeEntity.values.byName(name);
+extension MessageTypeMapping on MessageTypeEntity {
+  String toDrift() => name.toUpperCase();
 }
 
 extension MessageStatusMapping on MessageStatusEntity {
-  drift.MessageStatusDb toDrift() => drift.MessageStatusDb.values.byName(name);
-}
-
-extension MessageStatusDbMapping on drift.MessageStatusDb {
-  MessageStatusEntity toDomain() => MessageStatusEntity.values.byName(name);
-}
-
-extension RecipientTypeMapping on RecipientType {
-  drift.RecipientTypeDb toDrift() => drift.RecipientTypeDb.values.byName(name);
-}
-
-extension RecipientTypeDbMapping on drift.RecipientTypeDb {
-  RecipientType toDomain() => RecipientType.values.byName(name);
-}
-
-extension ColorMapping on Color {
-  String toHex() => '#${toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+  String toDrift() => name.toUpperCase();
 }
 
 extension MessageEntityMapping on MessageEntity {
   drift.MessagesCompanion toCompanion() {
     return drift.MessagesCompanion(
       id: Value(id),
-      threadId: Value(threadId),
-      chatId: Value(chatId),
-      senderRecipientId: Value(senderRecipientId),
-      textContent: Value(textContent),
+      conversationId: Value(conversationId),
+      senderId: Value(senderId),
+      content: Value(textContent),
       type: Value(type.toDrift()),
-      timestamp: Value(timestamp),
+      createdAt: Value(timestamp),
       status: Value(status.toDrift()),
-      isFromMe: Value(isFromMe),
-      attachmentUrl: Value(attachmentUrl),
-      attachmentAesKey: Value(attachmentAesKey),
-      attachmentIv: Value(attachmentIv),
-      attachmentMacKey: Value(attachmentMacKey),
-      latitude: Value(latitude),
-      longitude: Value(longitude),
-      pollQuestion: Value(pollQuestion),
-      pollOptions: Value(pollOptions),
-      allowMultipleVotes: Value(allowMultipleVotes),
+      updatedAt: Value(updatedAt),
+      replyToMessageId: Value(relatedMessageId),
     );
   }
 }
 
 extension RecipientMapping on Recipient {
-  drift.RecipientsCompanion toCompanion() {
-    return drift.RecipientsCompanion(
+  drift.UsersCompanion toCompanion() {
+    return drift.UsersCompanion(
       id: Value(id),
-      aci: Value(aci),
-      pni: Value(pni),
-      type: Value(type.toDrift()),
-      phone: Value(phone),
+      name: Value(profileName),
       username: Value(username),
-      systemDisplayName: Value(systemDisplayName),
-      profileName: Value(profileName),
-      avatarUrl: Value(avatarUrl),
+      email: Value(email),
       bio: Value(bio),
-      isOnline: Value(isOnline),
-      lastSeen: Value(lastSeen),
-      fallbackColor: Value(fallbackColor.toHex()),
+      avatarUrl: Value(avatarUrl),
+      isBot: Value(type == RecipientType.bot),
     );
   }
 }

@@ -5,7 +5,7 @@ export 'src/data/datasources/auth_remote_data_source.dart';
 export 'src/data/datasources/registration_remote_data_source.dart';
 export 'src/data/models/registration_response.dart';
 export 'src/data/services/registration_service.dart';
-export 'src/data/services/signal_service_account_manager.dart';
+export 'src/data/services/account_management_service.dart';
 export 'src/domain/i_auth_repository.dart';
 export 'src/domain/i_registration_repository.dart';
 export 'src/domain/interactors/update_profile_interactor.dart';

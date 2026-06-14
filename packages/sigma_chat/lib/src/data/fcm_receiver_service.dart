@@ -2,20 +2,19 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_chat/sigma_chat.dart';
+import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
+import 'package:sigma_core/src/network/pb/envelope.pb.dart' as env_pb;
 
 /// FcmReceiverService - Refatorado para POO com Loggable.
 class FcmReceiverService with Loggable {
 
-  final CryptoManager _cryptoManager;
   final IChatRepository _chatRepository;
   final NotificationService _notificationService;
 
   FcmReceiverService({
-    required CryptoManager cryptoManager,
     required IChatRepository chatRepository,
     required NotificationService notificationService,
-  })  : _cryptoManager = cryptoManager,
-        _chatRepository = chatRepository,
+  })  : _chatRepository = chatRepository,
         _notificationService = notificationService;
 
   Future<void> handleMessage(RemoteMessage message, {bool isBackground = false}) async {
@@ -45,29 +44,25 @@ class FcmReceiverService with Loggable {
   Future<void> _processPush(_IncomingPushData data) async {
     final senderId = data.senderId!;
     final chatId = data.chatId!;
-    final envelope = data.envelope!;
+    final envelopeBase64 = data.envelope!;
 
-    await _cryptoManager.init();
-    final payload = await _cryptoManager.decryptMessage(senderId, envelope);
-    final dataMsg = payload.dataMessage;
+    final envelopeBytes = base64Decode(envelopeBase64);
+    final envelope = env_pb.Envelope.fromBuffer(envelopeBytes);
     
-    final threadId = await _chatRepository.getOrCreateThread(chatId);
+    // Na nova arquitetura, o envelope contém o payload diretamente (Relay Only)
+    final payload = sigmapb.Message.fromBuffer(envelope.payload);
+    
+    await _chatRepository.getOrCreateThread(chatId);
     final now = DateTime.now().millisecondsSinceEpoch;
 
     final message = MessageEntity(
-      id: "fcm_$now",
-      threadId: threadId,
-      chatId: chatId,
-      senderRecipientId: senderId,
-      textContent: dataMsg.body,
-      type: dataMsg.hasAttachment() ? MessageTypeEntity.image : MessageTypeEntity.text,
+      id: payload.id.isNotEmpty ? payload.id : "fcm_$now",
+      conversationId: chatId,
+      senderId: senderId,
+      textContent: payload.hasText() ? payload.text.text : "",
+      type: MessageTypeEntity.text,
       timestamp: now,
-      status: MessageStatusEntity.read,
-      isFromMe: false,
-      attachmentUrl: dataMsg.hasAttachment() ? dataMsg.attachment.id : null,
-      attachmentAesKey: dataMsg.hasAttachment() ? base64Encode(dataMsg.attachment.key) : null,
-      attachmentIv: dataMsg.hasAttachment() ? base64Encode(dataMsg.attachment.iv) : null,
-      attachmentMacKey: dataMsg.hasAttachment() ? base64Encode(dataMsg.attachment.digest) : null,
+      status: MessageStatusEntity.delivered,
     );
 
     await _chatRepository.saveMessageAndMetadata(message);

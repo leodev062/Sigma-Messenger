@@ -9,15 +9,13 @@ class SendLocationInteractor {
   SendLocationInteractor(this._chatRepository, this._jobManager);
 
   Future<void> execute({
-    required int threadId,
-    required String chatId,
+    required String conversationId,
     required String senderId,
     required double latitude,
     required double longitude,
   }) async {
     final message = MessageEntity.createLocationOutgoing(
-      threadId: threadId,
-      chatId: chatId,
+      conversationId: conversationId,
       senderId: senderId,
       latitude: latitude,
       longitude: longitude,

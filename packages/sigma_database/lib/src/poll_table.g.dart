@@ -3,25 +3,16 @@
 part of 'poll_table.dart';
 
 // ignore_for_file: type=lint
-mixin _$PollTableMixin on DatabaseAccessor<SigmaDatabase> {
-  $RecipientsTable get recipients => attachedDatabase.recipients;
-  $ThreadsTable get threads => attachedDatabase.threads;
-  $MessagesTable get messages => attachedDatabase.messages;
+mixin _$PollDaoMixin on DatabaseAccessor<SigmaDatabase> {
   $PollsTable get polls => attachedDatabase.polls;
   $PollOptionsTable get pollOptions => attachedDatabase.pollOptions;
   $PollVotesTable get pollVotes => attachedDatabase.pollVotes;
-  PollTableManager get managers => PollTableManager(this);
+  PollDaoManager get managers => PollDaoManager(this);
 }
 
-class PollTableManager {
-  final _$PollTableMixin _db;
-  PollTableManager(this._db);
-  $$RecipientsTableTableManager get recipients =>
-      $$RecipientsTableTableManager(_db.attachedDatabase, _db.recipients);
-  $$ThreadsTableTableManager get threads =>
-      $$ThreadsTableTableManager(_db.attachedDatabase, _db.threads);
-  $$MessagesTableTableManager get messages =>
-      $$MessagesTableTableManager(_db.attachedDatabase, _db.messages);
+class PollDaoManager {
+  final _$PollDaoMixin _db;
+  PollDaoManager(this._db);
   $$PollsTableTableManager get polls =>
       $$PollsTableTableManager(_db.attachedDatabase, _db.polls);
   $$PollOptionsTableTableManager get pollOptions =>

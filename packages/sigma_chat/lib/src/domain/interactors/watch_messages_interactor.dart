@@ -6,5 +6,5 @@ class WatchMessagesInteractor {
 
   WatchMessagesInteractor(this._repository);
 
-  Stream<List<MessageEntity>> execute(int threadId, {int limit = 50}) => _repository.watchMessages(threadId, limit: limit);
+  Stream<List<MessageEntity>> execute(String conversationId, {int limit = 50}) => _repository.watchMessages(conversationId, limit: limit);
 }

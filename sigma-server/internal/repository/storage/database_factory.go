@@ -29,10 +29,11 @@ func NewDatabaseFactory(cfg config.PostgresConfiguration) (*gorm.DB, error) {
 
 	// Fix: Forçar alteração de colunas jsonb para bytea para suportar Protobuf (Padrão Signal)
 	// Isso resolve o erro "invalid input syntax for type json"
-	db.Exec("ALTER TABLE pending_envelopes ALTER COLUMN envelope TYPE bytea USING envelope::bytea")
-	db.Exec("ALTER TABLE pending_events ALTER COLUMN payload TYPE bytea USING payload::bytea")
+	// db.Exec("ALTER TABLE pending_envelopes ALTER COLUMN envelope TYPE bytea USING envelope::bytea")
+	// db.Exec("ALTER TABLE pending_events ALTER COLUMN payload TYPE bytea USING payload::bytea")
 
 	// TODO: Migrar para golang-migrate/liquibase (semelhante ao Signal)
+	/*
 	if err := db.Exec(`
 		DROP TABLE IF EXISTS pre_keys;
 		ALTER TABLE recipients
@@ -46,17 +47,14 @@ func NewDatabaseFactory(cfg config.PostgresConfiguration) (*gorm.DB, error) {
 	`).Error; err != nil {
 		log.Printf("warning: failed to drop legacy key storage: %v", err)
 	}
+	*/
 
 	if err := db.AutoMigrate(
+		&entities.User{},
 		&entities.Account{},
-		&entities.KeyBundle{},
-		&entities.PendingMessage{},
-		&entities.PendingEvent{},
-		&entities.MessageReaction{},
-		&entities.UserDeviceSession{},
-		&entities.BotWebhook{},
-		&entities.BotUpdate{},
-		&entities.BotConversationState{},
+		&entities.Device{},
+		&entities.Envelope{},
+		&entities.DeliveryLog{},
 	); err != nil {
 		log.Printf("warning: failed to run auto migration: %v", err)
 	}

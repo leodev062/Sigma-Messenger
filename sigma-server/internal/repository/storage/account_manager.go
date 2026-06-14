@@ -1,11 +1,8 @@
 package storage
 
 import (
-	"strings"
-
 	"sigma-server/internal/domain/entities"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,28 +14,15 @@ func NewAccountManager(db *gorm.DB) *AccountManager {
 	return &AccountManager{db: db}
 }
 
-func (m *AccountManager) FindByID(id uuid.UUID) (*entities.Account, error) {
+func (m *AccountManager) FindByID(id string) (*entities.Account, error) {
 	var account entities.Account
-	err := m.db.First(&account, id).Error
+	err := m.db.First(&account, "id = ?", id).Error
 	return &account, err
 }
 
-func (m *AccountManager) FindByFirebaseUID(uid string) (*entities.Account, error) {
+func (m *AccountManager) FindByEmail(email string) (*entities.Account, error) {
 	var account entities.Account
-	err := m.db.Where("firebase_uid = ?", uid).First(&account).Error
-	return &account, err
-}
-
-func (m *AccountManager) FindByUsername(username string) (*entities.Account, error) {
-	cleanUsername := strings.TrimPrefix(username, "@")
-	var account entities.Account
-	err := m.db.Where("username = ?", cleanUsername).First(&account).Error
-	return &account, err
-}
-
-func (m *AccountManager) FindByPhone(phone string) (*entities.Account, error) {
-	var account entities.Account
-	err := m.db.Where("phone = ?", phone).First(&account).Error
+	err := m.db.Where("email = ?", email).First(&account).Error
 	return &account, err
 }
 
@@ -54,55 +38,8 @@ func (m *AccountManager) Delete(account *entities.Account) error {
 	return m.db.Delete(account).Error
 }
 
-func (m *AccountManager) Search(term string, limit int) ([]entities.Account, error) {
-	cleanTerm := strings.TrimPrefix(term, "@")
-	query := "%" + cleanTerm + "%"
-	var accounts []entities.Account
-	err := m.db.Where("username ILIKE ? OR display_name ILIKE ?", query, query).
-		Limit(limit).
-		Find(&accounts).Error
-	return accounts, err
-}
-
-func (m *AccountManager) FindByPhones(phones []string) ([]entities.Account, error) {
-	var accounts []entities.Account
-	err := m.db.Where("phone IN ?", phones).Find(&accounts).Error
-	return accounts, err
-}
-
-func (m *AccountManager) FindByIDs(ids []uuid.UUID) ([]entities.Account, error) {
+func (m *AccountManager) FindByIDs(ids []string) ([]entities.Account, error) {
 	var accounts []entities.Account
 	err := m.db.Where("id IN ?", ids).Find(&accounts).Error
 	return accounts, err
-}
-
-func (m *AccountManager) SaveKeyBundle(accountID uuid.UUID, payload []byte) error {
-	return m.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&entities.Account{ID: accountID}).Error; err != nil {
-			return err
-		}
-
-		bundle := entities.KeyBundle{
-			AccountID: accountID,
-			Payload:   append([]byte(nil), payload...),
-		}
-
-		if err := tx.Where("account_id = ?", accountID).Delete(&entities.KeyBundle{}).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Create(&bundle).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func (m *AccountManager) FetchRawKeyBundle(accountID uuid.UUID) ([]byte, error) {
-	var bundle entities.KeyBundle
-	if err := m.db.Where("account_id = ?", accountID).First(&bundle).Error; err != nil {
-		return nil, err
-	}
-	return append([]byte(nil), bundle.Payload...), nil
 }

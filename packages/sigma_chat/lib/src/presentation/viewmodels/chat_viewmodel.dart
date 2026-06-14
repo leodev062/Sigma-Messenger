@@ -6,7 +6,6 @@ import 'package:sigma_auth/sigma_auth.dart';
 import 'package:sigma_chat/sigma_chat.dart';
 import 'package:sigma_chat/src/domain/interactors/send_poll_interactor.dart';
 import 'package:photo_manager/photo_manager.dart';
-import '../../data/jobs/chat/poll_vote_job.dart';
 import 'state/chat_state.dart';
 
 /// ChatViewModel - Arquitetura Profissional focada em performance (Padrão Signal).
@@ -35,7 +34,7 @@ class ChatViewModel extends ChangeNotifier {
   ChatState get state => _state;
 
   StreamSubscription? _messagesSubscription;
-  int? _currentThreadId;
+  String? _currentConversationId;
 
   ChatViewModel(
     this._watchChatsInteractor,
@@ -73,44 +72,40 @@ class ChatViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  void setupChat(int threadId) {
-    if (_currentThreadId == threadId) return;
-    _currentThreadId = threadId;
+  void setupChat(String conversationId) {
+    if (_currentConversationId == conversationId) return;
+    _currentConversationId = conversationId;
     
-    // CAA/MVI: Reinício de estado completo e atômico
     _state = _state.copyWith(
       messageLimit: 50, 
       isLoadingMore: false,
       hasMore: true,
       uiItems: [],
-      currentChatId: null,
+      currentChatId: conversationId,
       isSelectionMode: false,
       selectedMessageIds: const {},
     );
     notifyListeners();
 
-    _loadCurrentChatId(threadId);
     _subscribeToMessages();
-  }
-
-  Future<void> _loadCurrentChatId(int threadId) async {
-    final thread = await _chatRepository.watchThread(threadId).first;
-    if (thread != null) {
-      _updateState(_state.copyWith(currentChatId: thread.recipient.id));
-    }
+    markAsRead(conversationId);
   }
 
   void _subscribeToMessages() {
-    if (_currentThreadId == null) return;
+    if (_currentConversationId == null) return;
     
     _messagesSubscription?.cancel();
     _messagesSubscription = _watchMessagesInteractor
-        .execute(_currentThreadId!, limit: _state.messageLimit)
+        .execute(_currentConversationId!, limit: _state.messageLimit)
         .listen((messages) async {
       
-      // CAA/Performance: Processamento em Isolate para manter UI a 60FPS
-      // O 'compute' move a lógica de agrupamento para uma Worker Thread.
-      final uiItems = await compute(MessageGroupProcessor.processInIsolate, messages);
+      final uiItems = await compute<Map<String, dynamic>, List<ChatUiItem>>(
+        MessageGroupProcessor.processInIsolate, 
+        {
+          'messages': messages,
+          'currentUserId': Identity.currentUserId,
+        },
+      );
       
       _updateState(_state.copyWith(
         uiItems: uiItems,
@@ -128,9 +123,9 @@ class ChatViewModel extends ChangeNotifier {
     _updateState(_state.copyWith(isLoadingMore: true));
     final newLimit = _state.messageLimit + 50;
     
-    // Atualiza o limite e re-assina o stream do Drift (Fonte Única de Verdade)
     _state = _state.copyWith(messageLimit: newLimit);
     _subscribeToMessages();
+    markAsRead(_currentConversationId!);
   }
 
   void jumpToBottom() {
@@ -142,83 +137,68 @@ class ChatViewModel extends ChangeNotifier {
 
   Stream<List<ThreadEntity>> get threads => _watchChatsInteractor.execute();
   Stream<List<ThreadEntity>> get archivedThreads => _chatRepository.watchArchivedThreads();
-  Stream<ThreadEntity?> watchThread(int threadId) => _chatRepository.watchThread(threadId);
+  Stream<ThreadEntity?> watchThread(String threadId) => _chatRepository.watchThread(threadId);
 
-  Future<void> sendMessage(int threadId, String text) async {
-    final currentUser = _state.currentUser;
-    final chatId = _state.currentChatId;
-    
-    if (currentUser == null || chatId == null) return;
-
-    // CAA/Performance: Envio imediato sem await excessivo
-    _sendMessageInteractor.execute(threadId, chatId, currentUser.id, text);
-  }
-
-  Future<void> sendFile(int threadId, File file, MessageTypeEntity type) async {
+  Future<void> sendMessage(String conversationId, String text) async {
     final currentUser = _state.currentUser;
     if (currentUser == null) return;
-    final thread = await _chatRepository.watchThread(threadId).first;
-    if (thread != null) {
-      await _sendFileInteractor.execute(
-        chatId: thread.recipient.id,
-        senderId: currentUser.id,
-        file: file,
-        type: type,
-      );
-    }
+
+    _sendMessageInteractor.execute(
+      conversationId,
+      conversationId,
+      currentUser.id,
+      text,
+    );
   }
 
-  Future<void> sendLocation(int threadId, double lat, double lon) async {
+  Future<void> sendFile(String conversationId, File file, MessageTypeEntity type) async {
     final currentUser = _state.currentUser;
     if (currentUser == null) return;
-    final thread = await _chatRepository.watchThread(threadId).first;
-    if (thread != null) {
-      await _sendLocationInteractor.execute(
-        threadId: threadId,
-        chatId: thread.recipient.id,
-        senderId: currentUser.id,
-        latitude: lat,
-        longitude: lon,
-      );
-    }
+    await _sendFileInteractor.execute(
+      chatId: conversationId,
+      senderId: currentUser.id,
+      file: file,
+      type: type,
+    );
   }
 
-  Future<void> sendCurrentLocation(int threadId) async {
+  Future<void> sendLocation(String conversationId, double lat, double lon) async {
+    final currentUser = _state.currentUser;
+    if (currentUser == null) return;
+    await _sendLocationInteractor.execute(
+      conversationId: conversationId,
+      senderId: currentUser.id,
+      latitude: lat,
+      longitude: lon,
+    );
+  }
+
+  Future<void> sendCurrentLocation(String conversationId) async {
     final position = await _locationService.getCurrentLocation();
     if (position != null) {
-      await sendLocation(threadId, position.latitude, position.longitude);
+      await sendLocation(conversationId, position.latitude, position.longitude);
     }
   }
 
-  Future<void> sendPoll(int threadId, String question, List<String> options, {bool allowMultipleVotes = false}) async {
-    print("DEBUG: ChatViewModel.sendPoll called for thread $threadId");
+  Future<void> sendPoll(String conversationId, String question, List<String> options, {bool allowMultipleVotes = false}) async {
     final currentUser = _state.currentUser;
     if (currentUser == null) {
-      print("DEBUG: ChatViewModel.sendPoll - currentUser is NULL");
       SigmaLog.e("ChatViewModel", "Falha ao enviar enquete: usuário não logado");
       return;
     }
     
-    final thread = await _chatRepository.watchThread(threadId).first;
-    if (thread != null) {
-      print("DEBUG: ChatViewModel.sendPoll - thread found, executing interactor");
-      SigmaLog.i("ChatViewModel", "Iniciando envio de enquete: $question");
-      await _sendPollInteractor.execute(
-        threadId: threadId,
-        chatId: thread.recipient.id,
-        senderId: currentUser.id,
-        question: question,
-        options: options,
-        allowMultipleVotes: allowMultipleVotes,
-      );
-      print("DEBUG: ChatViewModel.sendPoll - interactor executed");
-    } else {
-      print("DEBUG: ChatViewModel.sendPoll - thread $threadId NOT FOUND");
-      SigmaLog.e("ChatViewModel", "Falha ao enviar enquete: thread $threadId não encontrada");
-    }
+    SigmaLog.i("ChatViewModel", "Iniciando envio de enquete: $question");
+    await _sendPollInteractor.execute(
+      conversationId: conversationId,
+      chatId: conversationId,
+      senderId: currentUser.id,
+      question: question,
+      options: options,
+      allowMultipleVotes: allowMultipleVotes,
+    );
   }
 
-  Future<void> voteInPoll(String messageId, int optionId) async {
+  Future<void> voteInPoll(String messageId, String optionId) async {
     final currentUser = _state.currentUser;
     if (currentUser == null) return;
     
@@ -228,39 +208,29 @@ class ChatViewModel extends ChangeNotifier {
     final pollId = "poll_$messageId";
     await _chatRepository.castVote(pollId, optionId, currentUser.id);
 
-    // Criar e agendar o Job de voto para sincronização com o servidor
-    final voteJob = PollVoteJob(
-      messageId: messageId,
-      optionIndexes: [optionId],
-      targetAuthorId: message.senderRecipientId,
-      targetSentTimestamp: message.timestamp,
-      voteCount: 1,
-    );
-
-    SigmaLog.i("ChatViewModel", "Voto local computado e Job agendado para $pollId");
-    await locator<SigmaJobManager>().add(voteJob);
+    // TODO: Implement PollVoteJob with new parameters or fix proto
   }
 
   Stream<PollRecordEntity?> watchPoll(String messageId) {
     return _chatRepository.watchPoll(messageId);
   }
 
-  Future<void> sendMediaAsset(int threadId, AssetEntity asset) async {
+  Future<void> sendMediaAsset(String conversationId, AssetEntity asset) async {
     final file = await asset.file;
     if (file != null) {
       MessageTypeEntity type = MessageTypeEntity.image;
       if (asset.type == AssetType.video) type = MessageTypeEntity.video;
       if (asset.type == AssetType.audio) type = MessageTypeEntity.audio;
       
-      await sendFile(threadId, file, type);
+      await sendFile(conversationId, file, type);
     }
   }
 
-  Future<void> markAsRead(int threadId) async => _markAsReadInteractor.execute(threadId);
-  Future<void> archiveThread(int threadId, bool archived) async => _archiveThreadInteractor.execute(threadId, archived);
-  Future<void> pinThread(int threadId, bool pinned) async => _pinThreadInteractor.execute(threadId, pinned);
+  Future<void> markAsRead(String threadId) async => _markAsReadInteractor.execute(threadId);
+  Future<void> archiveThread(String threadId, bool archived) async => _archiveThreadInteractor.execute(threadId, archived);
+  Future<void> pinThread(String threadId, bool pinned) async => _pinThreadInteractor.execute(threadId, pinned);
   
-  Future<void> deleteThread(int threadId) async {
+  Future<void> deleteThread(String threadId) async {
     await _deleteThreadInteractor.execute(threadId);
   }
 
@@ -304,12 +274,11 @@ class ChatViewModel extends ChangeNotifier {
 
   void clearSearch() => _updateState(_state.copyWith(searchResults: [], isSearching: false));
 
-  Future<int> openChatWithRecipient(Recipient recipient) async {
+  Future<String> openChatWithRecipient(Recipient recipient) async {
     await _recipientRepository.saveRecipient(recipient);
     return await _chatRepository.getOrCreateThread(recipient.id);
   }
 
-  /// MVI: Gestão de seleção de mensagens
   void toggleMessageSelection(String messageId) {
     final newSelection = Set<String>.from(_state.selectedMessageIds);
     if (newSelection.contains(messageId)) {

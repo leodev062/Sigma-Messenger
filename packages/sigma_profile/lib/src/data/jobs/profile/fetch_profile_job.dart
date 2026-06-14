@@ -1,18 +1,19 @@
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_database/sigma_database.dart';
 
 /// FetchProfileJob - Busca dados públicos de um perfil no servidor.
-class FetchProfileJob extends Job {
+class FetchProfileJob extends core.Job {
   static const String KEY = "FetchProfileJob";
   final String recipientId;
   final ProfileRemoteDataSource? remoteDataSource;
-  final RecipientDatabase? recipientDatabase;
+  final UserDao? userDao;
 
   FetchProfileJob({
     required this.recipientId,
     this.remoteDataSource,
-    this.recipientDatabase,
+    this.userDao,
     int? databaseId,
   })  : super(
           databaseId: databaseId,
@@ -23,11 +24,11 @@ class FetchProfileJob extends Job {
   @override
   Map<String, dynamic> serialize() => {'recipientId': recipientId};
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return FetchProfileJob(
       recipientId: data['recipientId'],
       remoteDataSource: locator<ProfileRemoteDataSource>(),
-      recipientDatabase: locator<RecipientDatabase>(),
+      userDao: locator<UserDao>(),
       databaseId: databaseId,
     );
   }
@@ -41,7 +42,7 @@ class FetchProfileJob extends Job {
     await result.when(
       (dto) async {
         final recipient = ModelMapper.recipientFromDto(dto);
-        await recipientDatabase!.upsertRecipient(recipient.toCompanion());
+        await userDao!.upsertUser(recipient.toCompanion());
         SigmaLog.i(KEY, "Perfil de $recipientId atualizado.");
       },
       (failure) {

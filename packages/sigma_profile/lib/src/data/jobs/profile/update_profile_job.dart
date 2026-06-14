@@ -1,9 +1,10 @@
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_database/sigma_database.dart';
 
 /// UpdateProfileJob - Garante que as mudanças de perfil cheguem ao servidor.
-class UpdateProfileJob extends Job {
+class UpdateProfileJob extends core.Job {
   static const String KEY = "UpdateProfileJob";
   
   final String? name;
@@ -17,7 +18,7 @@ class UpdateProfileJob extends Job {
   final bool? isPrivate;
 
   final ProfileRemoteDataSource? remoteDataSource;
-  final RecipientDatabase? recipientDatabase;
+  final UserDao? userDao;
 
   UpdateProfileJob({
     this.name,
@@ -30,7 +31,7 @@ class UpdateProfileJob extends Job {
     this.relativeId,
     this.isPrivate,
     this.remoteDataSource,
-    this.recipientDatabase,
+    this.userDao,
     int? databaseId,
   }) : super(
     databaseId: databaseId,
@@ -52,7 +53,7 @@ class UpdateProfileJob extends Job {
     'isPrivate': isPrivate,
   };
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return UpdateProfileJob(
       name: data['name'],
       username: data['username'],
@@ -64,7 +65,7 @@ class UpdateProfileJob extends Job {
       relativeId: data['relativeId'],
       isPrivate: data['isPrivate'],
       remoteDataSource: locator<ProfileRemoteDataSource>(),
-      recipientDatabase: locator<RecipientDatabase>(),
+      userDao: locator<UserDao>(),
       databaseId: databaseId,
     );
   }
@@ -90,9 +91,7 @@ class UpdateProfileJob extends Job {
         SigmaLog.i(KEY, "Perfil sincronizado com sucesso. Atualizando banco local com dados oficiais.");
         final recipient = ModelMapper.recipientFromDto(userDto);
         
-        // No Signal, o upsert deve garantir que não sobrescrevemos campos locais importantes
-        // como o fallbackColor ou systemDisplayName (contatos).
-        await recipientDatabase!.upsertRecipient(recipient.toCompanion());
+        await userDao!.upsertUser(recipient.toCompanion());
       },
       (failure) {
         SigmaLog.w(KEY, "Falha temporária ao sincronizar perfil: ${failure.message}");

@@ -6,7 +6,7 @@ class DeleteThreadInteractor {
 
   DeleteThreadInteractor(this._repository);
 
-  Future<void> execute(int threadId) async {
+  Future<void> execute(String threadId) async {
     await _repository.deleteThread(threadId);
   }
 }

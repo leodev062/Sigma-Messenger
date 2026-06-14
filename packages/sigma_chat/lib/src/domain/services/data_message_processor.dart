@@ -10,59 +10,41 @@ class DataMessageProcessor with Loggable {
   DataMessageProcessor(this._chatRepository);
 
   /// Ponto de entrada para qualquer dado recebido via Push ou Socket.
-  Future<void> process(sigmapb.Content payload, Map<String, dynamic> metadata) async {
-    if (!payload.hasDataMessage()) return;
-
-    final dataMsg = payload.dataMessage;
-
-    if (dataMsg.hasReaction()) {
-      await _handleReaction(dataMsg.reaction, metadata['senderId']);
-    } else if (dataMsg.body.isNotEmpty || dataMsg.hasAttachment() || dataMsg.hasLocation()) {
+  Future<void> process(sigmapb.Message payload, Map<String, dynamic> metadata) async {
+    if (payload.hasReaction()) {
+      await _handleReaction(payload.reaction, metadata['senderId']);
+    } else {
       await _handleMessage(payload, metadata);
     }
-    // Outros campos como receipts, typing, sync...
   }
 
-  Future<void> _handleReaction(sigmapb.Reaction reaction, String senderId) async {
-    logI("Processando reação estilo Signal: ${reaction.emoji} de $senderId");
+  Future<void> _handleReaction(sigmapb.ReactionContent reaction, String senderId) async {
+    logI("Processando reação: ${reaction.emoji} de $senderId");
 
-    // No Signal, a reação é vinculada pela combinação (AutorOriginal + TimestampOriginal)
-    final targetMessage = await _chatRepository.getMessageByMetadata(
-      authorAci: reaction.targetAuthorAci,
-      sentTimestamp: reaction.targetTimestamp.toInt(),
-    );
+    final targetMessage = await _chatRepository.getMessage(reaction.messageId);
 
     if (targetMessage != null) {
-      if (reaction.remove) {
-        await _chatRepository.removeReaction(targetMessage.id, senderId, reaction.emoji);
-      } else {
-        await _chatRepository.addReaction(targetMessage.id, senderId, reaction.emoji);
-      }
+      await _chatRepository.addReaction(targetMessage.id, senderId, reaction.emoji);
     } else {
-      logW("Mensagem alvo não encontrada para a reação. Armazenando como pendente...");
+      logW("Mensagem alvo não encontrada para a reação.");
     }
   }
 
-  Future<void> _handleMessage(sigmapb.Content payload, Map<String, dynamic> metadata) async {
-    final dataMsg = payload.dataMessage;
-    
+  Future<void> _handleMessage(sigmapb.Message payload, Map<String, dynamic> metadata) async {
     MessageTypeEntity type = MessageTypeEntity.text;
-    if (dataMsg.hasAttachment()) type = MessageTypeEntity.file;
-    if (dataMsg.hasLocation()) type = MessageTypeEntity.location;
+    if (payload.hasImage()) type = MessageTypeEntity.image;
+    if (payload.hasVideo()) type = MessageTypeEntity.video;
+    if (payload.hasAudio()) type = MessageTypeEntity.audio;
+    if (payload.hasPoll()) type = MessageTypeEntity.poll;
 
     final message = MessageEntity(
-      id: metadata['id'],
-      threadId: metadata['threadId'] ?? 0,
-      chatId: metadata['chatId'],
-      senderRecipientId: metadata['senderId'],
-      textContent: dataMsg.hasLocation() ? (dataMsg.location.address.isNotEmpty ? dataMsg.location.address : "📍 Localização") : dataMsg.body,
-      timestamp: metadata['timestamp'],
-      isFromMe: false,
+      id: payload.id.isNotEmpty ? payload.id : metadata['id'],
+      conversationId: payload.conversationId.isNotEmpty ? payload.conversationId : metadata['chatId'],
+      senderId: payload.senderId.isNotEmpty ? payload.senderId : metadata['senderId'],
+      textContent: payload.hasText() ? payload.text.text : "",
+      timestamp: payload.timestamp > 0 ? payload.timestamp.toInt() : metadata['timestamp'],
       status: MessageStatusEntity.delivered,
       type: type,
-      latitude: dataMsg.hasLocation() ? dataMsg.location.latitude : null,
-      longitude: dataMsg.hasLocation() ? dataMsg.location.longitude : null,
-      reactions: [],
     );
 
     logI("Salvando nova mensagem recebida: ${message.id}");

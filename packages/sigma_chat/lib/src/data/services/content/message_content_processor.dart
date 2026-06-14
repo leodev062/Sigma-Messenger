@@ -1,16 +1,13 @@
 import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
-/// MessageContentProcessor - Interface para o padrão Strategy de processamento de conteúdo.
-/// Permite que novos tipos de mensagens (Voz, Vídeo, Stickers) sejam adicionados sem alterar o Handler principal.
+/// MessageContentProcessor - Interface para processadores de conteúdo do Relay.
 abstract class MessageContentProcessor {
-  /// Define se este processador pode lidar com o payload recebido.
-  bool canProcess(sigmapb.Content payload);
+  bool canProcess(sigmapb.Message payload);
 
-  /// Executa o processamento específico do conteúdo.
   Future<void> process({
     required String messageId,
     required String senderId,
-    required sigmapb.Content payload,
+    required sigmapb.Message payload,
     required int timestamp,
   });
 }

@@ -5,7 +5,7 @@ class PinThreadInteractor {
 
   PinThreadInteractor(this._repository);
 
-  Future<void> execute(int threadId, bool pinned) async {
+  Future<void> execute(String threadId, bool pinned) async {
     await _repository.pinThread(threadId, pinned);
   }
 }

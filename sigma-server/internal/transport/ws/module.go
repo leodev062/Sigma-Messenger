@@ -30,6 +30,7 @@ type Dependencies struct {
 	ServerConfig         config.ServerConfiguration
 	JWT                  *auth.JwtGenerator
 	MessageManager       *storage.MessageManager
+	EnvelopeManager      *storage.EnvelopeManager
 	PendingEventManager  *storage.PendingEventManager
 	AccountService       *services.AccountService
 	MessageDispatcher    session.OutboundDispatcher
@@ -47,6 +48,7 @@ func NewModule(h *hub.Hub, deps Dependencies) *Module {
 	}
 
 	msgStore := &adapters.MessageStore{MessageManager: deps.MessageManager}
+	envelopeStore := &adapters.EnvelopeStore{EnvelopeManager: deps.EnvelopeManager}
 	eventStore := &adapters.EventStore{PendingEventManager: deps.PendingEventManager}
 	keysReader := &adapters.AccountKeys{AccountService: deps.AccountService}
 
@@ -56,7 +58,7 @@ func NewModule(h *hub.Hub, deps Dependencies) *Module {
 	presenceCoordinator := middleware.NewPresenceCoordinator(logger)
 
 	// Criar router com dispatcher e logger
-	messageRouter := router.New(msgStore, keysReader, deps.MessageDispatcher, logger)
+	messageRouter := router.New(msgStore, envelopeStore, keysReader, deps.MessageDispatcher, logger)
 
 	// Criar e injetar serviços no router
 	receiptService := wsservice.NewReceiptService(deps.MessageDispatcher, logger)
@@ -66,7 +68,7 @@ func NewModule(h *hub.Hub, deps Dependencies) *Module {
 	messageRouter.SetTypingHandler(typingService)
 	messageRouter.SetSyncHandler(syncService)
 
-	pending := wsservice.NewPendingDelivery(msgStore, eventStore, log.Default())
+	pending := wsservice.NewPendingDelivery(msgStore, envelopeStore, eventStore, log.Default())
 	connAuth := wsservice.NewConnectionAuth(deps.JWT, hubCfg)
 	originChecker := security.NewOriginChecker(hubCfg.AllowedOrigins)
 

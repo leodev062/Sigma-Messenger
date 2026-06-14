@@ -19,45 +19,19 @@ import 'dart:typed_data' as $typed_data;
 const Envelope$json = {
   '1': 'Envelope',
   '2': [
-    {
-      '1': 'type',
-      '3': 1,
-      '4': 1,
-      '5': 14,
-      '6': '.sigmapb.Envelope.Type',
-      '10': 'type'
-    },
-    {'1': 'source', '3': 2, '4': 1, '5': 9, '10': 'source'},
-    {'1': 'source_device', '3': 3, '4': 1, '5': 13, '10': 'sourceDevice'},
-    {'1': 'timestamp', '3': 4, '4': 1, '5': 4, '10': 'timestamp'},
-    {'1': 'content', '3': 5, '4': 1, '5': 12, '10': 'content'},
-    {'1': 'signature', '3': 6, '4': 1, '5': 12, '10': 'signature'},
-    {'1': 'clientId', '3': 7, '4': 1, '5': 9, '10': 'clientId'},
-    {'1': 'ttl', '3': 8, '4': 1, '5': 13, '10': 'ttl'},
-    {'1': 'groupIds', '3': 9, '4': 3, '5': 9, '10': 'groupIds'},
-  ],
-  '4': [Envelope_Type$json],
-};
-
-@$core.Deprecated('Use envelopeDescriptor instead')
-const Envelope_Type$json = {
-  '1': 'Type',
-  '2': [
-    {'1': 'TYPE_UNKNOWN', '2': 0},
-    {'1': 'CIPHERTEXT', '2': 1},
-    {'1': 'PREKEY_BUNDLE', '2': 2},
-    {'1': 'RECEIPT', '2': 3},
-    {'1': 'TYPING', '2': 4},
-    {'1': 'SYNC_MESSAGE', '2': 5},
+    {'1': 'envelopeId', '3': 1, '4': 1, '5': 9, '10': 'envelopeId'},
+    {'1': 'from', '3': 2, '4': 1, '5': 9, '10': 'from'},
+    {'1': 'to', '3': 3, '4': 1, '5': 9, '10': 'to'},
+    {'1': 'payload', '3': 4, '4': 1, '5': 12, '10': 'payload'},
+    {'1': 'status', '3': 5, '4': 1, '5': 9, '10': 'status'},
+    {'1': 'createdAt', '3': 6, '4': 1, '5': 3, '10': 'createdAt'},
+    {'1': 'deliverAt', '3': 7, '4': 1, '5': 3, '10': 'deliverAt'},
   ],
 };
 
 /// Descriptor for `Envelope`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List envelopeDescriptor = $convert.base64Decode(
-    'CghFbnZlbG9wZRIqCgR0eXBlGAEgASgOMhYuc2lnbWFwYi5FbnZlbG9wZS5UeXBlUgR0eXBlEh'
-    'YKBnNvdXJjZRgCIAEoCVIGc291cmNlEiMKDXNvdXJjZV9kZXZpY2UYAyABKA1SDHNvdXJjZURl'
-    'dmljZRIcCgl0aW1lc3RhbXAYBCABKARSCXRpbWVzdGFtcBIYCgdjb250ZW50GAUgASgMUgdjb2'
-    '50ZW50EhwKCXNpZ25hdHVyZRgGIAEoDFIJc2lnbmF0dXJlEhoKCGNsaWVudElkGAcgASgJUghj'
-    'bGllbnRJZBIQCgN0dGwYCCABKA1SA3R0bBIaCghncm91cElkcxgJIAMoCVIIZ3JvdXBJZHMiZg'
-    'oEVHlwZRIQCgxUWVBFX1VOS05PV04QABIOCgpDSVBIRVJURVhUEAESEQoNUFJFS0VZX0JVTkRM'
-    'RRACEgsKB1JFQ0VJUFQQAxIKCgZUWVBJTkcQBBIQCgxTWU5DX01FU1NBR0UQBQ==');
+    'CghFbnZlbG9wZRIeCgplbnZlbG9wZUlkGAEgASgJUgplbnZlbG9wZUlkEhIKBGZyb20YAiABKA'
+    'lSBGZyb20SDgoCdG8YAyABKAlSAnRvEhgKB3BheWxvYWQYBCABKAxSB3BheWxvYWQSFgoGc3Rh'
+    'dHVzGAUgASgJUgZzdGF0dXMSHAoJY3JlYXRlZEF0GAYgASgDUgljcmVhdGVkQXQSHAoJZGVsaX'
+    'ZlckF0GAcgASgDUglkZWxpdmVyQXQ=');

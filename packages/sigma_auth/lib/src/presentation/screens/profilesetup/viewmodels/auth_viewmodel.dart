@@ -58,7 +58,6 @@ class AuthViewModel extends ChangeNotifier with Loggable {
   final CreateAccountInteractor _createAccountInteractor;
   final IAuthRepository _authRepository;
   final IProfileRepository _profileRepository;
-  final KeysService _keysService;
 
   StreamSubscription<Recipient?>? _userSubscription;
 
@@ -74,14 +73,12 @@ class AuthViewModel extends ChangeNotifier with Loggable {
     required CreateAccountInteractor createAccountInteractor,
     required IAuthRepository authRepository,
     required IProfileRepository profileRepository,
-    required KeysService keysService,
   })  : _updateProfileInteractor = updateProfileInteractor,
         _loginInteractor = loginInteractor,
         _logoutInteractor = logoutInteractor,
         _createAccountInteractor = createAccountInteractor,
         _authRepository = authRepository,
-        _profileRepository = profileRepository,
-        _keysService = keysService {
+        _profileRepository = profileRepository {
     _init();
   }
 
@@ -91,19 +88,9 @@ class AuthViewModel extends ChangeNotifier with Loggable {
       if (user != null) {
         _state = _state.copyWith(status: AuthStatus.verified, user: user, initialized: true);
         
-        // Início do Paralelismo: Disparamos as tarefas de bootstrapping simultaneamente
-        // 1. Verificação de Chaves
-        // 2. Conexão do Socket (via loginInteractor)
-        
-        Future.wait([
-          _ensureIdentityKeys(),
-          _loginInteractor.execute(user.id, isNewLogin: false), // isNewLogin será false pois chaves são garantidas separadamente se necessário
-        ]).then((_) {
-          _listenToUserChanges();
-          notifyListeners();
-        }).catchError((e) {
-          logE("Erro no bootstrapping paralelo: $e");
-        });
+        await _loginInteractor.execute(user.id, isNewLogin: false);
+        _listenToUserChanges();
+        notifyListeners();
 
       } else {
         _state = _state.copyWith(status: AuthStatus.unauthenticated, initialized: true);
@@ -113,14 +100,6 @@ class AuthViewModel extends ChangeNotifier with Loggable {
       logE("Erro na inicialização: $e");
     }
     notifyListeners();
-  }
-
-  Future<void> _ensureIdentityKeys() async {
-    final identityKey = await _keysService.getIdentityKey();
-    if (identityKey == null) {
-      logW("Sessão ativa detectada, mas chaves de identidade ausentes. Recuperando...");
-      await _keysService.generateAndStoreKeys();
-    }
   }
 
   void _listenToUserChanges() {

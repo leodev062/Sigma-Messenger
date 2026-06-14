@@ -1,4 +1,5 @@
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_profile/sigma_profile.dart';
 import 'package:sigma_contacts/sigma_contacts.dart';
 
@@ -10,15 +11,11 @@ class LoginInteractor {
   LoginInteractor(this._socketService, this._jobManager);
 
   Future<void> execute(String userId, {bool isNewLogin = false}) async {
-    // 1. Conecta o WebSocket para mensagens em tempo real
     _socketService.connect(userId);
 
     if (isNewLogin) {
-      // 2. Cria uma cadeia de jobs para garantir o setup completo pós-login
-      // Login -> Upload de Chaves -> Fetch Perfil Próprio -> Sincronizar Contatos
-      final chain = JobChain(PushKeysUploadJob())
-        .then(FetchProfileJob(recipientId: userId))
-        .then(SyncContactsJob());
+      final chain = JobChain(FetchProfileJob(recipientId: userId) as core.Job)
+        .then(SyncContactsJob() as core.Job);
 
       await _jobManager.addChain(chain);
       SigmaLog.i("LoginInteractor", "Fluxo de NOVO login encadeado e iniciado.");

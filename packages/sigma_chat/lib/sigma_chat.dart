@@ -2,10 +2,7 @@ library sigma_chat;
 
 export 'src/data/chat_repository_impl.dart';
 export 'src/data/fcm_receiver_service.dart';
-export 'src/data/jobs/chat/push_media_send_job.dart';
-export 'src/data/jobs/chat/push_text_send_job.dart';
-export 'src/data/jobs/chat/push_receive_job.dart';
-export 'src/data/jobs/chat/reaction_send_job.dart';
+// Internal jobs removed from public exports to avoid ambiguous definitions ($fixnum, Job)
 export 'src/data/services/data_message_handler.dart';
 export 'src/data/services/message_handler.dart';
 export 'src/data/services/receipt_message_handler.dart';

@@ -46,6 +46,27 @@ func (h *KeysController) PutKeys(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func (h *KeysController) GetPreKeyCount(c echo.Context) error {
+	userID, ok := middleware.UserIDFromContext(c)
+	if !ok {
+		return httpx.Unauthorized(c, "unauthorized")
+	}
+
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return httpx.BadRequest(c, "invalid user id")
+	}
+
+	count, err := h.service.GetPreKeyCount(uid)
+	if err != nil {
+		return httpx.InternalError(c, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"count": count,
+	})
+}
+
 func (h *KeysController) GetKeys(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

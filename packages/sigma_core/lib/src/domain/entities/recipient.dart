@@ -88,7 +88,7 @@ class Recipient {
       return '@$username';
     }
     // 4. Telefone ou Fallback
-    return phone ?? 'Desconhecido';
+    return phone ?? 'Carregando...';
   }
 
   /// Alias para computedDisplayName para compatibilidade com código legado

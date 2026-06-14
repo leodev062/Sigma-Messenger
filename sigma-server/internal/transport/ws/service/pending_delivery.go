@@ -14,24 +14,53 @@ import (
 
 // PendingDelivery replays queued messages and events when a client connects.
 type PendingDelivery struct {
-	messages ports.PendingMessageStore
-	events   ports.PendingEventStore
-	logger   *log.Logger
+	messages  ports.PendingMessageStore
+	envelopes ports.EnvelopeStore
+	events    ports.PendingEventStore
+	logger    *log.Logger
 }
 
-func NewPendingDelivery(messages ports.PendingMessageStore, events ports.PendingEventStore, logger *log.Logger) *PendingDelivery {
+func NewPendingDelivery(messages ports.PendingMessageStore, envelopes ports.EnvelopeStore, events ports.PendingEventStore, logger *log.Logger) *PendingDelivery {
 	if logger == nil {
 		logger = log.Default()
 	}
-	return &PendingDelivery{messages: messages, events: events, logger: logger}
+	return &PendingDelivery{messages: messages, envelopes: envelopes, events: events, logger: logger}
 }
 
 func (d *PendingDelivery) DeliverAll(userID string, conn *session.Connection) {
 	if d == nil || conn == nil {
 		return
 	}
+	d.deliverEnvelopes(userID, conn)
 	d.deliverMessages(userID, conn)
 	d.deliverEvents(userID, conn)
+}
+
+func (d *PendingDelivery) deliverEnvelopes(userID string, conn *session.Connection) {
+	if d.envelopes == nil {
+		return
+	}
+	accountID, err := uuid.Parse(userID)
+	if err != nil {
+		return
+	}
+	envelopes, err := d.envelopes.FindPendingByRecipient(accountID)
+	if err != nil {
+		d.logger.Printf("ws pending delivery envelopes user=%s: %v", userID, err)
+		return
+	}
+	if len(envelopes) > 0 {
+		d.logger.Printf("ws pending delivery: sending %d relay envelopes to user=%s", len(envelopes), userID)
+	}
+	for _, env := range envelopes {
+		payload, err := protocol.WrapEnvelope(env.Payload, env.EnvelopeID)
+		if err != nil {
+			continue
+		}
+		if !conn.Enqueue(payload) {
+			return
+		}
+	}
 }
 
 func (d *PendingDelivery) deliverMessages(userID string, conn *session.Connection) {

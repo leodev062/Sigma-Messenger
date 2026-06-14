@@ -1,145 +1,134 @@
 import 'dart:math';
 import 'package:sigma_core/src/domain/entities/reaction_entity.dart';
+import 'package:sigma_core/src/util/identity.dart';
 
-enum MessageTypeEntity { text, image, video, audio, file, location, gif, poll }
-enum MessageStatusEntity { pending, sent, delivered, read }
+enum MessageTypeEntity { text, image, video, audio, poll, reply, reaction, location, file, gif }
+enum MessageStatusEntity { pending, sent, delivered, read, failed }
 
 /// MessageEntity - Entidade de domínio representando uma mensagem.
 class MessageEntity {
   final String _id;
-  final int _threadId;
-  final String _chatId;
-  final String _senderRecipientId;
+  final String _conversationId;
+  final String _senderId;
   final String _textContent;
   final MessageTypeEntity _type;
   final int _timestamp;
+  final int _updatedAt;
   final MessageStatusEntity _status;
-  final bool _isFromMe;
   final List<ReactionEntity> _reactions;
 
-  // Campos de anexo encapsulados
-  final String? _attachmentUrl;
-  final String? _attachmentAesKey;
-  final String? _attachmentIv;
-  final String? _attachmentMacKey;
+  // Conteúdos específicos
+  final String? _url;
+  final String? _thumbnail;
+  final int? _width;
+  final int? _height;
+  final int? _duration;
+  
+  // Enquete
+  final String? _pollQuestion;
+  final List<String>? _pollOptions;
+  final bool? _multipleChoice;
+
+  // Resposta/Reação
+  final String? _relatedMessageId;
+  final String? _emoji;
 
   // Localização
   final double? _latitude;
   final double? _longitude;
 
-  // Enquete
-  final String? _pollQuestion;
-  final List<String>? _pollOptions;
-  final bool? _allowMultipleVotes;
-
   // Getters públicos
   String get id => _id;
-  int get threadId => _threadId;
-  String get chatId => _chatId;
-  String get senderRecipientId => _senderRecipientId;
+  String get conversationId => _conversationId;
+  String get chatId => _conversationId; // Alias for compatibility
+  String get senderId => _senderId;
   String get textContent => _textContent;
   MessageTypeEntity get type => _type;
   int get timestamp => _timestamp;
+  int get updatedAt => _updatedAt;
   MessageStatusEntity get status => _status;
-  bool get isFromMe => _isFromMe;
+  bool get isFromMe => _senderId == Identity.currentUserId;
   List<ReactionEntity> get reactions => _reactions;
 
-  String? get attachmentUrl => _attachmentUrl;
-  String? get attachmentAesKey => _attachmentAesKey;
-  String? get attachmentIv => _attachmentIv;
-  String? get attachmentMacKey => _attachmentMacKey;
+  String? get url => _url;
+  String? get thumbnail => _thumbnail;
+  int? get width => _width;
+  int? get height => _height;
+  int? get duration => _duration;
+
+  String? get pollQuestion => _pollQuestion;
+  List<String>? get pollOptions => _pollOptions;
+  bool? get multipleChoice => _multipleChoice;
+
+  String? get relatedMessageId => _relatedMessageId;
+  String? get emoji => _emoji;
 
   double? get latitude => _latitude;
   double? get longitude => _longitude;
 
-  String? get pollQuestion => _pollQuestion;
-  List<String>? get pollOptions => _pollOptions;
-  bool? get allowMultipleVotes => _allowMultipleVotes;
-
   MessageEntity({
     required String id,
-    required int threadId,
-    required String chatId,
-    required String senderRecipientId,
+    required String conversationId,
+    required String senderId,
     required String textContent,
     required MessageTypeEntity type,
     required int timestamp,
+    int? updatedAt,
     required MessageStatusEntity status,
-    required bool isFromMe,
     List<ReactionEntity> reactions = const [],
-    String? attachmentUrl,
-    String? attachmentAesKey,
-    String? attachmentIv,
-    String? attachmentMacKey,
-    double? latitude,
-    double? longitude,
+    String? url,
+    String? thumbnail,
+    int? width,
+    int? height,
+    int? duration,
     String? pollQuestion,
     List<String>? pollOptions,
-    bool? allowMultipleVotes,
+    bool? multipleChoice,
+    String? relatedMessageId,
+    String? emoji,
+    double? latitude,
+    double? longitude,
   })  : _id = id,
-        _threadId = threadId,
-        _chatId = chatId,
-        _senderRecipientId = senderRecipientId,
+        _conversationId = conversationId,
+        _senderId = senderId,
         _textContent = textContent,
         _type = type,
         _timestamp = timestamp,
+        _updatedAt = updatedAt ?? timestamp,
         _status = status,
-        _isFromMe = isFromMe,
         _reactions = reactions,
-        _attachmentUrl = attachmentUrl,
-        _attachmentAesKey = attachmentAesKey,
-        _attachmentIv = attachmentIv,
-        _attachmentMacKey = attachmentMacKey,
-        _latitude = latitude,
-        _longitude = longitude,
+        _url = url,
+        _thumbnail = thumbnail,
+        _width = width,
+        _height = height,
+        _duration = duration,
         _pollQuestion = pollQuestion,
         _pollOptions = pollOptions,
-        _allowMultipleVotes = allowMultipleVotes;
+        _multipleChoice = multipleChoice,
+        _relatedMessageId = relatedMessageId,
+        _emoji = emoji,
+        _latitude = latitude,
+        _longitude = longitude;
 
   factory MessageEntity.createTextOutgoing({
-    required int threadId,
-    required String chatId,
+    required String conversationId,
     required String senderId,
     required String text,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return MessageEntity(
       id: "msg_${now}_${Random().nextInt(1000)}",
-      threadId: threadId,
-      chatId: chatId,
-      senderRecipientId: senderId,
+      conversationId: conversationId,
+      senderId: senderId,
       textContent: text,
       type: MessageTypeEntity.text,
       timestamp: now,
       status: MessageStatusEntity.pending,
-      isFromMe: true,
-    );
-  }
-
-  factory MessageEntity.createMediaOutgoing({
-    required int threadId,
-    required String chatId,
-    required String senderId,
-    required MessageTypeEntity type,
-    String textContent = "",
-  }) {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    return MessageEntity(
-      id: "msg_media_${now}_${Random().nextInt(1000)}",
-      threadId: threadId,
-      chatId: chatId,
-      senderRecipientId: senderId,
-      textContent: textContent,
-      type: type,
-      timestamp: now,
-      status: MessageStatusEntity.pending,
-      isFromMe: true,
     );
   }
 
   factory MessageEntity.createLocationOutgoing({
-    required int threadId,
-    required String chatId,
+    required String conversationId,
     required String senderId,
     required double latitude,
     required double longitude,
@@ -147,41 +136,36 @@ class MessageEntity {
     final now = DateTime.now().millisecondsSinceEpoch;
     return MessageEntity(
       id: "msg_loc_${now}_${Random().nextInt(1000)}",
-      threadId: threadId,
-      chatId: chatId,
-      senderRecipientId: senderId,
-      textContent: "📍 Localização",
+      conversationId: conversationId,
+      senderId: senderId,
+      textContent: "Localização",
       type: MessageTypeEntity.location,
       timestamp: now,
       status: MessageStatusEntity.pending,
-      isFromMe: true,
       latitude: latitude,
       longitude: longitude,
     );
   }
 
   factory MessageEntity.createPollOutgoing({
-    required int threadId,
-    required String chatId,
+    required String conversationId,
     required String senderId,
     required String question,
     required List<String> options,
-    bool allowMultipleVotes = false,
+    required bool allowMultipleVotes,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return MessageEntity(
       id: "msg_poll_${now}_${Random().nextInt(1000)}",
-      threadId: threadId,
-      chatId: chatId,
-      senderRecipientId: senderId,
-      textContent: "📊 Enquete: $question",
+      conversationId: conversationId,
+      senderId: senderId,
+      textContent: question,
       type: MessageTypeEntity.poll,
       timestamp: now,
       status: MessageStatusEntity.pending,
-      isFromMe: true,
       pollQuestion: question,
       pollOptions: options,
-      allowMultipleVotes: allowMultipleVotes,
+      multipleChoice: allowMultipleVotes,
     );
   }
 
@@ -191,13 +175,13 @@ class MessageEntity {
       case MessageTypeEntity.image: return "📷 Foto";
       case MessageTypeEntity.video: return "🎥 Vídeo";
       case MessageTypeEntity.audio: return "🎵 Áudio";
-      case MessageTypeEntity.file: return "📎 Arquivo";
-      case MessageTypeEntity.location: return "📍 Localização";
-      case MessageTypeEntity.gif: return "👾 GIF";
       case MessageTypeEntity.poll: return "📊 Enquete";
+      case MessageTypeEntity.reply: return "💬 Resposta";
+      case MessageTypeEntity.reaction: return "❤️ Reação";
+      case MessageTypeEntity.location: return "📍 Localização";
+      case MessageTypeEntity.file: return "📁 Arquivo";
+      case MessageTypeEntity.gif: return "👾 GIF";
       default: return "";
     }
   }
-
-  bool get hasAttachment => _attachmentUrl != null || _type != MessageTypeEntity.text;
 }

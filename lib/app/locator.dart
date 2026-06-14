@@ -3,18 +3,29 @@ import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_database/sigma_database.dart';
 import 'package:sigma_auth/sigma_auth.dart';
 import 'package:sigma_chat/sigma_chat.dart';
-import 'package:sigma_chat/src/data/services/content/location_content_processor.dart';
-import 'package:sigma_chat/src/data/services/content/poll_content_processor.dart';
-import 'package:sigma_chat/src/domain/interactors/send_poll_interactor.dart';
-import 'package:sigma_chat/src/data/jobs/chat/push_text_send_job.dart';
-import 'package:sigma_chat/src/data/jobs/chat/push_location_send_job.dart';
-import 'package:sigma_chat/src/data/jobs/chat/push_poll_send_job.dart';
-import 'package:sigma_chat/src/data/jobs/chat/receipt_send_job.dart';
-import 'package:sigma_chat/src/data/jobs/chat/typing_indicator_job.dart';
 import 'package:sigma_profile/sigma_profile.dart';
 import 'package:sigma_contacts/sigma_contacts.dart';
 import 'package:sigma_settings/sigma_settings.dart';
 import 'package:sigma_ui/sigma_ui.dart';
+
+import 'package:sigma_chat/src/data/jobs/chat/push_text_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/push_location_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/push_poll_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/push_media_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/push_receive_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/reaction_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/receipt_send_job.dart';
+import 'package:sigma_chat/src/data/jobs/chat/typing_indicator_job.dart';
+import 'package:sigma_chat/src/data/services/content/location_content_processor.dart';
+import 'package:sigma_chat/src/data/services/content/poll_content_processor.dart';
+import 'package:sigma_chat/src/data/services/content/media_content_processor.dart';
+import 'package:sigma_chat/src/data/services/content/text_content_processor.dart';
+import 'package:sigma_chat/src/data/services/content/poll_vote_content_processor.dart';
+
+import 'package:sigma_profile/src/data/jobs/profile/fetch_profile_job.dart';
+import 'package:sigma_profile/src/data/jobs/profile/update_profile_job.dart';
+import 'package:sigma_contacts/src/data/jobs/contacts/sync_contacts_job.dart';
+
 import '../presentation/viewmodels/home_viewmodel.dart';
 
 void setupLocator() {
@@ -31,14 +42,12 @@ void _initRegistrationModule() {
   locator.registerLazySingleton<IRegistrationRepository>(() => RegistrationRepositoryImpl(
     remoteDataSource: locator<RegistrationRemoteDataSource>(),
     store: locator<SigmaStore>(),
-    keysService: locator<KeysService>(),
   ));
 }
 
 void _initCoreModule() {
   locator.registerLazySingleton(() => AppConfig.fromEnvironment());
   
-  // 1. Infrastructure & Database (Dependencies of almost everything)
   const secureStorage = FlutterSecureStorage();
   locator.registerLazySingleton(() => AccountStore(secureStorage));
   locator.registerLazySingleton(() => KeyStore(secureStorage));
@@ -46,16 +55,14 @@ void _initCoreModule() {
   final database = SigmaDatabase(locator<KeyStore>());
   locator.registerSingleton(database);
   
-  locator.registerSingleton<RecipientDatabase>(RecipientDatabase(database));
-  locator.registerSingleton<ThreadTable>(ThreadTable(database));
-  locator.registerSingleton<MessageTable>(MessageTable(database));
-  locator.registerSingleton<JobDatabase>(JobDatabase(database));
-  locator.registerSingleton<KeyValueDatabase>(KeyValueDatabase(database));
-  locator.registerSingleton<AttachmentTable>(AttachmentTable(database));
-  locator.registerSingleton<PollTable>(PollTable(database));
+  locator.registerSingleton<UserDao>(database.userDao);
+  locator.registerSingleton<ConversationDao>(database.conversationDao);
+  locator.registerSingleton<MessageDao>(database.messageDao);
+  locator.registerSingleton<PollDao>(database.pollDao);
+  locator.registerSingleton<KeyValueDao>(database.keyValueDao);
+  locator.registerSingleton<JobDao>(database.jobDao);
 
-  // 2. Storage & Network Access
-  locator.registerLazySingleton(() => SettingsStore(locator<KeyValueDatabase>()));
+  locator.registerLazySingleton(() => SettingsStore(locator<KeyValueDao>()));
   
   locator.registerLazySingleton(() => SigmaStore(
     account: locator<AccountStore>(),
@@ -76,22 +83,16 @@ void _initCoreModule() {
     locator<IConnectivityService>(),
     locator<SigmaStore>(),
   ));
-  
-  locator.registerLazySingleton(() => KeysService(locator<KeyStore>()));
 
-  // 3. Services (Depend on HttpClient)
   locator.registerLazySingleton(() => RegistrationService(locator<SigmaHttpClient>().dio));
   locator.registerLazySingleton(() => AccountService(locator<SigmaHttpClient>().dio));
   locator.registerLazySingleton(() => ProfileService(locator<SigmaHttpClient>().dio));
-  locator.registerLazySingleton(() => KeysApiService(locator<SigmaHttpClient>().dio));
 
-  // DataSources
   locator.registerLazySingleton<RegistrationRemoteDataSource>(() => RegistrationRemoteDataSourceImpl(locator<RegistrationService>()));
   locator.registerLazySingleton<AccountRemoteDataSource>(() => AccountRemoteDataSourceImpl(locator<AccountService>()));
   locator.registerLazySingleton<ProfileRemoteDataSource>(() => ProfileRemoteDataSourceImpl(locator<ProfileService>()));
-  locator.registerLazySingleton<KeysRemoteDataSource>(() => KeysRemoteDataSourceImpl(locator<KeysApiService>()));
   
-  locator.registerLazySingleton(() => SignalServiceAccountManager(
+  locator.registerLazySingleton(() => AccountManagementService(
     registrationRemoteDataSource: locator<RegistrationRemoteDataSource>(),
     accountRemoteDataSource: locator<AccountRemoteDataSource>(),
     profileRemoteDataSource: locator<ProfileRemoteDataSource>(),
@@ -100,31 +101,22 @@ void _initCoreModule() {
   locator.registerLazySingleton(() => AttachmentManager(locator<SigmaNetworkAccess>()));
   
   locator.registerLazySingleton(() => NotificationService());
-  locator.registerLazySingleton(() => MediaCryptoService());
   locator.registerLazySingleton(() => LocationService());
   locator.registerLazySingleton(() => MediaPreviewService());
 
-  final jobManager = SigmaJobManager(locator<JobDatabase>(), locator<ISocketService>(), locator);
+  final jobManager = SigmaJobManager(locator<JobDao>(), locator<ISocketService>(), locator);
   jobManager.registerFactory(PushTextSendJob.KEY, PushTextSendJob.create);
   jobManager.registerFactory(PushLocationSendJob.KEY, PushLocationSendJob.create);
   jobManager.registerFactory(PushPollSendJob.KEY, PushPollSendJob.create);
   jobManager.registerFactory(PushMediaSendJob.KEY, PushMediaSendJob.create);
   jobManager.registerFactory(PushReceiveJob.KEY, PushReceiveJob.create);
   jobManager.registerFactory(FetchProfileJob.KEY, FetchProfileJob.create);
-  jobManager.registerFactory(PushKeysUploadJob.KEY, PushKeysUploadJob.create);
   jobManager.registerFactory(UpdateProfileJob.KEY, UpdateProfileJob.create);
   jobManager.registerFactory(ReactionSendJob.KEY, ReactionSendJob.create);
   jobManager.registerFactory(SyncContactsJob.KEY, SyncContactsJob.create);
   jobManager.registerFactory(ReceiptSendJob.KEY, ReceiptSendJob.create);
   jobManager.registerFactory(TypingIndicatorJob.KEY, TypingIndicatorJob.create);
   locator.registerSingleton(jobManager);
-
-  locator.registerLazySingleton(() => DriftSignalProtocolStore(locator<SigmaDatabase>(), locator<KeyStore>()));
-  
-  locator.registerLazySingleton(() => CryptoManager(
-    locator<KeysRemoteDataSource>(),
-    locator<DriftSignalProtocolStore>(),
-  ));
 }
 
 void _initAuthModule() {
@@ -139,12 +131,11 @@ void _initAuthModule() {
 
   locator.registerLazySingleton<IProfileRepository>(() => ProfileRepositoryImpl(
     locator<ProfileRemoteDataSource>(),
-    locator<RecipientDatabase>(),
+    locator<UserDao>(),
     locator<SigmaStore>(),
     locator<SigmaJobManager>(),
   ));
 
-  // Interactors
   locator.registerLazySingleton(() => UpdateProfileInteractor(locator<IProfileRepository>()));
   locator.registerLazySingleton(() => LoginInteractor(locator<ISocketService>(), locator<SigmaJobManager>()));
   locator.registerLazySingleton(() => LogoutInteractor(
@@ -154,7 +145,7 @@ void _initAuthModule() {
     locator<ISocketService>(),
   ));
   locator.registerLazySingleton(() => CreateAccountInteractor(locator<IRegistrationRepository>(), locator<UpdateProfileInteractor>(), locator<SigmaStore>()));
-  locator.registerLazySingleton(() => VerifyCodeInteractor(locator<IRegistrationRepository>(), locator<IProfileRepository>(), locator<SigmaStore>()));
+  locator.registerLazySingleton(() => VerifyCodeInteractor(locator<IRegistrationRepository>(), locator<SigmaStore>()));
   locator.registerLazySingleton(() => RequestVerificationInteractor(locator<IRegistrationRepository>()));
 
   locator.registerLazySingleton(() => AuthViewModel(
@@ -164,14 +155,13 @@ void _initAuthModule() {
     createAccountInteractor: locator<CreateAccountInteractor>(),
     authRepository: locator<IAuthRepository>(),
     profileRepository: locator<IProfileRepository>(),
-    keysService: locator<KeysService>(),
   ));
 
   locator.registerLazySingleton(() => VerificationCodeViewModel(
     repository: locator<IRegistrationRepository>(),
     verifyCodeInteractor: locator<VerifyCodeInteractor>(),
     authViewModel: locator<AuthViewModel>(),
-    sessionId: '', // Placeholder, will be replaced by factory if needed
+    sessionId: '', 
     initialE164: '',
     onNavigateToPhoneNumber: () {},
     onVerificationSuccess: () {},
@@ -189,20 +179,26 @@ void _initChatModule() {
 
   locator.registerLazySingleton<RecipientRemoteDataSource>(() => RecipientRemoteDataSourceImpl(locator<ProfileRemoteDataSource>()));
   locator.registerLazySingleton<IRecipientRepository>(() => RecipientRepositoryImpl(
-    locator<RecipientDatabase>(),
+    locator<UserDao>(),
     locator<RecipientRemoteDataSource>(),
   ));
-  locator.registerLazySingleton<IChatRepository>(() => ChatRepositoryImpl(
-    locator<MessageTable>(),
-    locator<RecipientDatabase>(),
-    locator<ThreadTable>(),
-    locator<AttachmentTable>(),
-    locator<PollTable>(),
+
+  locator.registerLazySingleton(() => ResolveProfileInteractor(
+    locator<IRecipientRepository>(),
     locator<SigmaJobManager>(),
   ));
 
+  locator.registerLazySingleton<IChatRepository>(() => ChatRepositoryImpl(
+    locator<MessageDao>(),
+    locator<UserDao>(),
+    locator<ConversationDao>(),
+    locator<PollDao>(),
+    locator<SigmaJobManager>(),
+    locator<SigmaStore>(),
+    locator<ResolveProfileInteractor>(),
+  ));
+
   locator.registerLazySingleton(() => DataMessageHandler(
-    locator<CryptoManager>(),
     [
       TextContentProcessor(locator<IChatRepository>()),
       MediaContentProcessor(locator<IChatRepository>()),
@@ -211,16 +207,14 @@ void _initChatModule() {
       PollVoteContentProcessor(locator<IChatRepository>()),
     ],
   ));
-  locator.registerLazySingleton(() => ReceiptMessageHandler(locator<IChatRepository>(), locator<CryptoManager>()));
+  locator.registerLazySingleton(() => ReceiptMessageHandler(locator<IChatRepository>()));
 
   locator.registerLazySingleton<PushMessageProcessor>(() => PushMessageProcessorImpl(
     locator<SignalServiceMessageSender>(),
     locator<DataMessageHandler>(),
-    locator<ReceiptMessageHandler>(),
   ));
   
   locator.registerLazySingleton(() => FcmReceiverService(
-    cryptoManager: locator<CryptoManager>(),
     chatRepository: locator<IChatRepository>(),
     notificationService: locator<NotificationService>(),
   ));

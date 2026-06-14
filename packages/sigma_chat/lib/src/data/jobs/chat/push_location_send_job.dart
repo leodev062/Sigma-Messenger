@@ -1,19 +1,20 @@
-import 'package:sigma_core/sigma_core.dart';
+import 'package:get_it/get_it.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
-import 'package:sigma_core/sigma_core.dart' as sigmapb;
+import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
+import 'package:fixnum/fixnum.dart' as fixnum;
 
-/// PushLocationSendJob - Envio de localização via Protobuf.
-class PushLocationSendJob extends Job {
+/// PushLocationSendJob - Envio de localização via Relay Protobuf.
+class PushLocationSendJob extends core.Job {
   static const String KEY = "PushLocationSendJob";
   final String messageId;
   final IChatRepository? chatRepository;
-  final CryptoManager? cryptoManager;
   final SignalServiceMessageSender? messageSender;
 
   PushLocationSendJob({
     required this.messageId,
     this.chatRepository,
-    this.cryptoManager,
     this.messageSender,
     int? databaseId,
   })  : super(
@@ -26,11 +27,10 @@ class PushLocationSendJob extends Job {
   @override
   Map<String, dynamic> serialize() => {'messageId': messageId};
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PushLocationSendJob(
       messageId: data['messageId'],
       chatRepository: locator<IChatRepository>(),
-      cryptoManager: locator<CryptoManager>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
     );
@@ -41,27 +41,21 @@ class PushLocationSendJob extends Job {
     final message = await chatRepository!.getMessage(messageId);
     if (message == null || message.status != MessageStatusEntity.pending) return;
 
-    await cryptoManager!.init();
-    
-    // Criar Payload de Localização (Protobuf)
-    final location = sigmapb.Location()
-      ..latitude = message.latitude ?? 0.0
-      ..longitude = message.longitude ?? 0.0;
+    final relayMessage = sigmapb.Message()
+      ..id = message.id
+      ..conversationId = message.chatId
+      ..senderId = "me"
+      ..receiverId = message.chatId
+      ..type = sigmapb.MessageType.TEXT 
+      ..timestamp = fixnum.Int64(message.timestamp)
+      ..text = (sigmapb.TextContent()..text = "📍 Localização: ${message.latitude}, ${message.longitude}");
 
-    final content = sigmapb.Content()
-      ..dataMessage = (sigmapb.DataMessage()..location = location);
-
-    final encryptedEnvelope = await cryptoManager!.encryptMessage(
-      message.chatId,
-      content,
-    );
-
-    messageSender!.sendEnvelope(message.chatId, encryptedEnvelope);
+    messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
     await chatRepository!.updateMessageStatus(messageId, MessageStatusEntity.sent);
   }
 
   @override
   void onRunError(Object error, StackTrace stackTrace) {
-    SigmaLog.e(KEY, "Erro no envio de localização $messageId", error);
+    SigmaLog.e(KEY, "Erro no envio de localização Relay $messageId", error);
   }
 }

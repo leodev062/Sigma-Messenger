@@ -24,7 +24,7 @@ func ExtractCommandText(payload []byte) string {
 		return ""
 	}
 
-	content := strings.TrimSpace(string(envelope.GetContent()))
+	content := strings.TrimSpace(string(envelope.GetPayload()))
 	if strings.HasPrefix(content, "/") && utf8.ValidString(content) {
 		return content
 	}

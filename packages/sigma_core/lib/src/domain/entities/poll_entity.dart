@@ -24,7 +24,7 @@ class Voter {
 
 /// Represents a poll option and a list of recipients who have voted for that option
 class PollOptionEntity {
-  final int id;
+  final String id;
   final String text;
   final List<Voter> voters;
   final VoteState voteState;
@@ -37,7 +37,7 @@ class PollOptionEntity {
   });
 
   PollOptionEntity copyWith({
-    int? id,
+    String? id,
     String? text,
     List<Voter>? voters,
     VoteState? voteState,

@@ -14,15 +14,18 @@ class SendMediaInteractor {
     required File file,
   }) async {
     // 1. Criar a Thread (Conversa)
-    final threadId = await _chatRepository.getOrCreateThread(chatId);
+    final conversationId = await _chatRepository.getOrCreateThread(chatId);
 
-    // 2. Criar a Entidade de Mensagem usando Factory OO
-    final message = MessageEntity.createMediaOutgoing(
-      threadId: threadId,
-      chatId: chatId,
+    // 2. Criar a Entidade de Mensagem
+    final message = MessageEntity(
+      id: "msg_${DateTime.now().millisecondsSinceEpoch}",
+      conversationId: conversationId,
       senderId: senderId,
       textContent: "📷 Foto", 
       type: MessageTypeEntity.image,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      status: MessageStatusEntity.pending,
+      url: file.path,
     );
 
     // 3. Persistir via Repositório (SSOT)

@@ -13,48 +13,26 @@ import (
 )
 
 type ProfileService struct {
-	repo *storage.AccountManager
+	repo *storage.UserManager
 }
 
-func NewProfileService(repo *storage.AccountManager) *ProfileService {
+func NewProfileService(repo *storage.UserManager) *ProfileService {
 	return &ProfileService{repo: repo}
 }
 
-func (s *ProfileService) GetByID(requesterID *uuid.UUID, userID uuid.UUID) (*entities.Account, error) {
-	account, err := s.repo.FindByID(userID)
+func (s *ProfileService) GetByID(requesterID string, userID string) (*entities.User, error) {
+	user, err := s.repo.FindByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	if account.IsPrivateProfile && (requesterID == nil || *requesterID != account.ID) {
-		return s.hidePrivateFields(account), nil
-	}
-	return account, nil
+	return user, nil
 }
 
-func (s *ProfileService) SyncRecipients(requesterID *uuid.UUID, ids []uuid.UUID) ([]entities.Account, error) {
-	if len(ids) == 0 {
-		return []entities.Account{}, nil
-	}
-
-	accounts, err := s.repo.FindByIDs(ids)
-	if err != nil {
-		return nil, err
-	}
-
-	for idx, account := range accounts {
-		if account.IsPrivateProfile && (requesterID == nil || *requesterID != account.ID) {
-			accounts[idx] = *s.hidePrivateFields(&account)
-		}
-	}
-
-	return accounts, nil
-}
-
-func (s *ProfileService) UpdateProfile(userID uuid.UUID, req dto.UpdateAccountRequest) (*entities.Account, error) {
-	account, err := s.repo.FindByID(userID)
+func (s *ProfileService) UpdateProfile(userID string, req dto.UpdateAccountRequest) (*entities.User, error) {
+	user, err := s.repo.FindByID(userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("account not found")
+			return nil, errors.New("user not found")
 		}
 		return nil, err
 	}
@@ -62,37 +40,28 @@ func (s *ProfileService) UpdateProfile(userID uuid.UUID, req dto.UpdateAccountRe
 	if req.Username != "" {
 		cleanUsername := strings.TrimPrefix(req.Username, "@")
 		existing, err := s.repo.FindByUsername(cleanUsername)
-		if err == nil && existing.ID != account.ID {
+		if err == nil && existing.ID != user.ID {
 			return nil, errors.New("username already in use")
 		}
-		account.Username = &cleanUsername
+		user.Username = cleanUsername
 	}
 	if req.Name != "" {
-		name := req.Name
-		account.DisplayName = &name
+		user.Name = req.Name
 	}
 	if req.AvatarURL != "" {
-		avatar := req.AvatarURL
-		account.AvatarURL = &avatar
+		user.AvatarURL = req.AvatarURL
 	}
 	if req.Bio != "" {
-		bio := req.Bio
-		account.Bio = &bio
-	}
-	if req.Country != "" {
-		country := req.Country
-		account.Country = &country
+		user.Bio = req.Bio
 	}
 
-	if req.IsPrivate != nil {
-		account.IsPrivateProfile = *req.IsPrivate
-	}
+	user.UpdatedAt = time.Now().Unix()
 
-	if err := s.repo.Update(account); err != nil {
+	if err := s.repo.Update(user); err != nil {
 		return nil, err
 	}
 
-	return account, nil
+	return user, nil
 }
 
 func (s *ProfileService) hidePrivateFields(account *entities.Account) *entities.Account {

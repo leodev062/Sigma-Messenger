@@ -1,6 +1,6 @@
 import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_auth/sigma_auth.dart';
-import 'package:sigma_profile/sigma_profile.dart';
+import 'package:sigma_database/sigma_database.dart';
 
 class VerificationResult {
   final bool success;
@@ -21,12 +21,10 @@ class VerificationResult {
 /// Caso de uso para verificar o código SMS e decidir o fluxo do usuário.
 class VerifyCodeInteractor {
   final IRegistrationRepository _registrationRepository;
-  final IProfileRepository _profileRepository;
   final SigmaStore _sigmaStore;
 
   VerifyCodeInteractor(
     this._registrationRepository, 
-    this._profileRepository,
     this._sigmaStore,
   );
 
@@ -51,29 +49,26 @@ class VerifyCodeInteractor {
         // Usuário Retornando: Salvar sessão e sincronizar perfil
         final user = _recipientFromAccountData(result.accountData ?? {'phone': phone});
         
+        final userDto = UserDto(
+          id: user.id,
+          phone: user.phone ?? '',
+          name: user.profileName,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+          isVerified: true,
+          type: 'individual',
+          isPrivate: user.isPrivate,
+        );
+
         await _sigmaStore.account.saveSession(
-          UserDto(
-            id: user.id,
-            phone: user.phone ?? '',
-            name: user.profileName,
-            username: user.username,
-            avatarUrl: user.avatarUrl,
-            bio: user.bio,
-            isVerified: true,
-            type: 'individual',
-            isPrivate: user.isPrivate,
-          ),
+          userDto,
           result.token ?? '',
         );
 
-        // Offline-First: Sync local DB
-        await _profileRepository.updateProfile(
-          name: user.profileName,
-          username: user.username,
-          bio: user.bio,
-          avatarUrl: user.avatarUrl,
-          isPrivate: user.isPrivate,
-        );
+        // Salvar no banco local (UserDao)
+        final userEntity = UserMapper.fromDto(userDto);
+        await locator<UserDao>().upsertUser(UserMapper.toDb(userEntity));
 
         return VerificationResult(
           success: true,
@@ -81,7 +76,8 @@ class VerifyCodeInteractor {
           token: result.token,
           accountData: result.accountData,
         );
-      } else {
+      }
+else {
         // Novo Usuário: Requer Setup de Perfil
         return VerificationResult(
           success: true,

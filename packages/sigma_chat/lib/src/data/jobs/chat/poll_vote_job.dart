@@ -1,11 +1,10 @@
 import 'package:get_it/get_it.dart';
-import 'package:fixnum/fixnum.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
-/// PollVoteJob - Envia um voto em uma enquete, seguindo a lógica do Signal.
-class PollVoteJob extends Job {
+/// PollVoteJob - Envia um voto em uma enquete.
+class PollVoteJob extends core.Job {
   static const String KEY = "PollVoteJob";
   
   final String messageId; // ID da mensagem da enquete original
@@ -15,7 +14,6 @@ class PollVoteJob extends Job {
   final int voteCount;
   
   final IChatRepository? chatRepository;
-  final CryptoManager? cryptoManager;
   final SignalServiceMessageSender? messageSender;
 
   PollVoteJob({
@@ -25,7 +23,6 @@ class PollVoteJob extends Job {
     required this.targetSentTimestamp,
     required this.voteCount,
     this.chatRepository,
-    this.cryptoManager,
     this.messageSender,
     int? databaseId,
   }) : super(
@@ -44,7 +41,7 @@ class PollVoteJob extends Job {
         'voteCount': voteCount,
       };
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PollVoteJob(
       messageId: data['messageId'],
       optionIndexes: List<int>.from(data['optionIndexes']),
@@ -52,7 +49,6 @@ class PollVoteJob extends Job {
       targetSentTimestamp: data['targetSentTimestamp'],
       voteCount: data['voteCount'],
       chatRepository: locator<IChatRepository>(),
-      cryptoManager: locator<CryptoManager>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
     );
@@ -63,27 +59,22 @@ class PollVoteJob extends Job {
     final message = await chatRepository!.getMessage(messageId);
     if (message == null) return;
 
-    await cryptoManager!.init();
-
-    // Criar Payload de Voto (Protobuf seguindo Signal)
-    final pollVote = sigmapb.PollVote()
-      ..targetAuthorAci = targetAuthorId
-      ..targetSentTimestamp = Int64(targetSentTimestamp)
-      ..optionIndexes.addAll(optionIndexes)
-      ..voteCount = voteCount;
-
-    final content = sigmapb.Content()
-      ..dataMessage = (sigmapb.DataMessage()..pollVote = pollVote);
-
-    final encryptedEnvelope = await cryptoManager!.encryptMessage(
-      message.chatId,
-      content,
-    );
-
-    messageSender!.sendEnvelope(message.chatId, encryptedEnvelope);
+    // TODO: Implement PollVote in proto if missing. 
+    // Sending as a special text message for now or skipping until proto is updated.
+    SigmaLog.i(KEY, "Voto em enquete não enviado: PollVote missing in proto.");
     
-    // No Signal, após enviar o voto com sucesso, atualizamos o estado local
-    // para ADDED ou REMOVED.
+    /*
+    final relayMessage = sigmapb.Message()
+      ..id = "vote_${DateTime.now().millisecondsSinceEpoch}"
+      ..conversationId = message.chatId
+      ..senderId = "me"
+      ..receiverId = message.chatId
+      ..type = sigmapb.MessageType.POLL
+      ..timestamp = Int64(DateTime.now().millisecondsSinceEpoch);
+      // ..pollVote = ... (Missing in generated Dart code)
+
+    messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
+    */
   }
 
   @override

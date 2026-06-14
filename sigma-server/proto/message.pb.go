@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.35.0
-// source: proto/message.proto
+// source: message.proto
 
 package sigmapb
 
@@ -21,295 +21,144 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ReceiptMessage_ReceiptType int32
+type MessageType int32
 
 const (
-	ReceiptMessage_UNKNOWN  ReceiptMessage_ReceiptType = 0
-	ReceiptMessage_DELIVERY ReceiptMessage_ReceiptType = 1 // Delivered
-	ReceiptMessage_READ     ReceiptMessage_ReceiptType = 2 // Read
+	MessageType_TEXT     MessageType = 0
+	MessageType_IMAGE    MessageType = 1
+	MessageType_VIDEO    MessageType = 2
+	MessageType_AUDIO    MessageType = 3
+	MessageType_POLL     MessageType = 4
+	MessageType_REPLY    MessageType = 5
+	MessageType_REACTION MessageType = 6
 )
 
-// Enum value maps for ReceiptMessage_ReceiptType.
+// Enum value maps for MessageType.
 var (
-	ReceiptMessage_ReceiptType_name = map[int32]string{
-		0: "UNKNOWN",
-		1: "DELIVERY",
-		2: "READ",
+	MessageType_name = map[int32]string{
+		0: "TEXT",
+		1: "IMAGE",
+		2: "VIDEO",
+		3: "AUDIO",
+		4: "POLL",
+		5: "REPLY",
+		6: "REACTION",
 	}
-	ReceiptMessage_ReceiptType_value = map[string]int32{
-		"UNKNOWN":  0,
-		"DELIVERY": 1,
-		"READ":     2,
+	MessageType_value = map[string]int32{
+		"TEXT":     0,
+		"IMAGE":    1,
+		"VIDEO":    2,
+		"AUDIO":    3,
+		"POLL":     4,
+		"REPLY":    5,
+		"REACTION": 6,
 	}
 )
 
-func (x ReceiptMessage_ReceiptType) Enum() *ReceiptMessage_ReceiptType {
-	p := new(ReceiptMessage_ReceiptType)
+func (x MessageType) Enum() *MessageType {
+	p := new(MessageType)
 	*p = x
 	return p
 }
 
-func (x ReceiptMessage_ReceiptType) String() string {
+func (x MessageType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ReceiptMessage_ReceiptType) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_message_proto_enumTypes[0].Descriptor()
+func (MessageType) Descriptor() protoreflect.EnumDescriptor {
+	return file_message_proto_enumTypes[0].Descriptor()
 }
 
-func (ReceiptMessage_ReceiptType) Type() protoreflect.EnumType {
-	return &file_proto_message_proto_enumTypes[0]
+func (MessageType) Type() protoreflect.EnumType {
+	return &file_message_proto_enumTypes[0]
 }
 
-func (x ReceiptMessage_ReceiptType) Number() protoreflect.EnumNumber {
+func (x MessageType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ReceiptMessage_ReceiptType.Descriptor instead.
-func (ReceiptMessage_ReceiptType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{8, 0}
+// Deprecated: Use MessageType.Descriptor instead.
+func (MessageType) EnumDescriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{0}
 }
 
-type TypingMessage_TypingState int32
+type MessageStatus int32
 
 const (
-	TypingMessage_STARTED TypingMessage_TypingState = 0
-	TypingMessage_STOPPED TypingMessage_TypingState = 1
+	MessageStatus_PENDING   MessageStatus = 0
+	MessageStatus_SENT      MessageStatus = 1
+	MessageStatus_DELIVERED MessageStatus = 2
+	MessageStatus_READ      MessageStatus = 3
+	MessageStatus_FAILED    MessageStatus = 4
 )
 
-// Enum value maps for TypingMessage_TypingState.
+// Enum value maps for MessageStatus.
 var (
-	TypingMessage_TypingState_name = map[int32]string{
-		0: "STARTED",
-		1: "STOPPED",
+	MessageStatus_name = map[int32]string{
+		0: "PENDING",
+		1: "SENT",
+		2: "DELIVERED",
+		3: "READ",
+		4: "FAILED",
 	}
-	TypingMessage_TypingState_value = map[string]int32{
-		"STARTED": 0,
-		"STOPPED": 1,
+	MessageStatus_value = map[string]int32{
+		"PENDING":   0,
+		"SENT":      1,
+		"DELIVERED": 2,
+		"READ":      3,
+		"FAILED":    4,
 	}
 )
 
-func (x TypingMessage_TypingState) Enum() *TypingMessage_TypingState {
-	p := new(TypingMessage_TypingState)
+func (x MessageStatus) Enum() *MessageStatus {
+	p := new(MessageStatus)
 	*p = x
 	return p
 }
 
-func (x TypingMessage_TypingState) String() string {
+func (x MessageStatus) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (TypingMessage_TypingState) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_message_proto_enumTypes[1].Descriptor()
+func (MessageStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_message_proto_enumTypes[1].Descriptor()
 }
 
-func (TypingMessage_TypingState) Type() protoreflect.EnumType {
-	return &file_proto_message_proto_enumTypes[1]
+func (MessageStatus) Type() protoreflect.EnumType {
+	return &file_message_proto_enumTypes[1]
 }
 
-func (x TypingMessage_TypingState) Number() protoreflect.EnumNumber {
+func (x MessageStatus) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use TypingMessage_TypingState.Descriptor instead.
-func (TypingMessage_TypingState) EnumDescriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{9, 0}
+// Deprecated: Use MessageStatus.Descriptor instead.
+func (MessageStatus) EnumDescriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{1}
 }
 
-type SyncMessage_SyncType int32
-
-const (
-	SyncMessage_UNKNOWN               SyncMessage_SyncType = 0
-	SyncMessage_MESSAGE_STATUS_UPDATE SyncMessage_SyncType = 1 // Status de mensagem enviada
-	SyncMessage_THREAD_UPDATE         SyncMessage_SyncType = 2 // Atualização de thread
-	SyncMessage_CONTACT_UPDATE        SyncMessage_SyncType = 3 // Atualização de contato
-)
-
-// Enum value maps for SyncMessage_SyncType.
-var (
-	SyncMessage_SyncType_name = map[int32]string{
-		0: "UNKNOWN",
-		1: "MESSAGE_STATUS_UPDATE",
-		2: "THREAD_UPDATE",
-		3: "CONTACT_UPDATE",
-	}
-	SyncMessage_SyncType_value = map[string]int32{
-		"UNKNOWN":               0,
-		"MESSAGE_STATUS_UPDATE": 1,
-		"THREAD_UPDATE":         2,
-		"CONTACT_UPDATE":        3,
-	}
-)
-
-func (x SyncMessage_SyncType) Enum() *SyncMessage_SyncType {
-	p := new(SyncMessage_SyncType)
-	*p = x
-	return p
-}
-
-func (x SyncMessage_SyncType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (SyncMessage_SyncType) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_message_proto_enumTypes[2].Descriptor()
-}
-
-func (SyncMessage_SyncType) Type() protoreflect.EnumType {
-	return &file_proto_message_proto_enumTypes[2]
-}
-
-func (x SyncMessage_SyncType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use SyncMessage_SyncType.Descriptor instead.
-func (SyncMessage_SyncType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{10, 0}
-}
-
-type Content struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Content:
-	//
-	//	*Content_DataMessage
-	//	*Content_Receipt
-	//	*Content_Typing
-	//	*Content_Sync
-	Content       isContent_Content `protobuf_oneof:"content"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Content) Reset() {
-	*x = Content{}
-	mi := &file_proto_message_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Content) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Content) ProtoMessage() {}
-
-func (x *Content) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Content.ProtoReflect.Descriptor instead.
-func (*Content) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Content) GetContent() isContent_Content {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
-func (x *Content) GetDataMessage() *DataMessage {
-	if x != nil {
-		if x, ok := x.Content.(*Content_DataMessage); ok {
-			return x.DataMessage
-		}
-	}
-	return nil
-}
-
-func (x *Content) GetReceipt() *ReceiptMessage {
-	if x != nil {
-		if x, ok := x.Content.(*Content_Receipt); ok {
-			return x.Receipt
-		}
-	}
-	return nil
-}
-
-func (x *Content) GetTyping() *TypingMessage {
-	if x != nil {
-		if x, ok := x.Content.(*Content_Typing); ok {
-			return x.Typing
-		}
-	}
-	return nil
-}
-
-func (x *Content) GetSync() *SyncMessage {
-	if x != nil {
-		if x, ok := x.Content.(*Content_Sync); ok {
-			return x.Sync
-		}
-	}
-	return nil
-}
-
-type isContent_Content interface {
-	isContent_Content()
-}
-
-type Content_DataMessage struct {
-	DataMessage *DataMessage `protobuf:"bytes,1,opt,name=dataMessage,proto3,oneof"`
-}
-
-type Content_Receipt struct {
-	Receipt *ReceiptMessage `protobuf:"bytes,2,opt,name=receipt,proto3,oneof"`
-}
-
-type Content_Typing struct {
-	Typing *TypingMessage `protobuf:"bytes,3,opt,name=typing,proto3,oneof"`
-}
-
-type Content_Sync struct {
-	Sync *SyncMessage `protobuf:"bytes,4,opt,name=sync,proto3,oneof"`
-}
-
-func (*Content_DataMessage) isContent_Content() {}
-
-func (*Content_Receipt) isContent_Content() {}
-
-func (*Content_Typing) isContent_Content() {}
-
-func (*Content_Sync) isContent_Content() {}
-
-type DataMessage struct {
+type TextContent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Body          string                 `protobuf:"bytes,1,opt,name=body,proto3" json:"body,omitempty"`
-	Attachment    *AttachmentPointer     `protobuf:"bytes,2,opt,name=attachment,proto3" json:"attachment,omitempty"`
-	Reaction      *Reaction              `protobuf:"bytes,3,opt,name=reaction,proto3" json:"reaction,omitempty"`
-	Location      *Location              `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
-	PollCreate    *PollCreate            `protobuf:"bytes,5,opt,name=pollCreate,proto3" json:"pollCreate,omitempty"`
-	PollVote      *PollVote              `protobuf:"bytes,6,opt,name=pollVote,proto3" json:"pollVote,omitempty"`
-	PollTerminate *PollTerminate         `protobuf:"bytes,7,opt,name=pollTerminate,proto3" json:"pollTerminate,omitempty"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DataMessage) Reset() {
-	*x = DataMessage{}
-	mi := &file_proto_message_proto_msgTypes[1]
+func (x *TextContent) Reset() {
+	*x = TextContent{}
+	mi := &file_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DataMessage) String() string {
+func (x *TextContent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DataMessage) ProtoMessage() {}
+func (*TextContent) ProtoMessage() {}
 
-func (x *DataMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[1]
+func (x *TextContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,84 +169,43 @@ func (x *DataMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DataMessage.ProtoReflect.Descriptor instead.
-func (*DataMessage) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use TextContent.ProtoReflect.Descriptor instead.
+func (*TextContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *DataMessage) GetBody() string {
+func (x *TextContent) GetText() string {
 	if x != nil {
-		return x.Body
+		return x.Text
 	}
 	return ""
 }
 
-func (x *DataMessage) GetAttachment() *AttachmentPointer {
-	if x != nil {
-		return x.Attachment
-	}
-	return nil
+type ImageContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Thumbnail     string                 `protobuf:"bytes,2,opt,name=thumbnail,proto3" json:"thumbnail,omitempty"`
+	Width         int32                  `protobuf:"varint,3,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,4,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DataMessage) GetReaction() *Reaction {
-	if x != nil {
-		return x.Reaction
-	}
-	return nil
-}
-
-func (x *DataMessage) GetLocation() *Location {
-	if x != nil {
-		return x.Location
-	}
-	return nil
-}
-
-func (x *DataMessage) GetPollCreate() *PollCreate {
-	if x != nil {
-		return x.PollCreate
-	}
-	return nil
-}
-
-func (x *DataMessage) GetPollVote() *PollVote {
-	if x != nil {
-		return x.PollVote
-	}
-	return nil
-}
-
-func (x *DataMessage) GetPollTerminate() *PollTerminate {
-	if x != nil {
-		return x.PollTerminate
-	}
-	return nil
-}
-
-type PollCreate struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Question           string                 `protobuf:"bytes,1,opt,name=question,proto3" json:"question,omitempty"`
-	Options            []string               `protobuf:"bytes,2,rep,name=options,proto3" json:"options,omitempty"`
-	AllowMultipleVotes bool                   `protobuf:"varint,3,opt,name=allow_multiple_votes,json=allowMultipleVotes,proto3" json:"allow_multiple_votes,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *PollCreate) Reset() {
-	*x = PollCreate{}
-	mi := &file_proto_message_proto_msgTypes[2]
+func (x *ImageContent) Reset() {
+	*x = ImageContent{}
+	mi := &file_message_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PollCreate) String() string {
+func (x *ImageContent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PollCreate) ProtoMessage() {}
+func (*ImageContent) ProtoMessage() {}
 
-func (x *PollCreate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[2]
+func (x *ImageContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,122 +216,63 @@ func (x *PollCreate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PollCreate.ProtoReflect.Descriptor instead.
-func (*PollCreate) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use ImageContent.ProtoReflect.Descriptor instead.
+func (*ImageContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PollCreate) GetQuestion() string {
+func (x *ImageContent) GetUrl() string {
 	if x != nil {
-		return x.Question
+		return x.Url
 	}
 	return ""
 }
 
-func (x *PollCreate) GetOptions() []string {
+func (x *ImageContent) GetThumbnail() string {
 	if x != nil {
-		return x.Options
-	}
-	return nil
-}
-
-func (x *PollCreate) GetAllowMultipleVotes() bool {
-	if x != nil {
-		return x.AllowMultipleVotes
-	}
-	return false
-}
-
-type PollVote struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	TargetAuthorAci     string                 `protobuf:"bytes,1,opt,name=target_author_aci,json=targetAuthorAci,proto3" json:"target_author_aci,omitempty"`
-	TargetSentTimestamp uint64                 `protobuf:"varint,2,opt,name=target_sent_timestamp,json=targetSentTimestamp,proto3" json:"target_sent_timestamp,omitempty"`
-	OptionIndexes       []uint32               `protobuf:"varint,3,rep,packed,name=option_indexes,json=optionIndexes,proto3" json:"option_indexes,omitempty"`
-	VoteCount           uint32                 `protobuf:"varint,4,opt,name=vote_count,json=voteCount,proto3" json:"vote_count,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *PollVote) Reset() {
-	*x = PollVote{}
-	mi := &file_proto_message_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PollVote) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PollVote) ProtoMessage() {}
-
-func (x *PollVote) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PollVote.ProtoReflect.Descriptor instead.
-func (*PollVote) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *PollVote) GetTargetAuthorAci() string {
-	if x != nil {
-		return x.TargetAuthorAci
+		return x.Thumbnail
 	}
 	return ""
 }
 
-func (x *PollVote) GetTargetSentTimestamp() uint64 {
+func (x *ImageContent) GetWidth() int32 {
 	if x != nil {
-		return x.TargetSentTimestamp
+		return x.Width
 	}
 	return 0
 }
 
-func (x *PollVote) GetOptionIndexes() []uint32 {
+func (x *ImageContent) GetHeight() int32 {
 	if x != nil {
-		return x.OptionIndexes
-	}
-	return nil
-}
-
-func (x *PollVote) GetVoteCount() uint32 {
-	if x != nil {
-		return x.VoteCount
+		return x.Height
 	}
 	return 0
 }
 
-type PollTerminate struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	TargetSentTimestamp uint64                 `protobuf:"varint,1,opt,name=target_sent_timestamp,json=targetSentTimestamp,proto3" json:"target_sent_timestamp,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+type VideoContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Thumbnail     string                 `protobuf:"bytes,2,opt,name=thumbnail,proto3" json:"thumbnail,omitempty"`
+	Duration      int64                  `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PollTerminate) Reset() {
-	*x = PollTerminate{}
-	mi := &file_proto_message_proto_msgTypes[4]
+func (x *VideoContent) Reset() {
+	*x = VideoContent{}
+	mi := &file_message_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PollTerminate) String() string {
+func (x *VideoContent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PollTerminate) ProtoMessage() {}
+func (*VideoContent) ProtoMessage() {}
 
-func (x *PollTerminate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[4]
+func (x *VideoContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -534,45 +283,108 @@ func (x *PollTerminate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PollTerminate.ProtoReflect.Descriptor instead.
-func (*PollTerminate) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use VideoContent.ProtoReflect.Descriptor instead.
+func (*VideoContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PollTerminate) GetTargetSentTimestamp() uint64 {
+func (x *VideoContent) GetUrl() string {
 	if x != nil {
-		return x.TargetSentTimestamp
+		return x.Url
+	}
+	return ""
+}
+
+func (x *VideoContent) GetThumbnail() string {
+	if x != nil {
+		return x.Thumbnail
+	}
+	return ""
+}
+
+func (x *VideoContent) GetDuration() int64 {
+	if x != nil {
+		return x.Duration
 	}
 	return 0
 }
 
-type AttachmentPointer struct {
+type AudioContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Duration      int64                  `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AudioContent) Reset() {
+	*x = AudioContent{}
+	mi := &file_message_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AudioContent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AudioContent) ProtoMessage() {}
+
+func (x *AudioContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AudioContent.ProtoReflect.Descriptor instead.
+func (*AudioContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AudioContent) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *AudioContent) GetDuration() int64 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
+type PollOption struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Key           []byte                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Iv            []byte                 `protobuf:"bytes,3,opt,name=iv,proto3" json:"iv,omitempty"`
-	Digest        []byte                 `protobuf:"bytes,4,opt,name=digest,proto3" json:"digest,omitempty"`
-	FileName      string                 `protobuf:"bytes,5,opt,name=fileName,proto3" json:"fileName,omitempty"`
-	Size          uint32                 `protobuf:"varint,6,opt,name=size,proto3" json:"size,omitempty"`
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	Votes         int32                  `protobuf:"varint,3,opt,name=votes,proto3" json:"votes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AttachmentPointer) Reset() {
-	*x = AttachmentPointer{}
-	mi := &file_proto_message_proto_msgTypes[5]
+func (x *PollOption) Reset() {
+	*x = PollOption{}
+	mi := &file_message_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AttachmentPointer) String() string {
+func (x *PollOption) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AttachmentPointer) ProtoMessage() {}
+func (*PollOption) ProtoMessage() {}
 
-func (x *AttachmentPointer) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[5]
+func (x *PollOption) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -583,78 +395,56 @@ func (x *AttachmentPointer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AttachmentPointer.ProtoReflect.Descriptor instead.
-func (*AttachmentPointer) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use PollOption.ProtoReflect.Descriptor instead.
+func (*PollOption) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *AttachmentPointer) GetId() string {
+func (x *PollOption) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *AttachmentPointer) GetKey() []byte {
+func (x *PollOption) GetText() string {
 	if x != nil {
-		return x.Key
-	}
-	return nil
-}
-
-func (x *AttachmentPointer) GetIv() []byte {
-	if x != nil {
-		return x.Iv
-	}
-	return nil
-}
-
-func (x *AttachmentPointer) GetDigest() []byte {
-	if x != nil {
-		return x.Digest
-	}
-	return nil
-}
-
-func (x *AttachmentPointer) GetFileName() string {
-	if x != nil {
-		return x.FileName
+		return x.Text
 	}
 	return ""
 }
 
-func (x *AttachmentPointer) GetSize() uint32 {
+func (x *PollOption) GetVotes() int32 {
 	if x != nil {
-		return x.Size
+		return x.Votes
 	}
 	return 0
 }
 
-type Reaction struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Emoji           string                 `protobuf:"bytes,1,opt,name=emoji,proto3" json:"emoji,omitempty"`
-	Remove          bool                   `protobuf:"varint,2,opt,name=remove,proto3" json:"remove,omitempty"`
-	TargetAuthorAci string                 `protobuf:"bytes,3,opt,name=targetAuthorAci,proto3" json:"targetAuthorAci,omitempty"`
-	TargetTimestamp uint64                 `protobuf:"varint,4,opt,name=targetTimestamp,proto3" json:"targetTimestamp,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+type PollContent struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Question       string                 `protobuf:"bytes,1,opt,name=question,proto3" json:"question,omitempty"`
+	Options        []*PollOption          `protobuf:"bytes,2,rep,name=options,proto3" json:"options,omitempty"`
+	MultipleChoice bool                   `protobuf:"varint,3,opt,name=multipleChoice,proto3" json:"multipleChoice,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *Reaction) Reset() {
-	*x = Reaction{}
-	mi := &file_proto_message_proto_msgTypes[6]
+func (x *PollContent) Reset() {
+	*x = PollContent{}
+	mi := &file_message_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Reaction) String() string {
+func (x *PollContent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Reaction) ProtoMessage() {}
+func (*PollContent) ProtoMessage() {}
 
-func (x *Reaction) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[6]
+func (x *PollContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,63 +455,175 @@ func (x *Reaction) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Reaction.ProtoReflect.Descriptor instead.
-func (*Reaction) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use PollContent.ProtoReflect.Descriptor instead.
+func (*PollContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Reaction) GetEmoji() string {
+func (x *PollContent) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *PollContent) GetOptions() []*PollOption {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *PollContent) GetMultipleChoice() bool {
+	if x != nil {
+		return x.MultipleChoice
+	}
+	return false
+}
+
+type ReplyContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessageId     string                 `protobuf:"bytes,1,opt,name=messageId,proto3" json:"messageId,omitempty"`
+	PreviewText   string                 `protobuf:"bytes,2,opt,name=previewText,proto3" json:"previewText,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplyContent) Reset() {
+	*x = ReplyContent{}
+	mi := &file_message_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplyContent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplyContent) ProtoMessage() {}
+
+func (x *ReplyContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplyContent.ProtoReflect.Descriptor instead.
+func (*ReplyContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ReplyContent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ReplyContent) GetPreviewText() string {
+	if x != nil {
+		return x.PreviewText
+	}
+	return ""
+}
+
+type ReactionContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessageId     string                 `protobuf:"bytes,1,opt,name=messageId,proto3" json:"messageId,omitempty"`
+	Emoji         string                 `protobuf:"bytes,2,opt,name=emoji,proto3" json:"emoji,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReactionContent) Reset() {
+	*x = ReactionContent{}
+	mi := &file_message_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReactionContent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReactionContent) ProtoMessage() {}
+
+func (x *ReactionContent) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReactionContent.ProtoReflect.Descriptor instead.
+func (*ReactionContent) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ReactionContent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ReactionContent) GetEmoji() string {
 	if x != nil {
 		return x.Emoji
 	}
 	return ""
 }
 
-func (x *Reaction) GetRemove() bool {
-	if x != nil {
-		return x.Remove
-	}
-	return false
-}
-
-func (x *Reaction) GetTargetAuthorAci() string {
-	if x != nil {
-		return x.TargetAuthorAci
-	}
-	return ""
-}
-
-func (x *Reaction) GetTargetTimestamp() uint64 {
-	if x != nil {
-		return x.TargetTimestamp
-	}
-	return 0
-}
-
-type Location struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Latitude      float64                `protobuf:"fixed64,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
-	Longitude     float64                `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
-	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+type Message struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ConversationId string                 `protobuf:"bytes,2,opt,name=conversationId,proto3" json:"conversationId,omitempty"`
+	SenderId       string                 `protobuf:"bytes,3,opt,name=senderId,proto3" json:"senderId,omitempty"`
+	ReceiverId     string                 `protobuf:"bytes,4,opt,name=receiverId,proto3" json:"receiverId,omitempty"`
+	Type           MessageType            `protobuf:"varint,5,opt,name=type,proto3,enum=messaging.MessageType" json:"type,omitempty"`
+	Timestamp      int64                  `protobuf:"varint,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	UpdatedAt      int64                  `protobuf:"varint,7,opt,name=updatedAt,proto3" json:"updatedAt,omitempty"`
+	Status         MessageStatus          `protobuf:"varint,8,opt,name=status,proto3,enum=messaging.MessageStatus" json:"status,omitempty"`
+	// Types that are valid to be assigned to Content:
+	//
+	//	*Message_Text
+	//	*Message_Image
+	//	*Message_Video
+	//	*Message_Audio
+	//	*Message_Poll
+	//	*Message_Reply
+	//	*Message_Reaction
+	Content       isMessage_Content `protobuf_oneof:"content"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Location) Reset() {
-	*x = Location{}
-	mi := &file_proto_message_proto_msgTypes[7]
+func (x *Message) Reset() {
+	*x = Message{}
+	mi := &file_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Location) String() string {
+func (x *Message) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Location) ProtoMessage() {}
+func (*Message) ProtoMessage() {}
 
-func (x *Location) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[7]
+func (x *Message) ProtoReflect() protoreflect.Message {
+	mi := &file_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,406 +634,328 @@ func (x *Location) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Location.ProtoReflect.Descriptor instead.
-func (*Location) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
+	return file_message_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Location) GetLatitude() float64 {
+func (x *Message) GetId() string {
 	if x != nil {
-		return x.Latitude
-	}
-	return 0
-}
-
-func (x *Location) GetLongitude() float64 {
-	if x != nil {
-		return x.Longitude
-	}
-	return 0
-}
-
-func (x *Location) GetAddress() string {
-	if x != nil {
-		return x.Address
+		return x.Id
 	}
 	return ""
 }
 
-// ReceiptMessage para confirmações de entrega/leitura
-type ReceiptMessage struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Type          ReceiptMessage_ReceiptType `protobuf:"varint,1,opt,name=type,proto3,enum=sigmapb.ReceiptMessage_ReceiptType" json:"type,omitempty"`
-	MessageId     string                     `protobuf:"bytes,2,opt,name=messageId,proto3" json:"messageId,omitempty"`        // UUID da mensagem sendo confirmada
-	SenderId      string                     `protobuf:"bytes,3,opt,name=senderId,proto3" json:"senderId,omitempty"`          // UUID de quem enviou a mensagem original
-	Timestamp     uint64                     `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`       // Timestamp quando foi confirmado
-	MessageCount  uint32                     `protobuf:"varint,5,opt,name=messageCount,proto3" json:"messageCount,omitempty"` // Quantas mensagens confirmadas
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReceiptMessage) Reset() {
-	*x = ReceiptMessage{}
-	mi := &file_proto_message_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReceiptMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReceiptMessage) ProtoMessage() {}
-
-func (x *ReceiptMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[8]
+func (x *Message) GetConversationId() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReceiptMessage.ProtoReflect.Descriptor instead.
-func (*ReceiptMessage) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *ReceiptMessage) GetType() ReceiptMessage_ReceiptType {
-	if x != nil {
-		return x.Type
-	}
-	return ReceiptMessage_UNKNOWN
-}
-
-func (x *ReceiptMessage) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
+		return x.ConversationId
 	}
 	return ""
 }
 
-func (x *ReceiptMessage) GetSenderId() string {
+func (x *Message) GetSenderId() string {
 	if x != nil {
 		return x.SenderId
 	}
 	return ""
 }
 
-func (x *ReceiptMessage) GetTimestamp() uint64 {
+func (x *Message) GetReceiverId() string {
 	if x != nil {
-		return x.Timestamp
+		return x.ReceiverId
 	}
-	return 0
+	return ""
 }
 
-func (x *ReceiptMessage) GetMessageCount() uint32 {
-	if x != nil {
-		return x.MessageCount
-	}
-	return 0
-}
-
-// TypingMessage para indicadores de digitação
-type TypingMessage struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	State         TypingMessage_TypingState `protobuf:"varint,1,opt,name=state,proto3,enum=sigmapb.TypingMessage_TypingState" json:"state,omitempty"`
-	Timestamp     uint64                    `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TypingMessage) Reset() {
-	*x = TypingMessage{}
-	mi := &file_proto_message_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TypingMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TypingMessage) ProtoMessage() {}
-
-func (x *TypingMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TypingMessage.ProtoReflect.Descriptor instead.
-func (*TypingMessage) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *TypingMessage) GetState() TypingMessage_TypingState {
-	if x != nil {
-		return x.State
-	}
-	return TypingMessage_STARTED
-}
-
-func (x *TypingMessage) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-// SyncMessage para sincronização de status/eventos
-type SyncMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          SyncMessage_SyncType   `protobuf:"varint,1,opt,name=type,proto3,enum=sigmapb.SyncMessage_SyncType" json:"type,omitempty"`
-	MessageId     string                 `protobuf:"bytes,2,opt,name=messageId,proto3" json:"messageId,omitempty"`
-	Status        int32                  `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"` // 0=PENDING, 1=SENT, 2=DELIVERED, 3=READ, 4=FAILED
-	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
-	Timestamp     uint64                 `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	TargetIds     []string               `protobuf:"bytes,6,rep,name=targetIds,proto3" json:"targetIds,omitempty"` // Para sincronização em grupo
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SyncMessage) Reset() {
-	*x = SyncMessage{}
-	mi := &file_proto_message_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncMessage) ProtoMessage() {}
-
-func (x *SyncMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_message_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncMessage.ProtoReflect.Descriptor instead.
-func (*SyncMessage) Descriptor() ([]byte, []int) {
-	return file_proto_message_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *SyncMessage) GetType() SyncMessage_SyncType {
+func (x *Message) GetType() MessageType {
 	if x != nil {
 		return x.Type
 	}
-	return SyncMessage_UNKNOWN
+	return MessageType_TEXT
 }
 
-func (x *SyncMessage) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
-func (x *SyncMessage) GetStatus() int32 {
-	if x != nil {
-		return x.Status
-	}
-	return 0
-}
-
-func (x *SyncMessage) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *SyncMessage) GetTimestamp() uint64 {
+func (x *Message) GetTimestamp() int64 {
 	if x != nil {
 		return x.Timestamp
 	}
 	return 0
 }
 
-func (x *SyncMessage) GetTargetIds() []string {
+func (x *Message) GetUpdatedAt() int64 {
 	if x != nil {
-		return x.TargetIds
+		return x.UpdatedAt
+	}
+	return 0
+}
+
+func (x *Message) GetStatus() MessageStatus {
+	if x != nil {
+		return x.Status
+	}
+	return MessageStatus_PENDING
+}
+
+func (x *Message) GetContent() isMessage_Content {
+	if x != nil {
+		return x.Content
 	}
 	return nil
 }
 
-var File_proto_message_proto protoreflect.FileDescriptor
+func (x *Message) GetText() *TextContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Text); ok {
+			return x.Text
+		}
+	}
+	return nil
+}
 
-const file_proto_message_proto_rawDesc = "" +
+func (x *Message) GetImage() *ImageContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Image); ok {
+			return x.Image
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetVideo() *VideoContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Video); ok {
+			return x.Video
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetAudio() *AudioContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Audio); ok {
+			return x.Audio
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetPoll() *PollContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Poll); ok {
+			return x.Poll
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetReply() *ReplyContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Reply); ok {
+			return x.Reply
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetReaction() *ReactionContent {
+	if x != nil {
+		if x, ok := x.Content.(*Message_Reaction); ok {
+			return x.Reaction
+		}
+	}
+	return nil
+}
+
+type isMessage_Content interface {
+	isMessage_Content()
+}
+
+type Message_Text struct {
+	Text *TextContent `protobuf:"bytes,9,opt,name=text,proto3,oneof"`
+}
+
+type Message_Image struct {
+	Image *ImageContent `protobuf:"bytes,10,opt,name=image,proto3,oneof"`
+}
+
+type Message_Video struct {
+	Video *VideoContent `protobuf:"bytes,11,opt,name=video,proto3,oneof"`
+}
+
+type Message_Audio struct {
+	Audio *AudioContent `protobuf:"bytes,12,opt,name=audio,proto3,oneof"`
+}
+
+type Message_Poll struct {
+	Poll *PollContent `protobuf:"bytes,13,opt,name=poll,proto3,oneof"`
+}
+
+type Message_Reply struct {
+	Reply *ReplyContent `protobuf:"bytes,14,opt,name=reply,proto3,oneof"`
+}
+
+type Message_Reaction struct {
+	Reaction *ReactionContent `protobuf:"bytes,15,opt,name=reaction,proto3,oneof"`
+}
+
+func (*Message_Text) isMessage_Content() {}
+
+func (*Message_Image) isMessage_Content() {}
+
+func (*Message_Video) isMessage_Content() {}
+
+func (*Message_Audio) isMessage_Content() {}
+
+func (*Message_Poll) isMessage_Content() {}
+
+func (*Message_Reply) isMessage_Content() {}
+
+func (*Message_Reaction) isMessage_Content() {}
+
+var File_message_proto protoreflect.FileDescriptor
+
+const file_message_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/message.proto\x12\asigmapb\"\xe1\x01\n" +
-	"\aContent\x128\n" +
-	"\vdataMessage\x18\x01 \x01(\v2\x14.sigmapb.DataMessageH\x00R\vdataMessage\x123\n" +
-	"\areceipt\x18\x02 \x01(\v2\x17.sigmapb.ReceiptMessageH\x00R\areceipt\x120\n" +
-	"\x06typing\x18\x03 \x01(\v2\x16.sigmapb.TypingMessageH\x00R\x06typing\x12*\n" +
-	"\x04sync\x18\x04 \x01(\v2\x14.sigmapb.SyncMessageH\x00R\x04syncB\t\n" +
-	"\acontent\"\xdd\x02\n" +
-	"\vDataMessage\x12\x12\n" +
-	"\x04body\x18\x01 \x01(\tR\x04body\x12:\n" +
+	"\rmessage.proto\x12\tmessaging\"!\n" +
+	"\vTextContent\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"l\n" +
+	"\fImageContent\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1c\n" +
+	"\tthumbnail\x18\x02 \x01(\tR\tthumbnail\x12\x14\n" +
+	"\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n" +
+	"\x06height\x18\x04 \x01(\x05R\x06height\"Z\n" +
+	"\fVideoContent\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1c\n" +
+	"\tthumbnail\x18\x02 \x01(\tR\tthumbnail\x12\x1a\n" +
+	"\bduration\x18\x03 \x01(\x03R\bduration\"<\n" +
+	"\fAudioContent\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1a\n" +
+	"\bduration\x18\x02 \x01(\x03R\bduration\"F\n" +
 	"\n" +
-	"attachment\x18\x02 \x01(\v2\x1a.sigmapb.AttachmentPointerR\n" +
-	"attachment\x12-\n" +
-	"\breaction\x18\x03 \x01(\v2\x11.sigmapb.ReactionR\breaction\x12-\n" +
-	"\blocation\x18\x04 \x01(\v2\x11.sigmapb.LocationR\blocation\x123\n" +
+	"PollOption\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\x12\x14\n" +
+	"\x05votes\x18\x03 \x01(\x05R\x05votes\"\x82\x01\n" +
+	"\vPollContent\x12\x1a\n" +
+	"\bquestion\x18\x01 \x01(\tR\bquestion\x12/\n" +
+	"\aoptions\x18\x02 \x03(\v2\x15.messaging.PollOptionR\aoptions\x12&\n" +
+	"\x0emultipleChoice\x18\x03 \x01(\bR\x0emultipleChoice\"N\n" +
+	"\fReplyContent\x12\x1c\n" +
+	"\tmessageId\x18\x01 \x01(\tR\tmessageId\x12 \n" +
+	"\vpreviewText\x18\x02 \x01(\tR\vpreviewText\"E\n" +
+	"\x0fReactionContent\x12\x1c\n" +
+	"\tmessageId\x18\x01 \x01(\tR\tmessageId\x12\x14\n" +
+	"\x05emoji\x18\x02 \x01(\tR\x05emoji\"\xfc\x04\n" +
+	"\aMessage\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
+	"\x0econversationId\x18\x02 \x01(\tR\x0econversationId\x12\x1a\n" +
+	"\bsenderId\x18\x03 \x01(\tR\bsenderId\x12\x1e\n" +
 	"\n" +
-	"pollCreate\x18\x05 \x01(\v2\x13.sigmapb.PollCreateR\n" +
-	"pollCreate\x12-\n" +
-	"\bpollVote\x18\x06 \x01(\v2\x11.sigmapb.PollVoteR\bpollVote\x12<\n" +
-	"\rpollTerminate\x18\a \x01(\v2\x16.sigmapb.PollTerminateR\rpollTerminate\"t\n" +
+	"receiverId\x18\x04 \x01(\tR\n" +
+	"receiverId\x12*\n" +
+	"\x04type\x18\x05 \x01(\x0e2\x16.messaging.MessageTypeR\x04type\x12\x1c\n" +
+	"\ttimestamp\x18\x06 \x01(\x03R\ttimestamp\x12\x1c\n" +
+	"\tupdatedAt\x18\a \x01(\x03R\tupdatedAt\x120\n" +
+	"\x06status\x18\b \x01(\x0e2\x18.messaging.MessageStatusR\x06status\x12,\n" +
+	"\x04text\x18\t \x01(\v2\x16.messaging.TextContentH\x00R\x04text\x12/\n" +
+	"\x05image\x18\n" +
+	" \x01(\v2\x17.messaging.ImageContentH\x00R\x05image\x12/\n" +
+	"\x05video\x18\v \x01(\v2\x17.messaging.VideoContentH\x00R\x05video\x12/\n" +
+	"\x05audio\x18\f \x01(\v2\x17.messaging.AudioContentH\x00R\x05audio\x12,\n" +
+	"\x04poll\x18\r \x01(\v2\x16.messaging.PollContentH\x00R\x04poll\x12/\n" +
+	"\x05reply\x18\x0e \x01(\v2\x17.messaging.ReplyContentH\x00R\x05reply\x128\n" +
+	"\breaction\x18\x0f \x01(\v2\x1a.messaging.ReactionContentH\x00R\breactionB\t\n" +
+	"\acontent*[\n" +
+	"\vMessageType\x12\b\n" +
+	"\x04TEXT\x10\x00\x12\t\n" +
+	"\x05IMAGE\x10\x01\x12\t\n" +
+	"\x05VIDEO\x10\x02\x12\t\n" +
+	"\x05AUDIO\x10\x03\x12\b\n" +
+	"\x04POLL\x10\x04\x12\t\n" +
+	"\x05REPLY\x10\x05\x12\f\n" +
+	"\bREACTION\x10\x06*K\n" +
+	"\rMessageStatus\x12\v\n" +
+	"\aPENDING\x10\x00\x12\b\n" +
+	"\x04SENT\x10\x01\x12\r\n" +
+	"\tDELIVERED\x10\x02\x12\b\n" +
+	"\x04READ\x10\x03\x12\n" +
 	"\n" +
-	"PollCreate\x12\x1a\n" +
-	"\bquestion\x18\x01 \x01(\tR\bquestion\x12\x18\n" +
-	"\aoptions\x18\x02 \x03(\tR\aoptions\x120\n" +
-	"\x14allow_multiple_votes\x18\x03 \x01(\bR\x12allowMultipleVotes\"\xb0\x01\n" +
-	"\bPollVote\x12*\n" +
-	"\x11target_author_aci\x18\x01 \x01(\tR\x0ftargetAuthorAci\x122\n" +
-	"\x15target_sent_timestamp\x18\x02 \x01(\x04R\x13targetSentTimestamp\x12%\n" +
-	"\x0eoption_indexes\x18\x03 \x03(\rR\roptionIndexes\x12\x1d\n" +
-	"\n" +
-	"vote_count\x18\x04 \x01(\rR\tvoteCount\"C\n" +
-	"\rPollTerminate\x122\n" +
-	"\x15target_sent_timestamp\x18\x01 \x01(\x04R\x13targetSentTimestamp\"\x8d\x01\n" +
-	"\x11AttachmentPointer\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\fR\x03key\x12\x0e\n" +
-	"\x02iv\x18\x03 \x01(\fR\x02iv\x12\x16\n" +
-	"\x06digest\x18\x04 \x01(\fR\x06digest\x12\x1a\n" +
-	"\bfileName\x18\x05 \x01(\tR\bfileName\x12\x12\n" +
-	"\x04size\x18\x06 \x01(\rR\x04size\"\x8c\x01\n" +
-	"\bReaction\x12\x14\n" +
-	"\x05emoji\x18\x01 \x01(\tR\x05emoji\x12\x16\n" +
-	"\x06remove\x18\x02 \x01(\bR\x06remove\x12(\n" +
-	"\x0ftargetAuthorAci\x18\x03 \x01(\tR\x0ftargetAuthorAci\x12(\n" +
-	"\x0ftargetTimestamp\x18\x04 \x01(\x04R\x0ftargetTimestamp\"^\n" +
-	"\bLocation\x12\x1a\n" +
-	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\x12\x18\n" +
-	"\aaddress\x18\x03 \x01(\tR\aaddress\"\xf9\x01\n" +
-	"\x0eReceiptMessage\x127\n" +
-	"\x04type\x18\x01 \x01(\x0e2#.sigmapb.ReceiptMessage.ReceiptTypeR\x04type\x12\x1c\n" +
-	"\tmessageId\x18\x02 \x01(\tR\tmessageId\x12\x1a\n" +
-	"\bsenderId\x18\x03 \x01(\tR\bsenderId\x12\x1c\n" +
-	"\ttimestamp\x18\x04 \x01(\x04R\ttimestamp\x12\"\n" +
-	"\fmessageCount\x18\x05 \x01(\rR\fmessageCount\"2\n" +
-	"\vReceiptType\x12\v\n" +
-	"\aUNKNOWN\x10\x00\x12\f\n" +
-	"\bDELIVERY\x10\x01\x12\b\n" +
-	"\x04READ\x10\x02\"\x90\x01\n" +
-	"\rTypingMessage\x128\n" +
-	"\x05state\x18\x01 \x01(\x0e2\".sigmapb.TypingMessage.TypingStateR\x05state\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x04R\ttimestamp\"'\n" +
-	"\vTypingState\x12\v\n" +
-	"\aSTARTED\x10\x00\x12\v\n" +
-	"\aSTOPPED\x10\x01\"\xa3\x02\n" +
-	"\vSyncMessage\x121\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1d.sigmapb.SyncMessage.SyncTypeR\x04type\x12\x1c\n" +
-	"\tmessageId\x18\x02 \x01(\tR\tmessageId\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\x12\x1c\n" +
-	"\ttimestamp\x18\x05 \x01(\x04R\ttimestamp\x12\x1c\n" +
-	"\ttargetIds\x18\x06 \x03(\tR\ttargetIds\"Y\n" +
-	"\bSyncType\x12\v\n" +
-	"\aUNKNOWN\x10\x00\x12\x19\n" +
-	"\x15MESSAGE_STATUS_UPDATE\x10\x01\x12\x11\n" +
-	"\rTHREAD_UPDATE\x10\x02\x12\x12\n" +
-	"\x0eCONTACT_UPDATE\x10\x03B\x1cZ\x1asigma-server/proto;sigmapbb\x06proto3"
+	"\x06FAILED\x10\x04B\x1cZ\x1asigma-server/proto;sigmapbb\x06proto3"
 
 var (
-	file_proto_message_proto_rawDescOnce sync.Once
-	file_proto_message_proto_rawDescData []byte
+	file_message_proto_rawDescOnce sync.Once
+	file_message_proto_rawDescData []byte
 )
 
-func file_proto_message_proto_rawDescGZIP() []byte {
-	file_proto_message_proto_rawDescOnce.Do(func() {
-		file_proto_message_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_message_proto_rawDesc), len(file_proto_message_proto_rawDesc)))
+func file_message_proto_rawDescGZIP() []byte {
+	file_message_proto_rawDescOnce.Do(func() {
+		file_message_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_message_proto_rawDesc), len(file_message_proto_rawDesc)))
 	})
-	return file_proto_message_proto_rawDescData
+	return file_message_proto_rawDescData
 }
 
-var file_proto_message_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_message_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
-var file_proto_message_proto_goTypes = []any{
-	(ReceiptMessage_ReceiptType)(0), // 0: sigmapb.ReceiptMessage.ReceiptType
-	(TypingMessage_TypingState)(0),  // 1: sigmapb.TypingMessage.TypingState
-	(SyncMessage_SyncType)(0),       // 2: sigmapb.SyncMessage.SyncType
-	(*Content)(nil),                 // 3: sigmapb.Content
-	(*DataMessage)(nil),             // 4: sigmapb.DataMessage
-	(*PollCreate)(nil),              // 5: sigmapb.PollCreate
-	(*PollVote)(nil),                // 6: sigmapb.PollVote
-	(*PollTerminate)(nil),           // 7: sigmapb.PollTerminate
-	(*AttachmentPointer)(nil),       // 8: sigmapb.AttachmentPointer
-	(*Reaction)(nil),                // 9: sigmapb.Reaction
-	(*Location)(nil),                // 10: sigmapb.Location
-	(*ReceiptMessage)(nil),          // 11: sigmapb.ReceiptMessage
-	(*TypingMessage)(nil),           // 12: sigmapb.TypingMessage
-	(*SyncMessage)(nil),             // 13: sigmapb.SyncMessage
+var file_message_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_message_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_message_proto_goTypes = []any{
+	(MessageType)(0),        // 0: messaging.MessageType
+	(MessageStatus)(0),      // 1: messaging.MessageStatus
+	(*TextContent)(nil),     // 2: messaging.TextContent
+	(*ImageContent)(nil),    // 3: messaging.ImageContent
+	(*VideoContent)(nil),    // 4: messaging.VideoContent
+	(*AudioContent)(nil),    // 5: messaging.AudioContent
+	(*PollOption)(nil),      // 6: messaging.PollOption
+	(*PollContent)(nil),     // 7: messaging.PollContent
+	(*ReplyContent)(nil),    // 8: messaging.ReplyContent
+	(*ReactionContent)(nil), // 9: messaging.ReactionContent
+	(*Message)(nil),         // 10: messaging.Message
 }
-var file_proto_message_proto_depIdxs = []int32{
-	4,  // 0: sigmapb.Content.dataMessage:type_name -> sigmapb.DataMessage
-	11, // 1: sigmapb.Content.receipt:type_name -> sigmapb.ReceiptMessage
-	12, // 2: sigmapb.Content.typing:type_name -> sigmapb.TypingMessage
-	13, // 3: sigmapb.Content.sync:type_name -> sigmapb.SyncMessage
-	8,  // 4: sigmapb.DataMessage.attachment:type_name -> sigmapb.AttachmentPointer
-	9,  // 5: sigmapb.DataMessage.reaction:type_name -> sigmapb.Reaction
-	10, // 6: sigmapb.DataMessage.location:type_name -> sigmapb.Location
-	5,  // 7: sigmapb.DataMessage.pollCreate:type_name -> sigmapb.PollCreate
-	6,  // 8: sigmapb.DataMessage.pollVote:type_name -> sigmapb.PollVote
-	7,  // 9: sigmapb.DataMessage.pollTerminate:type_name -> sigmapb.PollTerminate
-	0,  // 10: sigmapb.ReceiptMessage.type:type_name -> sigmapb.ReceiptMessage.ReceiptType
-	1,  // 11: sigmapb.TypingMessage.state:type_name -> sigmapb.TypingMessage.TypingState
-	2,  // 12: sigmapb.SyncMessage.type:type_name -> sigmapb.SyncMessage.SyncType
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+var file_message_proto_depIdxs = []int32{
+	6,  // 0: messaging.PollContent.options:type_name -> messaging.PollOption
+	0,  // 1: messaging.Message.type:type_name -> messaging.MessageType
+	1,  // 2: messaging.Message.status:type_name -> messaging.MessageStatus
+	2,  // 3: messaging.Message.text:type_name -> messaging.TextContent
+	3,  // 4: messaging.Message.image:type_name -> messaging.ImageContent
+	4,  // 5: messaging.Message.video:type_name -> messaging.VideoContent
+	5,  // 6: messaging.Message.audio:type_name -> messaging.AudioContent
+	7,  // 7: messaging.Message.poll:type_name -> messaging.PollContent
+	8,  // 8: messaging.Message.reply:type_name -> messaging.ReplyContent
+	9,  // 9: messaging.Message.reaction:type_name -> messaging.ReactionContent
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
-func init() { file_proto_message_proto_init() }
-func file_proto_message_proto_init() {
-	if File_proto_message_proto != nil {
+func init() { file_message_proto_init() }
+func file_message_proto_init() {
+	if File_message_proto != nil {
 		return
 	}
-	file_proto_message_proto_msgTypes[0].OneofWrappers = []any{
-		(*Content_DataMessage)(nil),
-		(*Content_Receipt)(nil),
-		(*Content_Typing)(nil),
-		(*Content_Sync)(nil),
+	file_message_proto_msgTypes[8].OneofWrappers = []any{
+		(*Message_Text)(nil),
+		(*Message_Image)(nil),
+		(*Message_Video)(nil),
+		(*Message_Audio)(nil),
+		(*Message_Poll)(nil),
+		(*Message_Reply)(nil),
+		(*Message_Reaction)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_message_proto_rawDesc), len(file_proto_message_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   11,
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_message_proto_rawDesc), len(file_message_proto_rawDesc)),
+			NumEnums:      2,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_proto_message_proto_goTypes,
-		DependencyIndexes: file_proto_message_proto_depIdxs,
-		EnumInfos:         file_proto_message_proto_enumTypes,
-		MessageInfos:      file_proto_message_proto_msgTypes,
+		GoTypes:           file_message_proto_goTypes,
+		DependencyIndexes: file_message_proto_depIdxs,
+		EnumInfos:         file_message_proto_enumTypes,
+		MessageInfos:      file_message_proto_msgTypes,
 	}.Build()
-	File_proto_message_proto = out.File
-	file_proto_message_proto_goTypes = nil
-	file_proto_message_proto_depIdxs = nil
+	File_message_proto = out.File
+	file_message_proto_goTypes = nil
+	file_message_proto_depIdxs = nil
 }

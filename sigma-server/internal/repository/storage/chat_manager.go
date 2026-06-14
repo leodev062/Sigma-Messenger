@@ -60,8 +60,12 @@ func (m *ChatManager) Create(room *entities.Account, ownerID uuid.UUID) error {
 		if err := tx.Create(room).Error; err != nil {
 			return err
 		}
+		uid, err := uuid.Parse(room.ID)
+		if err != nil {
+			return err
+		}
 		membership := &entities.Membership{
-			ChatID: room.ID,
+			ChatID: uid,
 			UserID: ownerID,
 			Role:   "owner",
 		}

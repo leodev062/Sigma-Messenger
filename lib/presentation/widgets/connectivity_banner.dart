@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sigma_core/sigma_core.dart';
 
 /// Um banner global que aparece quando o dispositivo está offline.

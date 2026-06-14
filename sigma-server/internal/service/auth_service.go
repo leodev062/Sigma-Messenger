@@ -22,13 +22,14 @@ type DeviceInfo struct {
 
 type AuthService struct {
 	accounts      *storage.AccountManager
+	users         *storage.UserManager
 	devices       *storage.DeviceSessionManager
 	jwtGenerator  *auth.JwtGenerator
 	phoneVerifier *auth.PhoneVerificationManager
 }
 
-func NewAuthService(accounts *storage.AccountManager, devices *storage.DeviceSessionManager, jwtGenerator *auth.JwtGenerator, phoneVerifier *auth.PhoneVerificationManager) *AuthService {
-	return &AuthService{accounts: accounts, devices: devices, jwtGenerator: jwtGenerator, phoneVerifier: phoneVerifier}
+func NewAuthService(accounts *storage.AccountManager, users *storage.UserManager, devices *storage.DeviceSessionManager, jwtGenerator *auth.JwtGenerator, phoneVerifier *auth.PhoneVerificationManager) *AuthService {
+	return &AuthService{accounts: accounts, users: users, devices: devices, jwtGenerator: jwtGenerator, phoneVerifier: phoneVerifier}
 }
 
 func (s *AuthService) RequestCode(phone string) error {
@@ -40,13 +41,25 @@ func (s *AuthService) Login(req dto.LoginRequest, ip string) (*dto.LoginResponse
 		return nil, errors.New("invalid verification code")
 	}
 
-	account, err := s.accounts.FindByPhone(req.Phone)
+	user, err := s.users.FindByPhone(req.Phone)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			account = &entities.Account{
-				Phone:       &req.Phone,
-				DisplayName: &req.Phone,
-				Type:        "individual",
+			// Auto-registration on Login
+			userID := uuid.New().String()
+			user = &entities.User{
+				ID:        userID,
+				Phone:     req.Phone,
+				CreatedAt: time.Now().Unix(),
+				UpdatedAt: time.Now().Unix(),
+			}
+			if err := s.users.Create(user); err != nil {
+				return nil, err
+			}
+
+			account := &entities.Account{
+				ID:        uuid.New().String(),
+				UserID:    userID,
+				CreatedAt: time.Now().Unix(),
 			}
 			if err := s.accounts.Create(account); err != nil {
 				return nil, err
@@ -56,24 +69,25 @@ func (s *AuthService) Login(req dto.LoginRequest, ip string) (*dto.LoginResponse
 		}
 	}
 
-	token, err := s.jwtGenerator.GenerateToken(account.ID.String(), 30*24*time.Hour)
+	token, err := s.jwtGenerator.GenerateToken(user.ID, 30*24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
 
-	// Register/Update device session (Professional Algorithm)
+	// Register/Update device session
 	if req.DeviceID != "" {
-		session := &entities.UserDeviceSession{
-			UserID:        account.ID,
-			DeviceID:      req.DeviceID,
-			DeviceName:    req.DeviceName,
-			Platform:      req.Platform,
-			ClientVersion: req.ClientVersion,
-			IPAddress:     ip,
-			LastActiveAt:  time.Now(),
+		device := &entities.Device{
+			ID:         req.DeviceID,
+			UserID:     user.ID,
+			DeviceName: req.DeviceName,
+			DeviceType: req.Platform,
+			OS:         req.Platform,
+			LastSeen:   time.Now().Unix(),
+			IsActive:   true,
+			CreatedAt:  time.Now().Unix(),
 		}
-		_ = s.devices.Upsert(session)
+		_ = s.devices.Save(device)
 	}
 
-	return &dto.LoginResponse{Token: token, User: account}, nil
+	return &dto.LoginResponse{Token: token, User: user}, nil
 }

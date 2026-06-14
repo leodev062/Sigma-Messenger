@@ -7,17 +7,14 @@ import 'package:sigma_auth/sigma_auth.dart';
 class RegistrationRepositoryImpl implements IRegistrationRepository {
   final RegistrationRemoteDataSource _remoteDataSource;
   final SigmaStore _store;
-  final KeysService _keysService;
 
   static const String _flowStateKey = 'registration_flow_state';
 
   RegistrationRepositoryImpl({
     required RegistrationRemoteDataSource remoteDataSource,
     required SigmaStore store,
-    required KeysService keysService,
   })  : _remoteDataSource = remoteDataSource,
-        _store = store,
-        _keysService = keysService;
+        _store = store;
 
   @override
   Future<RegistrationSessionResponse?> createSession(String e164) async {
@@ -60,9 +57,6 @@ class RegistrationRepositoryImpl implements IRegistrationRepository {
     required String password,
     String deviceName = 'Mobile App',
   }) async {
-    // Geração de chaves robusta antes do registro
-    await _keysService.generateAndStoreKeys();
-
     final result = await _remoteDataSource.registerAccount(
       sessionId: sessionId,
       password: password,

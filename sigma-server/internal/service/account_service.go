@@ -73,6 +73,10 @@ func (s *AccountService) GetPreKeyBundle(userID uuid.UUID) ([]byte, error) {
 	return s.repo.FetchRawKeyBundle(userID)
 }
 
+func (s *AccountService) GetPreKeyCount(userID uuid.UUID) (int64, error) {
+	return s.repo.GetPreKeyCount(userID)
+}
+
 func (s *AccountService) UpdateFCMToken(userID uuid.UUID, token string) error {
 	account, err := s.repo.FindByID(userID)
 	if err != nil {

@@ -1,28 +1,27 @@
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
-import 'package:fixnum/fixnum.dart' as $fixnum;
+import 'package:fixnum/fixnum.dart' as fixnum;
 
-/// ReactionSendJob - Encapsula a lógica de envio de reações em background.
-/// Segue o padrão Command/Job do Signal Android para garantir resiliência.
-class ReactionSendJob extends Job with Loggable {
+/// ReactionSendJob - Encapsula a lógica de envio de reações estilo Relay.
+class ReactionSendJob extends core.Job with Loggable {
   static const String KEY = 'reaction_send_job';
   final String messageId;
   final String emoji;
   final String recipientId;
   final SignalServiceMessageSender? messageSender;
-  final CryptoManager? cryptoManager;
 
   ReactionSendJob({
     required this.messageId,
     required this.emoji,
     required this.recipientId,
     this.messageSender,
-    this.cryptoManager,
-    super.databaseId,
+    int? databaseId,
   }) : super(
          factoryKey: KEY,
          queueKey: recipientId,
+         databaseId: databaseId,
        );
 
   @override
@@ -36,47 +35,42 @@ class ReactionSendJob extends Job with Loggable {
 
   @override
   Future<void> run() async {
-    logI("Enviando reação estilo Signal '$emoji' para a mensagem $messageId");
+    logI("Enviando reação Relay '$emoji' para a mensagem $messageId");
 
-    await cryptoManager!.init();
+    final relayMessage = sigmapb.Message()
+      ..id = "reaction_${DateTime.now().millisecondsSinceEpoch}"
+      ..conversationId = recipientId
+      ..senderId = "me"
+      ..receiverId = recipientId
+      ..type = sigmapb.MessageType.REACTION
+      ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch)
+      ..reaction = (sigmapb.ReactionContent()
+        ..messageId = messageId
+        ..emoji = emoji);
 
-    // No Signal original, construímos um DataMessage com o campo reaction (Tag 10)
-    final reaction = sigmapb.Reaction()
-      ..emoji = emoji
-      ..targetAuthorAci = recipientId // Simplificação: em 1:1 o autor original é o recipient
-      ..targetTimestamp = $fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
-
-    final content = sigmapb.Content()
-      ..dataMessage = (sigmapb.DataMessage()..reaction = reaction);
-
-    final encryptedEnvelope = await cryptoManager!.encryptMessage(
-      recipientId,
-      content,
-    );
-
-    messageSender!.sendEnvelope(recipientId, encryptedEnvelope);
+    messageSender!.sendUnencryptedEnvelope(recipientId, relayMessage);
     
-    logD("Reação encriptada enviada para $recipientId");
+    logD("Reação Relay enviada para $recipientId");
   }
 
   @override
   bool shouldRetry(Object error) {
-    return error.toString().contains("Socket") || error.toString().contains("Exception");
+    return error.toString().contains("Socket") ||
+        error.toString().contains("Exception");
   }
 
   @override
   void onRunError(Object error, StackTrace stackTrace) {
-    logE("Erro ao processar ReactionSendJob: $error");
+    logE("Erro ao processar ReactionSendJob Relay: $error");
   }
 
   /// Factory estático para o JobManager instanciar o trabalho a partir do banco.
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return ReactionSendJob(
       messageId: data['messageId'],
       emoji: data['emoji'],
       recipientId: data['recipientId'],
       messageSender: locator<SignalServiceMessageSender>(),
-      cryptoManager: locator<CryptoManager>(),
       databaseId: databaseId,
     );
   }

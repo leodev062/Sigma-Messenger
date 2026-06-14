@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import 'message_context_menu.dart';
 import 'package:sigma_settings/sigma_settings.dart';
+import 'package:sigma_profile/sigma_profile.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import '../pages/message_details_screen.dart';
@@ -14,10 +15,6 @@ import 'poll_component.dart';
 import '../pages/poll_votes_screen.dart';
 
 /// Signal-Style Bubble Tail Painter
-///
-/// Improvements:
-/// - tail with rounded connection (closer to native Signal)
-/// - subtle stroke to reduce visible seams
 class BubbleTailPainter extends CustomPainter {
   final Color color;
   final bool isMe;
@@ -45,9 +42,6 @@ class BubbleTailPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeJoin = StrokeJoin.round;
 
-    // Tail geometry
-    // Origin is top-left (or top-right depending on isMe). We draw a curved notch that
-    // better matches bubble radius continuity.
     final w = size.width;
     final h = size.height;
     final r = radius.clamp(0.0, (w / 2));
@@ -55,7 +49,6 @@ class BubbleTailPainter extends CustomPainter {
     final path = Path();
 
     if (isMe) {
-      // Attach on the bubble's top-right edge.
       path.moveTo(w, 0);
       path.lineTo(r, 0);
       path.quadraticBezierTo(0, 0, 0, r);
@@ -75,7 +68,6 @@ class BubbleTailPainter extends CustomPainter {
 
     canvas.drawPath(path, fillPaint);
 
-    // Outline to reduce seams against background.
     if (strokeColor != null) {
       canvas.drawPath(path, strokePaint);
     }
@@ -166,13 +158,14 @@ class _MessageBubbleState extends State<MessageBubble>
     super.build(context);
     final isMe = widget.item.message.isFromMe;
     final viewModel = context.read<ChatViewModel>();
+    final resolveProfile = context.read<ResolveProfileInteractor>();
 
     return RepaintBoundary(
       child: Selector<ChatViewModel, bool>(
         selector: (_, vm) =>
             vm.state.selectedMessageIds.contains(widget.item.message.id),
         builder: (context, isSelected, child) {
-          return InkWell(
+          final content = InkWell(
             onLongPress: () {
               HapticFeedback.mediumImpact();
               if (viewModel.state.isSelectionMode) {
@@ -196,46 +189,52 @@ class _MessageBubbleState extends State<MessageBubble>
                 top: widget.item.isFirstInGroup ? 4 : 1,
                 bottom: widget.item.isLastInGroup ? 4 : 1,
               ),
-              child: Row(
-                mainAxisAlignment: isMe
-                    ? MainAxisAlignment.end
-                    : MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (!isMe && widget.item.showAvatar) ...[
-                    AvatarImageView(
-                      recipient:
-                          widget.sender ??
-                          Recipient.createUnknown(
-                            widget.item.message.senderRecipientId,
-                          ),
-                      size: 28,
+              child: isMe
+                  ? _buildRow(context, null)
+                  : StreamBuilder<Recipient>(
+                      stream: resolveProfile.watch(widget.item.message.senderId),
+                      initialData: Recipient.createUnknown(widget.item.message.senderId),
+                      builder: (context, snapshot) => _buildRow(context, snapshot.data),
                     ),
-                    const SizedBox(width: 8),
-                  ] else if (!isMe && !widget.item.showAvatar) ...[
-                    const SizedBox(width: 36),
-                  ],
-                  Flexible(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        _buildBubbleContent(context),
-                        if (widget.item.message.reactions.isNotEmpty)
-                          Positioned(
-                            bottom: -10,
-                            right: isMe ? null : 0,
-                            left: isMe ? 0 : null,
-                            child: _buildReactionsDisplay(context),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ),
           );
+          return content;
         },
       ),
+    );
+  }
+
+  Widget _buildRow(BuildContext context, Recipient? sender) {
+    final isMe = widget.item.message.isFromMe;
+    return Row(
+      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (!isMe && widget.item.showAvatar) ...[
+          AvatarImageView(
+            recipient: sender ?? Recipient.createUnknown(widget.item.message.senderId),
+            size: 28,
+          ),
+          const SizedBox(width: 8),
+        ] else if (!isMe && !widget.item.showAvatar) ...[
+          const SizedBox(width: 36),
+        ],
+        Flexible(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _buildBubbleContent(context, sender),
+              if (widget.item.message.reactions.isNotEmpty)
+                Positioned(
+                  bottom: -10,
+                  right: isMe ? null : 0,
+                  left: isMe ? 0 : null,
+                  child: _buildReactionsDisplay(context),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -278,7 +277,7 @@ class _MessageBubbleState extends State<MessageBubble>
     );
   }
 
-  Widget _buildBubbleContent(BuildContext context) {
+  Widget _buildBubbleContent(BuildContext context, Recipient? sender) {
     final theme = Theme.of(context);
     final settings = context.watch<SettingsViewModel>();
     final isMe = widget.item.message.isFromMe;
@@ -313,7 +312,6 @@ class _MessageBubbleState extends State<MessageBubble>
                 color: bubbleColor,
                 isMe: isMe,
                 radius: 3.0,
-                // Outline to reduce seams against the parent background.
                 strokeColor: bubbleColor.withValues(alpha: 0.25),
                 strokeWidth: 0.8,
               ),
@@ -333,7 +331,7 @@ class _MessageBubbleState extends State<MessageBubble>
                 Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
-                    widget.sender?.computedDisplayName ?? "Unknown",
+                    sender?.computedDisplayName ?? "Carregando...",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -411,6 +409,8 @@ class _MessageBubbleState extends State<MessageBubble>
               ? Colors.white
               : SigmaColors.signalBlue,
         );
+      case MessageStatusEntity.failed:
+        return Icon(Icons.error_outline, size: 14, color: Colors.red);
     }
   }
 
@@ -564,7 +564,7 @@ class _PollMessageBody extends StatelessWidget {
           },
           onToggleVote: (option, checked) {
             if (checked) {
-              viewModel.voteInPoll(message.id, option.id);
+              viewModel.voteInPoll(message.id, option.id.toString());
             }
           },
         );

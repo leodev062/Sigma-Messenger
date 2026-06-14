@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -21,17 +20,17 @@ import (
 
 // ReceiptHandler interface para processar recibos de mensagens
 type ReceiptHandler interface {
-	HandleReceipt(ctx context.Context, receipt *sigmapb.ReceiptMessage, senderID string) error
+	HandleReceipt(ctx context.Context, receipt *sigmapb.Message, senderID string) error
 }
 
 // TypingHandler interface para processar indicadores de digitação
 type TypingHandler interface {
-	HandleTyping(ctx context.Context, typing *sigmapb.TypingMessage, senderID, recipientID string) error
+	HandleTyping(ctx context.Context, typing *sigmapb.Message, senderID, recipientID string) error
 }
 
 // SyncHandler interface para processar mensagens de sincronização
 type SyncHandler interface {
-	HandleSync(ctx context.Context, sync *sigmapb.SyncMessage, senderID string) error
+	HandleSync(ctx context.Context, sync *sigmapb.Message, senderID string) error
 }
 
 type route struct {
@@ -48,6 +47,7 @@ type Context struct {
 	UserID      string
 	PathParams  map[string]string
 	Messages    ports.PendingMessageStore
+	Envelopes   ports.EnvelopeStore
 	AccountKeys ports.AccountKeysReader
 }
 
@@ -55,6 +55,7 @@ type Context struct {
 type Router struct {
 	routes      []route
 	messages    ports.PendingMessageStore
+	envelopes   ports.EnvelopeStore
 	accountKeys ports.AccountKeysReader
 	receipts    ReceiptHandler
 	typing      TypingHandler
@@ -63,23 +64,20 @@ type Router struct {
 	logger      *log.Logger
 }
 
-func New(messages ports.PendingMessageStore, keys ports.AccountKeysReader, dispatcher ports.OutboundDispatcher, logger *log.Logger) *Router {
+func New(messages ports.PendingMessageStore, envelopes ports.EnvelopeStore, keys ports.AccountKeysReader, dispatcher ports.OutboundDispatcher, logger *log.Logger) *Router {
 	if logger == nil {
 		logger = log.Default()
 	}
 
 	rt := &Router{
 		messages:    messages,
+		envelopes:   envelopes,
 		accountKeys: keys,
 		dispatcher:  dispatcher,
 		logger:      logger,
 	}
 
 	rt.routes = []route{
-		// Keys
-		rt.route("GET", []string{"api", "v1", "accounts", "{id}", "keys"}, []bool{false, false, false, true, false}, rt.getKeys),
-		rt.route("GET", []string{"v1", "accounts", "{id}", "keys"}, []bool{false, false, true, false}, rt.getKeys),
-
 		// Message deletion
 		rt.route("DELETE", []string{"api", "v2", "message"}, nil, rt.deleteMessage),
 		rt.route("DELETE", []string{"v2", "message"}, nil, rt.deleteMessage),
@@ -128,6 +126,7 @@ func (rt *Router) Handle(session ports.OutboundSession, request *protocol.Reques
 		UserID:      session.UserID(),
 		PathParams:  params,
 		Messages:    rt.messages,
+		Envelopes:   rt.envelopes,
 		AccountKeys: rt.accountKeys,
 	}
 	return matched.handler(ctx)
@@ -177,18 +176,6 @@ func parsePath(raw string) string {
 	return strings.Trim(parsed.Path, "/")
 }
 
-func (rt *Router) getKeys(ctx *Context) ([]byte, int, error) {
-	id, err := uuid.Parse(ctx.PathParams["id"])
-	if err != nil {
-		return MarshalError(400, "invalid account id"), 400, nil
-	}
-	payload, err := ctx.AccountKeys.GetKeys(id)
-	if err != nil {
-		return MarshalError(404, "account not found"), 404, nil
-	}
-	return payload, http.StatusOK, nil
-}
-
 func (rt *Router) deleteMessage(ctx *Context) ([]byte, int, error) {
 	if ctx.Messages == nil {
 		return MarshalError(500, "message store is not configured"), 500, nil
@@ -210,16 +197,31 @@ func (rt *Router) deleteMessage(ctx *Context) ([]byte, int, error) {
 		return rt.deleteByID(ctx, requestID, recipientID)
 	}
 
-	if envelope.Type != sigmapb.Envelope_RECEIPT {
+	if envelope.Status != "receipt" {
 		return MarshalError(400, "invalid envelope type for deletion"), 400, nil
 	}
 
-	requestID := strings.TrimSpace(string(envelope.Content))
+	requestID := strings.TrimSpace(string(envelope.Payload))
 	return rt.deleteByID(ctx, requestID, recipientID)
 }
 
 func (rt *Router) deleteByID(ctx *Context, requestID string, recipientID uuid.UUID) ([]byte, int, error) {
-	// 1) tentar como uuid message_id
+	// 0) Tentar deletar do EnvelopeStore (Relay Engine)
+	if ctx.Envelopes != nil {
+		rows, err := ctx.Envelopes.DeleteByEnvelopeIDForRecipient(requestID, recipientID)
+		if err == nil && rows > 0 {
+			return marshalJSON(map[string]bool{"deleted": true})
+		}
+		// Tentar como ID sequencial
+		if pid, err := strconv.Atoi(requestID); err == nil {
+			rows, err2 := ctx.Envelopes.DeleteForRecipient(pid, recipientID)
+			if err2 == nil && rows > 0 {
+				return marshalJSON(map[string]bool{"deleted": true})
+			}
+		}
+	}
+
+	// 1) tentar como uuid message_id (Backward Compatibility)
 	if mid, err := uuid.Parse(requestID); err == nil {
 		rows, err2 := ctx.Messages.DeleteByMessageIDForRecipient(mid, recipientID)
 		if err2 != nil {
@@ -269,7 +271,7 @@ func (rt *Router) putReceipt(ctx *Context) ([]byte, int, error) {
 	}
 
 	// Desserializar ReceiptMessage do body
-	var receipt sigmapb.ReceiptMessage
+	var receipt sigmapb.Message
 	if err := proto.Unmarshal(ctx.Request.Body, &receipt); err != nil {
 		return MarshalError(400, fmt.Sprintf("invalid receipt payload: %v", err)), 400, nil
 	}
@@ -295,7 +297,7 @@ func (rt *Router) putTyping(ctx *Context) ([]byte, int, error) {
 	}
 
 	// Desserializar TypingMessage do body
-	var typing sigmapb.TypingMessage
+	var typing sigmapb.Message
 	if err := proto.Unmarshal(ctx.Request.Body, &typing); err != nil {
 		return MarshalError(400, fmt.Sprintf("invalid typing payload: %v", err)), 400, nil
 	}
@@ -316,7 +318,7 @@ func (rt *Router) putSync(ctx *Context) ([]byte, int, error) {
 	}
 
 	// Desserializar SyncMessage do body
-	var sync sigmapb.SyncMessage
+	var sync sigmapb.Message
 	if err := proto.Unmarshal(ctx.Request.Body, &sync); err != nil {
 		return MarshalError(400, fmt.Sprintf("invalid sync payload: %v", err)), 400, nil
 	}

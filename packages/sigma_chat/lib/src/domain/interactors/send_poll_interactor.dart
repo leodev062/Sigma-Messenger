@@ -6,7 +6,7 @@ class SendPollInteractor {
   SendPollInteractor(this._chatRepository);
 
   Future<void> execute({
-    required int threadId,
+    required String conversationId,
     required String chatId,
     required String senderId,
     required String question,

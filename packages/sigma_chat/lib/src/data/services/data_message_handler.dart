@@ -1,36 +1,33 @@
-import 'dart:convert';
 import 'package:sigma_core/sigma_core.dart';
 import 'message_handler.dart';
 import 'content/message_content_processor.dart';
+import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
-/// DataMessageHandler (Anteriormente TextMessageHandler)
-/// Refatorado para o padrão Strategy. Agora ele coordena os processadores de conteúdo.
+/// DataMessageHandler - Refatorado para o padrão Relay Protobuf (agente-server.md).
 class DataMessageHandler with Loggable implements MessageHandler {
-  final CryptoManager _cryptoManager;
   final List<MessageContentProcessor> _processors;
 
-  DataMessageHandler(this._cryptoManager, this._processors);
+  DataMessageHandler(this._processors);
 
   @override
   Future<void> handle(Envelope envelope) async {
-    final senderId = envelope.source;
-    final encryptedEnvelope = base64Encode(envelope.content);
-
-    logD("Recebida DataMessage de $senderId. Desencriptando...");
+    final senderId = envelope.from;
 
     try {
-      final payload = await _cryptoManager.decryptMessage(senderId, encryptedEnvelope);
-      final messageId = "msg_${envelope.timestamp}_${envelope.source}";
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final message = sigmapb.Message.fromBuffer(envelope.payload);
+      
+      final messageId = message.id.isNotEmpty ? message.id : "msg_\${envelope.createdAt}_\${envelope.from}";
+      final timestamp = message.timestamp > 0 ? message.timestamp.toInt() : DateTime.now().millisecondsSinceEpoch;
 
-      // Executa a estratégia correta baseada no conteúdo do payload
+      // Executa a estratégia correta baseada no conteúdo da Message
       bool processed = false;
+      
       for (final processor in _processors) {
-        if (processor.canProcess(payload)) {
+        if (processor.canProcess(message)) {
           await processor.process(
             messageId: messageId,
             senderId: senderId,
-            payload: payload,
+            payload: message,
             timestamp: timestamp,
           );
           processed = true;
@@ -39,11 +36,11 @@ class DataMessageHandler with Loggable implements MessageHandler {
       }
 
       if (!processed) {
-        logW("Nenhum processador encontrado para o payload de $senderId");
+        logW("Nenhum processador encontrado para o payload de \$senderId (content type: \${message.whichContent()})");
       }
       
-    } catch (e) {
-      logE("Falha ao processar DataMessage", e);
+    } catch (e, stack) {
+      logE("Falha ao processar Relay Message", e, stack);
       rethrow;
     }
   }

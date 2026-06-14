@@ -33,8 +33,10 @@ type Application struct {
 	DB     *gorm.DB
 
 	AccountManager         *storage.AccountManager
+	UserManager            *storage.UserManager
 	ChatManager            *storage.ChatManager
 	MessageManager         *storage.MessageManager
+	EnvelopeManager        *storage.EnvelopeManager
 	MessageReactionManager *storage.MessageReactionManager
 	PendingEventManager    *storage.PendingEventManager
 	DeviceSessionManager   *storage.DeviceSessionManager
@@ -79,8 +81,10 @@ func NewApplication(cfg *config.WhisperServerConfiguration) (*Application, error
 	}
 
 	app.AccountManager = storage.NewAccountManager(dbConn)
+	app.UserManager = storage.NewUserManager(dbConn)
 	app.ChatManager = storage.NewChatManager(dbConn)
 	app.MessageManager = storage.NewMessageManager(dbConn)
+	app.EnvelopeManager = storage.NewEnvelopeManager(dbConn)
 	app.MessageReactionManager = storage.NewMessageReactionManager(dbConn)
 	app.PendingEventManager = storage.NewPendingEventManager(dbConn)
 	app.DeviceSessionManager = storage.NewDeviceSessionManager(dbConn)
@@ -98,14 +102,15 @@ func NewApplication(cfg *config.WhisperServerConfiguration) (*Application, error
 		return nil, err
 	}
 
-	app.AuthService = services.NewAuthService(app.AccountManager, app.DeviceSessionManager, app.JWT, phoneVerificationManager)
+	app.AuthService = services.NewAuthService(app.AccountManager, app.UserManager, app.DeviceSessionManager, app.JWT, phoneVerificationManager)
 	app.AccountService = services.NewAccountService(app.AccountManager)
-	app.DirectoryService = services.NewDirectoryService(app.AccountManager)
-	app.ProfileService = services.NewProfileService(app.AccountManager)
+	app.DirectoryService = services.NewDirectoryService(app.UserManager)
+	app.ProfileService = services.NewProfileService(app.UserManager)
 	app.MessageReactionService = services.NewMessageReactionService(app.MessageReactionManager)
 	app.PaymentService = services.NewPaymentService(telephonyManager, cfg.Payment.MercadoPagoAccessToken)
 	app.RegistrationService = services.NewRegistrationService(
 		app.AccountManager,
+		app.UserManager,
 		app.MessageManager,
 		app.DeviceSessionManager,
 		app.RegistrationClient,
@@ -124,6 +129,7 @@ func NewApplication(cfg *config.WhisperServerConfiguration) (*Application, error
 		ServerConfig:        cfg.Server,
 		JWT:                 app.JWT,
 		MessageManager:      app.MessageManager,
+		EnvelopeManager:     app.EnvelopeManager,
 		PendingEventManager: app.PendingEventManager,
 		AccountService:      app.AccountService,
 		MessageDispatcher:   app.MessageDispatchService,
@@ -162,7 +168,7 @@ func (a *Application) wireRealtimeMessaging(wsHub *hub.Hub, pushManager *push.Pu
 	presenceService := delivery.NewPresenceService(wsHub)
 	messageDelivery := delivery.NewMessageDeliveryService(
 		presenceService,
-		a.MessageManager,
+		a.EnvelopeManager,
 		a.AccountManager,
 		pushManager,
 		log.Default(),

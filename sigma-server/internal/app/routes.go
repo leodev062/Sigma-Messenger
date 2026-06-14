@@ -60,6 +60,7 @@ func registerHTTPRoutes(a *Application) {
 
 	v2 := a.Echo.Group("/v2")
 	v2.PUT("/keys", keysController.PutKeys, jwtAuth)
+	v2.GET("/keys/count", keysController.GetPreKeyCount, jwtAuth)
 	v2.GET("/keys/:id", keysController.GetKeys)
 
 	v2.POST("/messages/:id/reactions", messageReactionController.Add, jwtAuth)

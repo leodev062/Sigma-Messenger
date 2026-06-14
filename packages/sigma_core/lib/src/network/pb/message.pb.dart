@@ -21,549 +21,342 @@ export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
 export 'message.pbenum.dart';
 
-enum Content_Content { dataMessage, receipt, typing, sync, notSet }
-
-class Content extends $pb.GeneratedMessage {
-  factory Content({
-    DataMessage? dataMessage,
-    ReceiptMessage? receipt,
-    TypingMessage? typing,
-    SyncMessage? sync,
+class TextContent extends $pb.GeneratedMessage {
+  factory TextContent({
+    $core.String? text,
   }) {
     final result = create();
-    if (dataMessage != null) result.dataMessage = dataMessage;
-    if (receipt != null) result.receipt = receipt;
-    if (typing != null) result.typing = typing;
-    if (sync != null) result.sync = sync;
+    if (text != null) result.text = text;
     return result;
   }
 
-  Content._();
+  TextContent._();
 
-  factory Content.fromBuffer($core.List<$core.int> data,
+  factory TextContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory Content.fromJson($core.String json,
+  factory TextContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
-  static const $core.Map<$core.int, Content_Content> _Content_ContentByTag = {
-    1: Content_Content.dataMessage,
-    2: Content_Content.receipt,
-    3: Content_Content.typing,
-    4: Content_Content.sync,
-    0: Content_Content.notSet
-  };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'Content',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'TextContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..oo(0, [1, 2, 3, 4])
-    ..aOM<DataMessage>(1, _omitFieldNames ? '' : 'dataMessage',
-        protoName: 'dataMessage', subBuilder: DataMessage.create)
-    ..aOM<ReceiptMessage>(2, _omitFieldNames ? '' : 'receipt',
-        subBuilder: ReceiptMessage.create)
-    ..aOM<TypingMessage>(3, _omitFieldNames ? '' : 'typing',
-        subBuilder: TypingMessage.create)
-    ..aOM<SyncMessage>(4, _omitFieldNames ? '' : 'sync',
-        subBuilder: SyncMessage.create)
+    ..aOS(1, _omitFieldNames ? '' : 'text')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Content clone() => deepCopy();
+  TextContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Content copyWith(void Function(Content) updates) =>
-      super.copyWith((message) => updates(message as Content)) as Content;
+  TextContent copyWith(void Function(TextContent) updates) =>
+      super.copyWith((message) => updates(message as TextContent))
+          as TextContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Content create() => Content._();
+  static TextContent create() => TextContent._();
   @$core.override
-  Content createEmptyInstance() => create();
+  TextContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static Content getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Content>(create);
-  static Content? _defaultInstance;
+  static TextContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TextContent>(create);
+  static TextContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  @$pb.TagNumber(2)
-  @$pb.TagNumber(3)
-  @$pb.TagNumber(4)
-  Content_Content whichContent() => _Content_ContentByTag[$_whichOneof(0)]!;
+  $core.String get text => $_getSZ(0);
   @$pb.TagNumber(1)
-  @$pb.TagNumber(2)
-  @$pb.TagNumber(3)
-  @$pb.TagNumber(4)
-  void clearContent() => $_clearField($_whichOneof(0));
-
+  set text($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  DataMessage get dataMessage => $_getN(0);
+  $core.bool hasText() => $_has(0);
   @$pb.TagNumber(1)
-  set dataMessage(DataMessage value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasDataMessage() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearDataMessage() => $_clearField(1);
-  @$pb.TagNumber(1)
-  DataMessage ensureDataMessage() => $_ensure(0);
-
-  @$pb.TagNumber(2)
-  ReceiptMessage get receipt => $_getN(1);
-  @$pb.TagNumber(2)
-  set receipt(ReceiptMessage value) => $_setField(2, value);
-  @$pb.TagNumber(2)
-  $core.bool hasReceipt() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearReceipt() => $_clearField(2);
-  @$pb.TagNumber(2)
-  ReceiptMessage ensureReceipt() => $_ensure(1);
-
-  @$pb.TagNumber(3)
-  TypingMessage get typing => $_getN(2);
-  @$pb.TagNumber(3)
-  set typing(TypingMessage value) => $_setField(3, value);
-  @$pb.TagNumber(3)
-  $core.bool hasTyping() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearTyping() => $_clearField(3);
-  @$pb.TagNumber(3)
-  TypingMessage ensureTyping() => $_ensure(2);
-
-  @$pb.TagNumber(4)
-  SyncMessage get sync => $_getN(3);
-  @$pb.TagNumber(4)
-  set sync(SyncMessage value) => $_setField(4, value);
-  @$pb.TagNumber(4)
-  $core.bool hasSync() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearSync() => $_clearField(4);
-  @$pb.TagNumber(4)
-  SyncMessage ensureSync() => $_ensure(3);
+  void clearText() => $_clearField(1);
 }
 
-class DataMessage extends $pb.GeneratedMessage {
-  factory DataMessage({
-    $core.String? body,
-    AttachmentPointer? attachment,
-    Reaction? reaction,
-    Location? location,
-    PollCreate? pollCreate,
-    PollVote? pollVote,
-    PollTerminate? pollTerminate,
+class ImageContent extends $pb.GeneratedMessage {
+  factory ImageContent({
+    $core.String? url,
+    $core.String? thumbnail,
+    $core.int? width,
+    $core.int? height,
   }) {
     final result = create();
-    if (body != null) result.body = body;
-    if (attachment != null) result.attachment = attachment;
-    if (reaction != null) result.reaction = reaction;
-    if (location != null) result.location = location;
-    if (pollCreate != null) result.pollCreate = pollCreate;
-    if (pollVote != null) result.pollVote = pollVote;
-    if (pollTerminate != null) result.pollTerminate = pollTerminate;
+    if (url != null) result.url = url;
+    if (thumbnail != null) result.thumbnail = thumbnail;
+    if (width != null) result.width = width;
+    if (height != null) result.height = height;
     return result;
   }
 
-  DataMessage._();
+  ImageContent._();
 
-  factory DataMessage.fromBuffer($core.List<$core.int> data,
+  factory ImageContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory DataMessage.fromJson($core.String json,
+  factory ImageContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DataMessage',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'ImageContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'body')
-    ..aOM<AttachmentPointer>(2, _omitFieldNames ? '' : 'attachment',
-        subBuilder: AttachmentPointer.create)
-    ..aOM<Reaction>(3, _omitFieldNames ? '' : 'reaction',
-        subBuilder: Reaction.create)
-    ..aOM<Location>(4, _omitFieldNames ? '' : 'location',
-        subBuilder: Location.create)
-    ..aOM<PollCreate>(5, _omitFieldNames ? '' : 'pollCreate',
-        protoName: 'pollCreate', subBuilder: PollCreate.create)
-    ..aOM<PollVote>(6, _omitFieldNames ? '' : 'pollVote',
-        protoName: 'pollVote', subBuilder: PollVote.create)
-    ..aOM<PollTerminate>(7, _omitFieldNames ? '' : 'pollTerminate',
-        protoName: 'pollTerminate', subBuilder: PollTerminate.create)
+    ..aOS(1, _omitFieldNames ? '' : 'url')
+    ..aOS(2, _omitFieldNames ? '' : 'thumbnail')
+    ..aI(3, _omitFieldNames ? '' : 'width')
+    ..aI(4, _omitFieldNames ? '' : 'height')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DataMessage clone() => deepCopy();
+  ImageContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DataMessage copyWith(void Function(DataMessage) updates) =>
-      super.copyWith((message) => updates(message as DataMessage))
-          as DataMessage;
+  ImageContent copyWith(void Function(ImageContent) updates) =>
+      super.copyWith((message) => updates(message as ImageContent))
+          as ImageContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static DataMessage create() => DataMessage._();
+  static ImageContent create() => ImageContent._();
   @$core.override
-  DataMessage createEmptyInstance() => create();
+  ImageContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static DataMessage getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<DataMessage>(create);
-  static DataMessage? _defaultInstance;
+  static ImageContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ImageContent>(create);
+  static ImageContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get body => $_getSZ(0);
+  $core.String get url => $_getSZ(0);
   @$pb.TagNumber(1)
-  set body($core.String value) => $_setString(0, value);
+  set url($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasBody() => $_has(0);
+  $core.bool hasUrl() => $_has(0);
   @$pb.TagNumber(1)
-  void clearBody() => $_clearField(1);
+  void clearUrl() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  AttachmentPointer get attachment => $_getN(1);
+  $core.String get thumbnail => $_getSZ(1);
   @$pb.TagNumber(2)
-  set attachment(AttachmentPointer value) => $_setField(2, value);
+  set thumbnail($core.String value) => $_setString(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasAttachment() => $_has(1);
+  $core.bool hasThumbnail() => $_has(1);
   @$pb.TagNumber(2)
-  void clearAttachment() => $_clearField(2);
-  @$pb.TagNumber(2)
-  AttachmentPointer ensureAttachment() => $_ensure(1);
+  void clearThumbnail() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  Reaction get reaction => $_getN(2);
+  $core.int get width => $_getIZ(2);
   @$pb.TagNumber(3)
-  set reaction(Reaction value) => $_setField(3, value);
+  set width($core.int value) => $_setSignedInt32(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasReaction() => $_has(2);
+  $core.bool hasWidth() => $_has(2);
   @$pb.TagNumber(3)
-  void clearReaction() => $_clearField(3);
-  @$pb.TagNumber(3)
-  Reaction ensureReaction() => $_ensure(2);
+  void clearWidth() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  Location get location => $_getN(3);
+  $core.int get height => $_getIZ(3);
   @$pb.TagNumber(4)
-  set location(Location value) => $_setField(4, value);
+  set height($core.int value) => $_setSignedInt32(3, value);
   @$pb.TagNumber(4)
-  $core.bool hasLocation() => $_has(3);
+  $core.bool hasHeight() => $_has(3);
   @$pb.TagNumber(4)
-  void clearLocation() => $_clearField(4);
-  @$pb.TagNumber(4)
-  Location ensureLocation() => $_ensure(3);
-
-  @$pb.TagNumber(5)
-  PollCreate get pollCreate => $_getN(4);
-  @$pb.TagNumber(5)
-  set pollCreate(PollCreate value) => $_setField(5, value);
-  @$pb.TagNumber(5)
-  $core.bool hasPollCreate() => $_has(4);
-  @$pb.TagNumber(5)
-  void clearPollCreate() => $_clearField(5);
-  @$pb.TagNumber(5)
-  PollCreate ensurePollCreate() => $_ensure(4);
-
-  @$pb.TagNumber(6)
-  PollVote get pollVote => $_getN(5);
-  @$pb.TagNumber(6)
-  set pollVote(PollVote value) => $_setField(6, value);
-  @$pb.TagNumber(6)
-  $core.bool hasPollVote() => $_has(5);
-  @$pb.TagNumber(6)
-  void clearPollVote() => $_clearField(6);
-  @$pb.TagNumber(6)
-  PollVote ensurePollVote() => $_ensure(5);
-
-  @$pb.TagNumber(7)
-  PollTerminate get pollTerminate => $_getN(6);
-  @$pb.TagNumber(7)
-  set pollTerminate(PollTerminate value) => $_setField(7, value);
-  @$pb.TagNumber(7)
-  $core.bool hasPollTerminate() => $_has(6);
-  @$pb.TagNumber(7)
-  void clearPollTerminate() => $_clearField(7);
-  @$pb.TagNumber(7)
-  PollTerminate ensurePollTerminate() => $_ensure(6);
+  void clearHeight() => $_clearField(4);
 }
 
-class PollCreate extends $pb.GeneratedMessage {
-  factory PollCreate({
-    $core.String? question,
-    $core.Iterable<$core.String>? options,
-    $core.bool? allowMultipleVotes,
+class VideoContent extends $pb.GeneratedMessage {
+  factory VideoContent({
+    $core.String? url,
+    $core.String? thumbnail,
+    $fixnum.Int64? duration,
   }) {
     final result = create();
-    if (question != null) result.question = question;
-    if (options != null) result.options.addAll(options);
-    if (allowMultipleVotes != null)
-      result.allowMultipleVotes = allowMultipleVotes;
+    if (url != null) result.url = url;
+    if (thumbnail != null) result.thumbnail = thumbnail;
+    if (duration != null) result.duration = duration;
     return result;
   }
 
-  PollCreate._();
+  VideoContent._();
 
-  factory PollCreate.fromBuffer($core.List<$core.int> data,
+  factory VideoContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory PollCreate.fromJson($core.String json,
+  factory VideoContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'PollCreate',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'VideoContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'question')
-    ..pPS(2, _omitFieldNames ? '' : 'options')
-    ..aOB(3, _omitFieldNames ? '' : 'allowMultipleVotes')
+    ..aOS(1, _omitFieldNames ? '' : 'url')
+    ..aOS(2, _omitFieldNames ? '' : 'thumbnail')
+    ..aInt64(3, _omitFieldNames ? '' : 'duration')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollCreate clone() => deepCopy();
+  VideoContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollCreate copyWith(void Function(PollCreate) updates) =>
-      super.copyWith((message) => updates(message as PollCreate)) as PollCreate;
+  VideoContent copyWith(void Function(VideoContent) updates) =>
+      super.copyWith((message) => updates(message as VideoContent))
+          as VideoContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static PollCreate create() => PollCreate._();
+  static VideoContent create() => VideoContent._();
   @$core.override
-  PollCreate createEmptyInstance() => create();
+  VideoContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static PollCreate getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<PollCreate>(create);
-  static PollCreate? _defaultInstance;
+  static VideoContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<VideoContent>(create);
+  static VideoContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get question => $_getSZ(0);
+  $core.String get url => $_getSZ(0);
   @$pb.TagNumber(1)
-  set question($core.String value) => $_setString(0, value);
+  set url($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasQuestion() => $_has(0);
+  $core.bool hasUrl() => $_has(0);
   @$pb.TagNumber(1)
-  void clearQuestion() => $_clearField(1);
+  void clearUrl() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $pb.PbList<$core.String> get options => $_getList(1);
+  $core.String get thumbnail => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set thumbnail($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasThumbnail() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearThumbnail() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.bool get allowMultipleVotes => $_getBF(2);
+  $fixnum.Int64 get duration => $_getI64(2);
   @$pb.TagNumber(3)
-  set allowMultipleVotes($core.bool value) => $_setBool(2, value);
+  set duration($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasAllowMultipleVotes() => $_has(2);
+  $core.bool hasDuration() => $_has(2);
   @$pb.TagNumber(3)
-  void clearAllowMultipleVotes() => $_clearField(3);
+  void clearDuration() => $_clearField(3);
 }
 
-class PollVote extends $pb.GeneratedMessage {
-  factory PollVote({
-    $core.String? targetAuthorAci,
-    $fixnum.Int64? targetSentTimestamp,
-    $core.Iterable<$core.int>? optionIndexes,
-    $core.int? voteCount,
+class AudioContent extends $pb.GeneratedMessage {
+  factory AudioContent({
+    $core.String? url,
+    $fixnum.Int64? duration,
   }) {
     final result = create();
-    if (targetAuthorAci != null) result.targetAuthorAci = targetAuthorAci;
-    if (targetSentTimestamp != null)
-      result.targetSentTimestamp = targetSentTimestamp;
-    if (optionIndexes != null) result.optionIndexes.addAll(optionIndexes);
-    if (voteCount != null) result.voteCount = voteCount;
+    if (url != null) result.url = url;
+    if (duration != null) result.duration = duration;
     return result;
   }
 
-  PollVote._();
+  AudioContent._();
 
-  factory PollVote.fromBuffer($core.List<$core.int> data,
+  factory AudioContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory PollVote.fromJson($core.String json,
+  factory AudioContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'PollVote',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'AudioContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'targetAuthorAci')
-    ..a<$fixnum.Int64>(
-        2, _omitFieldNames ? '' : 'targetSentTimestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
-    ..p<$core.int>(
-        3, _omitFieldNames ? '' : 'optionIndexes', $pb.PbFieldType.KU3)
-    ..aI(4, _omitFieldNames ? '' : 'voteCount', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(1, _omitFieldNames ? '' : 'url')
+    ..aInt64(2, _omitFieldNames ? '' : 'duration')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollVote clone() => deepCopy();
+  AudioContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollVote copyWith(void Function(PollVote) updates) =>
-      super.copyWith((message) => updates(message as PollVote)) as PollVote;
+  AudioContent copyWith(void Function(AudioContent) updates) =>
+      super.copyWith((message) => updates(message as AudioContent))
+          as AudioContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static PollVote create() => PollVote._();
+  static AudioContent create() => AudioContent._();
   @$core.override
-  PollVote createEmptyInstance() => create();
+  AudioContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static PollVote getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PollVote>(create);
-  static PollVote? _defaultInstance;
+  static AudioContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AudioContent>(create);
+  static AudioContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get targetAuthorAci => $_getSZ(0);
+  $core.String get url => $_getSZ(0);
   @$pb.TagNumber(1)
-  set targetAuthorAci($core.String value) => $_setString(0, value);
+  set url($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasTargetAuthorAci() => $_has(0);
+  $core.bool hasUrl() => $_has(0);
   @$pb.TagNumber(1)
-  void clearTargetAuthorAci() => $_clearField(1);
+  void clearUrl() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $fixnum.Int64 get targetSentTimestamp => $_getI64(1);
+  $fixnum.Int64 get duration => $_getI64(1);
   @$pb.TagNumber(2)
-  set targetSentTimestamp($fixnum.Int64 value) => $_setInt64(1, value);
+  set duration($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasTargetSentTimestamp() => $_has(1);
+  $core.bool hasDuration() => $_has(1);
   @$pb.TagNumber(2)
-  void clearTargetSentTimestamp() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $pb.PbList<$core.int> get optionIndexes => $_getList(2);
-
-  @$pb.TagNumber(4)
-  $core.int get voteCount => $_getIZ(3);
-  @$pb.TagNumber(4)
-  set voteCount($core.int value) => $_setUnsignedInt32(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasVoteCount() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearVoteCount() => $_clearField(4);
+  void clearDuration() => $_clearField(2);
 }
 
-class PollTerminate extends $pb.GeneratedMessage {
-  factory PollTerminate({
-    $fixnum.Int64? targetSentTimestamp,
-  }) {
-    final result = create();
-    if (targetSentTimestamp != null)
-      result.targetSentTimestamp = targetSentTimestamp;
-    return result;
-  }
-
-  PollTerminate._();
-
-  factory PollTerminate.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory PollTerminate.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'PollTerminate',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
-      createEmptyInstance: create)
-    ..a<$fixnum.Int64>(
-        1, _omitFieldNames ? '' : 'targetSentTimestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollTerminate clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PollTerminate copyWith(void Function(PollTerminate) updates) =>
-      super.copyWith((message) => updates(message as PollTerminate))
-          as PollTerminate;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static PollTerminate create() => PollTerminate._();
-  @$core.override
-  PollTerminate createEmptyInstance() => create();
-  @$core.pragma('dart2js:noInline')
-  static PollTerminate getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<PollTerminate>(create);
-  static PollTerminate? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $fixnum.Int64 get targetSentTimestamp => $_getI64(0);
-  @$pb.TagNumber(1)
-  set targetSentTimestamp($fixnum.Int64 value) => $_setInt64(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasTargetSentTimestamp() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearTargetSentTimestamp() => $_clearField(1);
-}
-
-class AttachmentPointer extends $pb.GeneratedMessage {
-  factory AttachmentPointer({
+class PollOption extends $pb.GeneratedMessage {
+  factory PollOption({
     $core.String? id,
-    $core.List<$core.int>? key,
-    $core.List<$core.int>? iv,
-    $core.List<$core.int>? digest,
-    $core.String? fileName,
-    $core.int? size,
+    $core.String? text,
+    $core.int? votes,
   }) {
     final result = create();
     if (id != null) result.id = id;
-    if (key != null) result.key = key;
-    if (iv != null) result.iv = iv;
-    if (digest != null) result.digest = digest;
-    if (fileName != null) result.fileName = fileName;
-    if (size != null) result.size = size;
+    if (text != null) result.text = text;
+    if (votes != null) result.votes = votes;
     return result;
   }
 
-  AttachmentPointer._();
+  PollOption._();
 
-  factory AttachmentPointer.fromBuffer($core.List<$core.int> data,
+  factory PollOption.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory AttachmentPointer.fromJson($core.String json,
+  factory PollOption.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'AttachmentPointer',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'PollOption',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'id')
-    ..a<$core.List<$core.int>>(
-        2, _omitFieldNames ? '' : 'key', $pb.PbFieldType.OY)
-    ..a<$core.List<$core.int>>(
-        3, _omitFieldNames ? '' : 'iv', $pb.PbFieldType.OY)
-    ..a<$core.List<$core.int>>(
-        4, _omitFieldNames ? '' : 'digest', $pb.PbFieldType.OY)
-    ..aOS(5, _omitFieldNames ? '' : 'fileName', protoName: 'fileName')
-    ..aI(6, _omitFieldNames ? '' : 'size', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(2, _omitFieldNames ? '' : 'text')
+    ..aI(3, _omitFieldNames ? '' : 'votes')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  AttachmentPointer clone() => deepCopy();
+  PollOption clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  AttachmentPointer copyWith(void Function(AttachmentPointer) updates) =>
-      super.copyWith((message) => updates(message as AttachmentPointer))
-          as AttachmentPointer;
+  PollOption copyWith(void Function(PollOption) updates) =>
+      super.copyWith((message) => updates(message as PollOption)) as PollOption;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static AttachmentPointer create() => AttachmentPointer._();
+  static PollOption create() => PollOption._();
   @$core.override
-  AttachmentPointer createEmptyInstance() => create();
+  PollOption createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static AttachmentPointer getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<AttachmentPointer>(create);
-  static AttachmentPointer? _defaultInstance;
+  static PollOption getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<PollOption>(create);
+  static PollOption? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.String get id => $_getSZ(0);
@@ -575,298 +368,381 @@ class AttachmentPointer extends $pb.GeneratedMessage {
   void clearId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.List<$core.int> get key => $_getN(1);
+  $core.String get text => $_getSZ(1);
   @$pb.TagNumber(2)
-  set key($core.List<$core.int> value) => $_setBytes(1, value);
+  set text($core.String value) => $_setString(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasKey() => $_has(1);
+  $core.bool hasText() => $_has(1);
   @$pb.TagNumber(2)
-  void clearKey() => $_clearField(2);
+  void clearText() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.List<$core.int> get iv => $_getN(2);
+  $core.int get votes => $_getIZ(2);
   @$pb.TagNumber(3)
-  set iv($core.List<$core.int> value) => $_setBytes(2, value);
+  set votes($core.int value) => $_setSignedInt32(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasIv() => $_has(2);
+  $core.bool hasVotes() => $_has(2);
   @$pb.TagNumber(3)
-  void clearIv() => $_clearField(3);
-
-  @$pb.TagNumber(4)
-  $core.List<$core.int> get digest => $_getN(3);
-  @$pb.TagNumber(4)
-  set digest($core.List<$core.int> value) => $_setBytes(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasDigest() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearDigest() => $_clearField(4);
-
-  @$pb.TagNumber(5)
-  $core.String get fileName => $_getSZ(4);
-  @$pb.TagNumber(5)
-  set fileName($core.String value) => $_setString(4, value);
-  @$pb.TagNumber(5)
-  $core.bool hasFileName() => $_has(4);
-  @$pb.TagNumber(5)
-  void clearFileName() => $_clearField(5);
-
-  @$pb.TagNumber(6)
-  $core.int get size => $_getIZ(5);
-  @$pb.TagNumber(6)
-  set size($core.int value) => $_setUnsignedInt32(5, value);
-  @$pb.TagNumber(6)
-  $core.bool hasSize() => $_has(5);
-  @$pb.TagNumber(6)
-  void clearSize() => $_clearField(6);
+  void clearVotes() => $_clearField(3);
 }
 
-class Reaction extends $pb.GeneratedMessage {
-  factory Reaction({
-    $core.String? emoji,
-    $core.bool? remove,
-    $core.String? targetAuthorAci,
-    $fixnum.Int64? targetTimestamp,
+class PollContent extends $pb.GeneratedMessage {
+  factory PollContent({
+    $core.String? question,
+    $core.Iterable<PollOption>? options,
+    $core.bool? multipleChoice,
   }) {
     final result = create();
-    if (emoji != null) result.emoji = emoji;
-    if (remove != null) result.remove = remove;
-    if (targetAuthorAci != null) result.targetAuthorAci = targetAuthorAci;
-    if (targetTimestamp != null) result.targetTimestamp = targetTimestamp;
+    if (question != null) result.question = question;
+    if (options != null) result.options.addAll(options);
+    if (multipleChoice != null) result.multipleChoice = multipleChoice;
     return result;
   }
 
-  Reaction._();
+  PollContent._();
 
-  factory Reaction.fromBuffer($core.List<$core.int> data,
+  factory PollContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory Reaction.fromJson($core.String json,
+  factory PollContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'Reaction',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'PollContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'emoji')
-    ..aOB(2, _omitFieldNames ? '' : 'remove')
-    ..aOS(3, _omitFieldNames ? '' : 'targetAuthorAci',
-        protoName: 'targetAuthorAci')
-    ..a<$fixnum.Int64>(
-        4, _omitFieldNames ? '' : 'targetTimestamp', $pb.PbFieldType.OU6,
-        protoName: 'targetTimestamp', defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(1, _omitFieldNames ? '' : 'question')
+    ..pPM<PollOption>(2, _omitFieldNames ? '' : 'options',
+        subBuilder: PollOption.create)
+    ..aOB(3, _omitFieldNames ? '' : 'multipleChoice',
+        protoName: 'multipleChoice')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Reaction clone() => deepCopy();
+  PollContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Reaction copyWith(void Function(Reaction) updates) =>
-      super.copyWith((message) => updates(message as Reaction)) as Reaction;
+  PollContent copyWith(void Function(PollContent) updates) =>
+      super.copyWith((message) => updates(message as PollContent))
+          as PollContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Reaction create() => Reaction._();
+  static PollContent create() => PollContent._();
   @$core.override
-  Reaction createEmptyInstance() => create();
+  PollContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static Reaction getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Reaction>(create);
-  static Reaction? _defaultInstance;
+  static PollContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<PollContent>(create);
+  static PollContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get emoji => $_getSZ(0);
+  $core.String get question => $_getSZ(0);
   @$pb.TagNumber(1)
-  set emoji($core.String value) => $_setString(0, value);
+  set question($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasEmoji() => $_has(0);
+  $core.bool hasQuestion() => $_has(0);
   @$pb.TagNumber(1)
-  void clearEmoji() => $_clearField(1);
+  void clearQuestion() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.bool get remove => $_getBF(1);
-  @$pb.TagNumber(2)
-  set remove($core.bool value) => $_setBool(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasRemove() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearRemove() => $_clearField(2);
+  $pb.PbList<PollOption> get options => $_getList(1);
 
   @$pb.TagNumber(3)
-  $core.String get targetAuthorAci => $_getSZ(2);
+  $core.bool get multipleChoice => $_getBF(2);
   @$pb.TagNumber(3)
-  set targetAuthorAci($core.String value) => $_setString(2, value);
+  set multipleChoice($core.bool value) => $_setBool(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasTargetAuthorAci() => $_has(2);
+  $core.bool hasMultipleChoice() => $_has(2);
   @$pb.TagNumber(3)
-  void clearTargetAuthorAci() => $_clearField(3);
-
-  @$pb.TagNumber(4)
-  $fixnum.Int64 get targetTimestamp => $_getI64(3);
-  @$pb.TagNumber(4)
-  set targetTimestamp($fixnum.Int64 value) => $_setInt64(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasTargetTimestamp() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearTargetTimestamp() => $_clearField(4);
+  void clearMultipleChoice() => $_clearField(3);
 }
 
-class Location extends $pb.GeneratedMessage {
-  factory Location({
-    $core.double? latitude,
-    $core.double? longitude,
-    $core.String? address,
-  }) {
-    final result = create();
-    if (latitude != null) result.latitude = latitude;
-    if (longitude != null) result.longitude = longitude;
-    if (address != null) result.address = address;
-    return result;
-  }
-
-  Location._();
-
-  factory Location.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory Location.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'Location',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
-      createEmptyInstance: create)
-    ..aD(1, _omitFieldNames ? '' : 'latitude')
-    ..aD(2, _omitFieldNames ? '' : 'longitude')
-    ..aOS(3, _omitFieldNames ? '' : 'address')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Location clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Location copyWith(void Function(Location) updates) =>
-      super.copyWith((message) => updates(message as Location)) as Location;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static Location create() => Location._();
-  @$core.override
-  Location createEmptyInstance() => create();
-  @$core.pragma('dart2js:noInline')
-  static Location getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Location>(create);
-  static Location? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.double get latitude => $_getN(0);
-  @$pb.TagNumber(1)
-  set latitude($core.double value) => $_setDouble(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasLatitude() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearLatitude() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $core.double get longitude => $_getN(1);
-  @$pb.TagNumber(2)
-  set longitude($core.double value) => $_setDouble(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasLongitude() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearLongitude() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $core.String get address => $_getSZ(2);
-  @$pb.TagNumber(3)
-  set address($core.String value) => $_setString(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasAddress() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearAddress() => $_clearField(3);
-}
-
-/// ReceiptMessage para confirmações de entrega/leitura
-class ReceiptMessage extends $pb.GeneratedMessage {
-  factory ReceiptMessage({
-    ReceiptMessage_ReceiptType? type,
+class ReplyContent extends $pb.GeneratedMessage {
+  factory ReplyContent({
     $core.String? messageId,
-    $core.String? senderId,
-    $fixnum.Int64? timestamp,
-    $core.int? messageCount,
+    $core.String? previewText,
   }) {
     final result = create();
-    if (type != null) result.type = type;
     if (messageId != null) result.messageId = messageId;
-    if (senderId != null) result.senderId = senderId;
-    if (timestamp != null) result.timestamp = timestamp;
-    if (messageCount != null) result.messageCount = messageCount;
+    if (previewText != null) result.previewText = previewText;
     return result;
   }
 
-  ReceiptMessage._();
+  ReplyContent._();
 
-  factory ReceiptMessage.fromBuffer($core.List<$core.int> data,
+  factory ReplyContent.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory ReceiptMessage.fromJson($core.String json,
+  factory ReplyContent.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ReceiptMessage',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
+      _omitMessageNames ? '' : 'ReplyContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
       createEmptyInstance: create)
-    ..aE<ReceiptMessage_ReceiptType>(1, _omitFieldNames ? '' : 'type',
-        enumValues: ReceiptMessage_ReceiptType.values)
-    ..aOS(2, _omitFieldNames ? '' : 'messageId', protoName: 'messageId')
-    ..aOS(3, _omitFieldNames ? '' : 'senderId', protoName: 'senderId')
-    ..a<$fixnum.Int64>(
-        4, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
-    ..aI(5, _omitFieldNames ? '' : 'messageCount',
-        protoName: 'messageCount', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(1, _omitFieldNames ? '' : 'messageId', protoName: 'messageId')
+    ..aOS(2, _omitFieldNames ? '' : 'previewText', protoName: 'previewText')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ReceiptMessage clone() => deepCopy();
+  ReplyContent clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ReceiptMessage copyWith(void Function(ReceiptMessage) updates) =>
-      super.copyWith((message) => updates(message as ReceiptMessage))
-          as ReceiptMessage;
+  ReplyContent copyWith(void Function(ReplyContent) updates) =>
+      super.copyWith((message) => updates(message as ReplyContent))
+          as ReplyContent;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static ReceiptMessage create() => ReceiptMessage._();
+  static ReplyContent create() => ReplyContent._();
   @$core.override
-  ReceiptMessage createEmptyInstance() => create();
+  ReplyContent createEmptyInstance() => create();
   @$core.pragma('dart2js:noInline')
-  static ReceiptMessage getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ReceiptMessage>(create);
-  static ReceiptMessage? _defaultInstance;
+  static ReplyContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ReplyContent>(create);
+  static ReplyContent? _defaultInstance;
 
   @$pb.TagNumber(1)
-  ReceiptMessage_ReceiptType get type => $_getN(0);
+  $core.String get messageId => $_getSZ(0);
   @$pb.TagNumber(1)
-  set type(ReceiptMessage_ReceiptType value) => $_setField(1, value);
+  set messageId($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasType() => $_has(0);
+  $core.bool hasMessageId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearType() => $_clearField(1);
+  void clearMessageId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get messageId => $_getSZ(1);
+  $core.String get previewText => $_getSZ(1);
   @$pb.TagNumber(2)
-  set messageId($core.String value) => $_setString(1, value);
+  set previewText($core.String value) => $_setString(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasMessageId() => $_has(1);
+  $core.bool hasPreviewText() => $_has(1);
   @$pb.TagNumber(2)
-  void clearMessageId() => $_clearField(2);
+  void clearPreviewText() => $_clearField(2);
+}
+
+class ReactionContent extends $pb.GeneratedMessage {
+  factory ReactionContent({
+    $core.String? messageId,
+    $core.String? emoji,
+  }) {
+    final result = create();
+    if (messageId != null) result.messageId = messageId;
+    if (emoji != null) result.emoji = emoji;
+    return result;
+  }
+
+  ReactionContent._();
+
+  factory ReactionContent.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ReactionContent.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ReactionContent',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'messageId', protoName: 'messageId')
+    ..aOS(2, _omitFieldNames ? '' : 'emoji')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ReactionContent clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ReactionContent copyWith(void Function(ReactionContent) updates) =>
+      super.copyWith((message) => updates(message as ReactionContent))
+          as ReactionContent;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ReactionContent create() => ReactionContent._();
+  @$core.override
+  ReactionContent createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static ReactionContent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ReactionContent>(create);
+  static ReactionContent? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get messageId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set messageId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasMessageId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMessageId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get emoji => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set emoji($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEmoji() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEmoji() => $_clearField(2);
+}
+
+enum Message_Content {
+  text,
+  image,
+  video,
+  audio,
+  poll,
+  reply,
+  reaction,
+  notSet
+}
+
+class Message extends $pb.GeneratedMessage {
+  factory Message({
+    $core.String? id,
+    $core.String? conversationId,
+    $core.String? senderId,
+    $core.String? receiverId,
+    MessageType? type,
+    $fixnum.Int64? timestamp,
+    $fixnum.Int64? updatedAt,
+    MessageStatus? status,
+    TextContent? text,
+    ImageContent? image,
+    VideoContent? video,
+    AudioContent? audio,
+    PollContent? poll,
+    ReplyContent? reply,
+    ReactionContent? reaction,
+  }) {
+    final result = create();
+    if (id != null) result.id = id;
+    if (conversationId != null) result.conversationId = conversationId;
+    if (senderId != null) result.senderId = senderId;
+    if (receiverId != null) result.receiverId = receiverId;
+    if (type != null) result.type = type;
+    if (timestamp != null) result.timestamp = timestamp;
+    if (updatedAt != null) result.updatedAt = updatedAt;
+    if (status != null) result.status = status;
+    if (text != null) result.text = text;
+    if (image != null) result.image = image;
+    if (video != null) result.video = video;
+    if (audio != null) result.audio = audio;
+    if (poll != null) result.poll = poll;
+    if (reply != null) result.reply = reply;
+    if (reaction != null) result.reaction = reaction;
+    return result;
+  }
+
+  Message._();
+
+  factory Message.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory Message.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, Message_Content> _Message_ContentByTag = {
+    9: Message_Content.text,
+    10: Message_Content.image,
+    11: Message_Content.video,
+    12: Message_Content.audio,
+    13: Message_Content.poll,
+    14: Message_Content.reply,
+    15: Message_Content.reaction,
+    0: Message_Content.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'Message',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
+      createEmptyInstance: create)
+    ..oo(0, [9, 10, 11, 12, 13, 14, 15])
+    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(2, _omitFieldNames ? '' : 'conversationId',
+        protoName: 'conversationId')
+    ..aOS(3, _omitFieldNames ? '' : 'senderId', protoName: 'senderId')
+    ..aOS(4, _omitFieldNames ? '' : 'receiverId', protoName: 'receiverId')
+    ..aE<MessageType>(5, _omitFieldNames ? '' : 'type',
+        enumValues: MessageType.values)
+    ..aInt64(6, _omitFieldNames ? '' : 'timestamp')
+    ..aInt64(7, _omitFieldNames ? '' : 'updatedAt', protoName: 'updatedAt')
+    ..aE<MessageStatus>(8, _omitFieldNames ? '' : 'status',
+        enumValues: MessageStatus.values)
+    ..aOM<TextContent>(9, _omitFieldNames ? '' : 'text',
+        subBuilder: TextContent.create)
+    ..aOM<ImageContent>(10, _omitFieldNames ? '' : 'image',
+        subBuilder: ImageContent.create)
+    ..aOM<VideoContent>(11, _omitFieldNames ? '' : 'video',
+        subBuilder: VideoContent.create)
+    ..aOM<AudioContent>(12, _omitFieldNames ? '' : 'audio',
+        subBuilder: AudioContent.create)
+    ..aOM<PollContent>(13, _omitFieldNames ? '' : 'poll',
+        subBuilder: PollContent.create)
+    ..aOM<ReplyContent>(14, _omitFieldNames ? '' : 'reply',
+        subBuilder: ReplyContent.create)
+    ..aOM<ReactionContent>(15, _omitFieldNames ? '' : 'reaction',
+        subBuilder: ReactionContent.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Message clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Message copyWith(void Function(Message) updates) =>
+      super.copyWith((message) => updates(message as Message)) as Message;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Message create() => Message._();
+  @$core.override
+  Message createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static Message getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Message>(create);
+  static Message? _defaultInstance;
+
+  @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
+  @$pb.TagNumber(12)
+  @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
+  @$pb.TagNumber(15)
+  Message_Content whichContent() => _Message_ContentByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(9)
+  @$pb.TagNumber(10)
+  @$pb.TagNumber(11)
+  @$pb.TagNumber(12)
+  @$pb.TagNumber(13)
+  @$pb.TagNumber(14)
+  @$pb.TagNumber(15)
+  void clearContent() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $core.String get id => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set id($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get conversationId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set conversationId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasConversationId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearConversationId() => $_clearField(2);
 
   @$pb.TagNumber(3)
   $core.String get senderId => $_getSZ(2);
@@ -878,204 +754,126 @@ class ReceiptMessage extends $pb.GeneratedMessage {
   void clearSenderId() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $fixnum.Int64 get timestamp => $_getI64(3);
+  $core.String get receiverId => $_getSZ(3);
   @$pb.TagNumber(4)
-  set timestamp($fixnum.Int64 value) => $_setInt64(3, value);
+  set receiverId($core.String value) => $_setString(3, value);
   @$pb.TagNumber(4)
-  $core.bool hasTimestamp() => $_has(3);
+  $core.bool hasReceiverId() => $_has(3);
   @$pb.TagNumber(4)
-  void clearTimestamp() => $_clearField(4);
+  void clearReceiverId() => $_clearField(4);
 
   @$pb.TagNumber(5)
-  $core.int get messageCount => $_getIZ(4);
+  MessageType get type => $_getN(4);
   @$pb.TagNumber(5)
-  set messageCount($core.int value) => $_setUnsignedInt32(4, value);
+  set type(MessageType value) => $_setField(5, value);
   @$pb.TagNumber(5)
-  $core.bool hasMessageCount() => $_has(4);
+  $core.bool hasType() => $_has(4);
   @$pb.TagNumber(5)
-  void clearMessageCount() => $_clearField(5);
-}
-
-/// TypingMessage para indicadores de digitação
-class TypingMessage extends $pb.GeneratedMessage {
-  factory TypingMessage({
-    TypingMessage_TypingState? state,
-    $fixnum.Int64? timestamp,
-  }) {
-    final result = create();
-    if (state != null) result.state = state;
-    if (timestamp != null) result.timestamp = timestamp;
-    return result;
-  }
-
-  TypingMessage._();
-
-  factory TypingMessage.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory TypingMessage.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'TypingMessage',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
-      createEmptyInstance: create)
-    ..aE<TypingMessage_TypingState>(1, _omitFieldNames ? '' : 'state',
-        enumValues: TypingMessage_TypingState.values)
-    ..a<$fixnum.Int64>(
-        2, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  TypingMessage clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  TypingMessage copyWith(void Function(TypingMessage) updates) =>
-      super.copyWith((message) => updates(message as TypingMessage))
-          as TypingMessage;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static TypingMessage create() => TypingMessage._();
-  @$core.override
-  TypingMessage createEmptyInstance() => create();
-  @$core.pragma('dart2js:noInline')
-  static TypingMessage getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<TypingMessage>(create);
-  static TypingMessage? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  TypingMessage_TypingState get state => $_getN(0);
-  @$pb.TagNumber(1)
-  set state(TypingMessage_TypingState value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasState() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearState() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get timestamp => $_getI64(1);
-  @$pb.TagNumber(2)
-  set timestamp($fixnum.Int64 value) => $_setInt64(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasTimestamp() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearTimestamp() => $_clearField(2);
-}
-
-/// SyncMessage para sincronização de status/eventos
-class SyncMessage extends $pb.GeneratedMessage {
-  factory SyncMessage({
-    SyncMessage_SyncType? type,
-    $core.String? messageId,
-    $core.int? status,
-    $core.String? error,
-    $fixnum.Int64? timestamp,
-    $core.Iterable<$core.String>? targetIds,
-  }) {
-    final result = create();
-    if (type != null) result.type = type;
-    if (messageId != null) result.messageId = messageId;
-    if (status != null) result.status = status;
-    if (error != null) result.error = error;
-    if (timestamp != null) result.timestamp = timestamp;
-    if (targetIds != null) result.targetIds.addAll(targetIds);
-    return result;
-  }
-
-  SyncMessage._();
-
-  factory SyncMessage.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory SyncMessage.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'SyncMessage',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
-      createEmptyInstance: create)
-    ..aE<SyncMessage_SyncType>(1, _omitFieldNames ? '' : 'type',
-        enumValues: SyncMessage_SyncType.values)
-    ..aOS(2, _omitFieldNames ? '' : 'messageId', protoName: 'messageId')
-    ..aI(3, _omitFieldNames ? '' : 'status')
-    ..aOS(4, _omitFieldNames ? '' : 'error')
-    ..a<$fixnum.Int64>(
-        5, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
-        defaultOrMaker: $fixnum.Int64.ZERO)
-    ..pPS(6, _omitFieldNames ? '' : 'targetIds', protoName: 'targetIds')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  SyncMessage clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  SyncMessage copyWith(void Function(SyncMessage) updates) =>
-      super.copyWith((message) => updates(message as SyncMessage))
-          as SyncMessage;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static SyncMessage create() => SyncMessage._();
-  @$core.override
-  SyncMessage createEmptyInstance() => create();
-  @$core.pragma('dart2js:noInline')
-  static SyncMessage getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<SyncMessage>(create);
-  static SyncMessage? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  SyncMessage_SyncType get type => $_getN(0);
-  @$pb.TagNumber(1)
-  set type(SyncMessage_SyncType value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasType() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearType() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $core.String get messageId => $_getSZ(1);
-  @$pb.TagNumber(2)
-  set messageId($core.String value) => $_setString(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasMessageId() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearMessageId() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $core.int get status => $_getIZ(2);
-  @$pb.TagNumber(3)
-  set status($core.int value) => $_setSignedInt32(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasStatus() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearStatus() => $_clearField(3);
-
-  @$pb.TagNumber(4)
-  $core.String get error => $_getSZ(3);
-  @$pb.TagNumber(4)
-  set error($core.String value) => $_setString(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasError() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearError() => $_clearField(4);
-
-  @$pb.TagNumber(5)
-  $fixnum.Int64 get timestamp => $_getI64(4);
-  @$pb.TagNumber(5)
-  set timestamp($fixnum.Int64 value) => $_setInt64(4, value);
-  @$pb.TagNumber(5)
-  $core.bool hasTimestamp() => $_has(4);
-  @$pb.TagNumber(5)
-  void clearTimestamp() => $_clearField(5);
+  void clearType() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $pb.PbList<$core.String> get targetIds => $_getList(5);
+  $fixnum.Int64 get timestamp => $_getI64(5);
+  @$pb.TagNumber(6)
+  set timestamp($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasTimestamp() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearTimestamp() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $fixnum.Int64 get updatedAt => $_getI64(6);
+  @$pb.TagNumber(7)
+  set updatedAt($fixnum.Int64 value) => $_setInt64(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasUpdatedAt() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearUpdatedAt() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  MessageStatus get status => $_getN(7);
+  @$pb.TagNumber(8)
+  set status(MessageStatus value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasStatus() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearStatus() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  TextContent get text => $_getN(8);
+  @$pb.TagNumber(9)
+  set text(TextContent value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasText() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearText() => $_clearField(9);
+  @$pb.TagNumber(9)
+  TextContent ensureText() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  ImageContent get image => $_getN(9);
+  @$pb.TagNumber(10)
+  set image(ImageContent value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasImage() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearImage() => $_clearField(10);
+  @$pb.TagNumber(10)
+  ImageContent ensureImage() => $_ensure(9);
+
+  @$pb.TagNumber(11)
+  VideoContent get video => $_getN(10);
+  @$pb.TagNumber(11)
+  set video(VideoContent value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasVideo() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearVideo() => $_clearField(11);
+  @$pb.TagNumber(11)
+  VideoContent ensureVideo() => $_ensure(10);
+
+  @$pb.TagNumber(12)
+  AudioContent get audio => $_getN(11);
+  @$pb.TagNumber(12)
+  set audio(AudioContent value) => $_setField(12, value);
+  @$pb.TagNumber(12)
+  $core.bool hasAudio() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearAudio() => $_clearField(12);
+  @$pb.TagNumber(12)
+  AudioContent ensureAudio() => $_ensure(11);
+
+  @$pb.TagNumber(13)
+  PollContent get poll => $_getN(12);
+  @$pb.TagNumber(13)
+  set poll(PollContent value) => $_setField(13, value);
+  @$pb.TagNumber(13)
+  $core.bool hasPoll() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearPoll() => $_clearField(13);
+  @$pb.TagNumber(13)
+  PollContent ensurePoll() => $_ensure(12);
+
+  @$pb.TagNumber(14)
+  ReplyContent get reply => $_getN(13);
+  @$pb.TagNumber(14)
+  set reply(ReplyContent value) => $_setField(14, value);
+  @$pb.TagNumber(14)
+  $core.bool hasReply() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearReply() => $_clearField(14);
+  @$pb.TagNumber(14)
+  ReplyContent ensureReply() => $_ensure(13);
+
+  @$pb.TagNumber(15)
+  ReactionContent get reaction => $_getN(14);
+  @$pb.TagNumber(15)
+  set reaction(ReactionContent value) => $_setField(15, value);
+  @$pb.TagNumber(15)
+  $core.bool hasReaction() => $_has(14);
+  @$pb.TagNumber(15)
+  void clearReaction() => $_clearField(15);
+  @$pb.TagNumber(15)
+  ReactionContent ensureReaction() => $_ensure(14);
 }
 
 const $core.bool _omitFieldNames =

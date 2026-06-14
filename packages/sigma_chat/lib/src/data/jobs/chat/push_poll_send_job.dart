@@ -1,20 +1,20 @@
 import 'package:get_it/get_it.dart';
-import 'package:sigma_core/sigma_core.dart';
+import 'package:sigma_core/sigma_core.dart' hide Job;
+import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
 import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
+import 'package:fixnum/fixnum.dart' as fixnum;
 
-/// PushPollSendJob - Envio de enquete via Protobuf.
-class PushPollSendJob extends Job {
+/// PushPollSendJob - Envio de enquete via Relay Protobuf.
+class PushPollSendJob extends core.Job {
   static const String KEY = "PushPollSendJob";
   final String messageId;
   final IChatRepository? chatRepository;
-  final CryptoManager? cryptoManager;
   final SignalServiceMessageSender? messageSender;
 
   PushPollSendJob({
     required this.messageId,
     this.chatRepository,
-    this.cryptoManager,
     this.messageSender,
     int? databaseId,
   })  : super(
@@ -27,11 +27,10 @@ class PushPollSendJob extends Job {
   @override
   Map<String, dynamic> serialize() => {'messageId': messageId};
 
-  static Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
+  static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PushPollSendJob(
       messageId: data['messageId'],
       chatRepository: locator<IChatRepository>(),
-      cryptoManager: locator<CryptoManager>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
     );
@@ -42,28 +41,24 @@ class PushPollSendJob extends Job {
     final message = await chatRepository!.getMessage(messageId);
     if (message == null || message.status != MessageStatusEntity.pending) return;
 
-    await cryptoManager!.init();
-    
-    // Criar Payload de Enquete (Protobuf seguindo Signal)
-    final poll = sigmapb.PollCreate()
-      ..question = message.pollQuestion ?? ""
-      ..options.addAll(message.pollOptions ?? [])
-      ..allowMultipleVotes = message.allowMultipleVotes ?? false;
+    final relayMessage = sigmapb.Message()
+      ..id = message.id
+      ..conversationId = message.chatId
+      ..senderId = "me"
+      ..receiverId = message.chatId
+      ..type = sigmapb.MessageType.POLL
+      ..timestamp = fixnum.Int64(message.timestamp)
+      ..poll = (sigmapb.PollContent()
+        ..question = message.pollQuestion ?? ""
+        ..multipleChoice = message.multipleChoice ?? false
+        ..options.addAll((message.pollOptions ?? []).map((o) => sigmapb.PollOption()..text = o)));
 
-    final content = sigmapb.Content()
-      ..dataMessage = (sigmapb.DataMessage()..pollCreate = poll);
-
-    final encryptedEnvelope = await cryptoManager!.encryptMessage(
-      message.chatId,
-      content,
-    );
-
-    messageSender!.sendEnvelope(message.chatId, encryptedEnvelope);
+    messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
     await chatRepository!.updateMessageStatus(messageId, MessageStatusEntity.sent);
   }
 
   @override
   void onRunError(Object error, StackTrace stackTrace) {
-    SigmaLog.e(KEY, "Erro no envio de enquete $messageId", error);
+    SigmaLog.e(KEY, "Erro no envio de enquete Relay $messageId", error);
   }
 }

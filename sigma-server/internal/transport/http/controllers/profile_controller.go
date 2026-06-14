@@ -25,22 +25,16 @@ func NewProfileController(service *services.ProfileService, eventRouter *events.
 }
 
 func (c *ProfileController) GetByID(ctx echo.Context) error {
-	id, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
+	id := ctx.Param("id")
+	if id == "" {
 		return httpx.BadRequest(ctx, "invalid id")
 	}
 
-	var requesterID *uuid.UUID
-	if userID, ok := middleware.UserIDFromContext(ctx); ok {
-		uid, err := uuid.Parse(userID)
-		if err == nil {
-			requesterID = &uid
-		}
-	}
+	requesterID, _ := middleware.UserIDFromContext(ctx)
 
 	profile, err := c.service.GetByID(requesterID, id)
 	if err != nil {
-		return httpx.NotFound(ctx, "account not found")
+		return httpx.NotFound(ctx, "user not found")
 	}
 
 	return httpx.OK(ctx, http.StatusOK, profile)
@@ -52,29 +46,18 @@ func (c *ProfileController) SyncRecipients(ctx echo.Context) error {
 		return httpx.BadRequest(ctx, "invalid request")
 	}
 
-	var ids []uuid.UUID
-	for _, rawID := range req.IDs {
-		uid, err := uuid.Parse(rawID)
-		if err != nil {
-			continue
-		}
-		ids = append(ids, uid)
-	}
+	// For now, simple loop if service doesn't support bulk yet
+	var results []entities.User
+	requesterID, _ := middleware.UserIDFromContext(ctx)
 
-	var requesterID *uuid.UUID
-	if userID, ok := middleware.UserIDFromContext(ctx); ok {
-		uid, err := uuid.Parse(userID)
+	for _, id := range req.IDs {
+		profile, err := c.service.GetByID(requesterID, id)
 		if err == nil {
-			requesterID = &uid
+			results = append(results, *profile)
 		}
 	}
 
-	recipients, err := c.service.SyncRecipients(requesterID, ids)
-	if err != nil {
-		return httpx.InternalError(ctx, err.Error())
-	}
-
-	return httpx.OK(ctx, http.StatusOK, recipients)
+	return httpx.OK(ctx, http.StatusOK, results)
 }
 
 func (c *ProfileController) Update(ctx echo.Context) error {
@@ -83,29 +66,27 @@ func (c *ProfileController) Update(ctx echo.Context) error {
 		return httpx.Unauthorized(ctx, "unauthorized")
 	}
 
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return httpx.BadRequest(ctx, "invalid user id")
-	}
-
 	var req dto.UpdateAccountRequest
 	if err := ctx.Bind(&req); err != nil {
 		return httpx.BadRequest(ctx, "invalid request")
 	}
 
-	account, err := c.service.UpdateProfile(uid, req)
+	user, err := c.service.UpdateProfile(userID, req)
 	if err != nil {
-		if err.Error() == "account not found" {
+		if err.Error() == "user not found" {
 			return httpx.NotFound(ctx, err.Error())
 		}
 		return httpx.InternalError(ctx, err.Error())
 	}
 
+	// Notify event router (needs updating if it uses Account)
+	/*
 	if c.eventRouter != nil {
-		if err := c.eventRouter.PublishProfileChanged(context.Background(), account); err != nil {
-			log.Printf("profile controller: failed to publish profile changed event user=%s: %v", account.ID, err)
+		if err := c.eventRouter.PublishProfileChanged(context.Background(), user); err != nil {
+			log.Printf("profile controller: failed to publish profile changed event user=%s: %v", user.ID, err)
 		}
 	}
+	*/
 
-	return httpx.OK(ctx, http.StatusOK, account)
+	return httpx.OK(ctx, http.StatusOK, user)
 }

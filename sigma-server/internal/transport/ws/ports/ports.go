@@ -18,6 +18,13 @@ type PendingMessageStore interface {
 	DeleteByMessageIDForRecipient(messageID, recipientID uuid.UUID) (int64, error)
 }
 
+// EnvelopeStore reads and acknowledges queued Relay envelopes.
+type EnvelopeStore interface {
+	FindPendingByRecipient(recipientID uuid.UUID) ([]entities.Envelope, error)
+	DeleteForRecipient(id int, recipientID uuid.UUID) (int64, error)
+	DeleteByEnvelopeIDForRecipient(envelopeID string, recipientID uuid.UUID) (int64, error)
+}
+
 // PendingEventStore reads and removes one-time push events.
 type PendingEventStore interface {
 	FindPendingByAccountID(accountID uuid.UUID) ([]entities.PendingEvent, error)

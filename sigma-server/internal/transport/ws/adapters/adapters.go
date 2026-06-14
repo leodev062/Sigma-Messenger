@@ -9,6 +9,10 @@ type MessageStore struct {
 	*storage.MessageManager
 }
 
+type EnvelopeStore struct {
+	*storage.EnvelopeManager
+}
+
 type EventStore struct {
 	*storage.PendingEventManager
 }

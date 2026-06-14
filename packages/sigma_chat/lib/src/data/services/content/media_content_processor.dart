@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_chat/sigma_chat.dart';
@@ -10,38 +9,49 @@ class MediaContentProcessor implements MessageContentProcessor {
   MediaContentProcessor(this._chatRepository);
 
   @override
-  bool canProcess(sigmapb.Content payload) => 
-      payload.hasDataMessage() && payload.dataMessage.hasAttachment();
+  bool canProcess(sigmapb.Message payload) => 
+      payload.hasImage() || payload.hasVideo() || payload.hasAudio();
 
   @override
   Future<void> process({
     required String messageId,
     required String senderId,
-    required sigmapb.Content payload,
+    required sigmapb.Message payload,
     required int timestamp,
   }) async {
-    final dataMsg = payload.dataMessage;
-    final attachment = dataMsg.attachment;
-    
-    // Determina o tipo de mídia baseado na extensão ou metadados
-    MessageTypeEntity type = MessageTypeEntity.image;
-    if (attachment.fileName.endsWith(".mp4")) type = MessageTypeEntity.video;
-    if (attachment.fileName.endsWith(".mp3")) type = MessageTypeEntity.audio;
+    MessageTypeEntity type;
+    String url = "";
+    String? thumb;
+    int? duration;
+
+    if (payload.hasImage()) {
+      type = MessageTypeEntity.image;
+      url = payload.image.url;
+      thumb = payload.image.thumbnail;
+    } else if (payload.hasVideo()) {
+      type = MessageTypeEntity.video;
+      url = payload.video.url;
+      thumb = payload.video.thumbnail;
+      duration = payload.video.duration.toInt();
+    } else if (payload.hasAudio()) {
+      type = MessageTypeEntity.audio;
+      url = payload.audio.url;
+      duration = payload.audio.duration.toInt();
+    } else {
+      return;
+    }
 
     final message = MessageEntity(
       id: messageId,
-      threadId: 0,
-      chatId: senderId,
-      senderRecipientId: senderId,
-      textContent: dataMsg.body,
+      conversationId: senderId,
+      senderId: senderId,
+      textContent: "",
       type: type,
       timestamp: timestamp,
-      status: MessageStatusEntity.read,
-      isFromMe: false,
-      attachmentUrl: attachment.id,
-      attachmentAesKey: base64Encode(attachment.key),
-      attachmentIv: base64Encode(attachment.iv),
-      attachmentMacKey: base64Encode(attachment.digest),
+      status: MessageStatusEntity.delivered,
+      url: url,
+      thumbnail: thumb,
+      duration: duration,
     );
 
     await _chatRepository.saveMessageAndMetadata(message);

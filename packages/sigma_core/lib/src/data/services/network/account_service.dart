@@ -17,9 +17,6 @@ abstract class AccountService {
   @DELETE("v1/accounts/me")
   Future<void> deleteAccount();
 
-  @GET("v1/accounts/{id}/keys")
-  Future<dynamic> getAccountKeys(@Path("id") String id);
-
   @PUT("v1/accounts/me/fcm")
   Future<void> updateFCMToken(@Body() Map<String, dynamic> data);
 

@@ -6,9 +6,12 @@ import '../models/chat_ui_item.dart';
 class MessageGroupProcessor {
   static const int groupingThresholdMs = 60000;
 
-  /// Método estático para ser usado com 'compute' (Isolates).
-  /// Recebe uma lista de MessageEntity e retorna a lista de UI Items processada.
-  static List<ChatUiItem> processInIsolate(List<MessageEntity> messages) {
+  /// Parâmetros para processamento em Isolate.
+  /// Necessário porque Isolates não compartilham memória estática (Identity.currentUserId).
+  static List<ChatUiItem> processInIsolate(Map<String, dynamic> params) {
+    final List<MessageEntity> messages = params['messages'] as List<MessageEntity>;
+    final String currentUserId = params['currentUserId'] as String;
+
     if (messages.isEmpty) return [];
 
     final List<ChatUiItem> uiItems = [];
@@ -23,8 +26,9 @@ class MessageGroupProcessor {
       final bool isFirstInGroup = _checkIsFirstInGroup(current, prev);
       final bool isLastInGroup = _checkIsLastInGroup(current, next);
 
-      final bool showAvatar = !current.isFromMe && isLastInGroup;
-      final bool showName = !current.isFromMe && isFirstInGroup;
+      final bool isFromMe = current.senderId == currentUserId;
+      final bool showAvatar = !isFromMe && isLastInGroup;
+      final bool showName = !isFromMe && isFirstInGroup;
 
       uiItems.add(MessageUiItem(
         current,
@@ -44,7 +48,7 @@ class MessageGroupProcessor {
 
   static bool _checkIsFirstInGroup(MessageEntity current, MessageEntity? prev) {
     if (prev == null) return true;
-    if (prev.senderRecipientId != current.senderRecipientId) return true;
+    if (prev.senderId != current.senderId) return true;
     if ((current.timestamp - prev.timestamp).abs() > groupingThresholdMs) return true;
     if (!DateUtil.isSameDay(
       DateTime.fromMillisecondsSinceEpoch(current.timestamp),
@@ -55,7 +59,7 @@ class MessageGroupProcessor {
 
   static bool _checkIsLastInGroup(MessageEntity current, MessageEntity? next) {
     if (next == null) return true;
-    if (next.senderRecipientId != current.senderRecipientId) return true;
+    if (next.senderId != current.senderId) return true;
     if ((next.timestamp - current.timestamp).abs() > groupingThresholdMs) return true;
     if (!DateUtil.isSameDay(
       DateTime.fromMillisecondsSinceEpoch(next.timestamp),

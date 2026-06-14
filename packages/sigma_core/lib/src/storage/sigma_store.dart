@@ -18,12 +18,13 @@ class SigmaStore {
 
   Future<void> init() async {
     await account.loadToMemory();
+    Identity.currentUserId = account.getUserId() ?? "";
   }
 
   /// Limpa TODOS os dados do app (Logout Completo)
   Future<void> clearAll() async {
     await account.clear();
-    await keys.deleteAll();
+    Identity.currentUserId = "";
     // Opcional: settings.clear() se quiser resetar tema etc.
   }
 }
@@ -63,6 +64,7 @@ class AccountStore {
     _user = user;
     _userId = user.id;
     _authToken = token;
+    Identity.currentUserId = user.id;
 
     await Future.wait([
       _storage.write(key: _keyUser, value: jsonEncode(user.toJson())),
@@ -85,7 +87,7 @@ class AccountStore {
 
 /// SettingsStore - Refatorado para ocultar a complexidade de Strings e conversões.
 class SettingsStore {
-  final KeyValueDatabase _db;
+  final KeyValueDao? _db;
   
   SettingsStore(this._db);
 
@@ -99,30 +101,30 @@ class SettingsStore {
   static const _keyMessageBorderRadius = "settings_message_border_radius";
 
   // Métodos Tipados (Abstração POO)
-  Future<void> setTheme(String theme) => _db.writeString(_keyTheme, theme);
-  Future<String?> getTheme() => _db.readString(_keyTheme);
+  Future<void> setTheme(String theme) => _db?.writeString(_keyTheme, theme) ?? Future.value();
+  Future<String?> getTheme() => _db?.readString(_keyTheme) ?? Future.value(null);
 
-  Future<void> setReadReceipts(bool enabled) => _db.writeBool(_keyReadReceipts, enabled);
-  Future<bool> isReadReceiptsEnabled() => _db.readBool(_keyReadReceipts, defaultValue: true);
+  Future<void> setReadReceipts(bool enabled) => _db?.writeBool(_keyReadReceipts, enabled) ?? Future.value();
+  Future<bool> isReadReceiptsEnabled() => _db?.readBool(_keyReadReceipts, defaultValue: true) ?? Future.value(true);
 
-  Future<void> setLocale(String languageCode) => _db.writeString(_keyLocale, languageCode);
-  Future<String?> getLocale() => _db.readString(_keyLocale);
+  Future<void> setLocale(String languageCode) => _db?.writeString(_keyLocale, languageCode) ?? Future.value();
+  Future<String?> getLocale() => _db?.readString(_keyLocale) ?? Future.value(null);
 
-  Future<void> setShowChatFilters(bool enabled) => _db.writeBool(_keyChatFilters, enabled);
-  Future<bool> isShowChatFiltersEnabled() => _db.readBool(_keyChatFilters, defaultValue: true);
+  Future<void> setShowChatFilters(bool enabled) => _db?.writeBool(_keyChatFilters, enabled) ?? Future.value();
+  Future<bool> isShowChatFiltersEnabled() => _db?.readBool(_keyChatFilters, defaultValue: true) ?? Future.value(true);
 
-  Future<void> setLastTab(int index) => _db.writeInt(_keyLastTab, index);
-  Future<int> getLastTab() async => (await _db.readInt(_keyLastTab)) ?? 0;
+  Future<void> setLastTab(int index) => _db?.writeInt(_keyLastTab, index) ?? Future.value();
+  Future<int> getLastTab() async => (await _db?.readInt(_keyLastTab)) ?? 0;
 
-  Future<void> setMessageFontSize(double size) => _db.writeDouble(_keyMessageFontSize, size);
-  Future<double> getMessageFontSize() async => (await _db.readDouble(_keyMessageFontSize)) ?? 16.0;
+  Future<void> setMessageFontSize(double size) => _db?.writeDouble(_keyMessageFontSize, size) ?? Future.value();
+  Future<double> getMessageFontSize() async => (await _db?.readDouble(_keyMessageFontSize)) ?? 16.0;
 
-  Future<void> setMessageBorderRadius(double radius) => _db.writeDouble(_keyMessageBorderRadius, radius);
-  Future<double> getMessageBorderRadius() async => (await _db.readDouble(_keyMessageBorderRadius)) ?? 18.0;
+  Future<void> setMessageBorderRadius(double radius) => _db?.writeDouble(_keyMessageBorderRadius, radius) ?? Future.value();
+  Future<double> getMessageBorderRadius() async => (await _db?.readDouble(_keyMessageBorderRadius)) ?? 18.0;
 }
 
-/// Helpers para o KeyValueDatabase (Extension on KeyValueDatabase para centralizar conversão)
-extension KeyValueTypedAccess on KeyValueDatabase {
+/// Helpers para o KeyValueDao (Extension on KeyValueDao para centralizar conversão)
+extension KeyValueTypedAccess on KeyValueDao {
   Future<void> writeBool(String key, bool value) => writeValue(key, value.toString());
   
   Future<bool> readBool(String key, {bool defaultValue = false}) async {
@@ -151,10 +153,6 @@ class KeyStore {
   final FlutterSecureStorage _storage;
   KeyStore(this._storage);
 
-  static const _keyIdentityKeyPair = 'signal_identity_key_pair';
-  static const _keyRegistrationId = 'signal_registration_id';
-  static const _keySignedPreKey = 'signal_signed_pre_key';
-  static const _keyPublicPreKeys = 'signal_public_pre_keys';
   static const _keyDatabasePassword = 'database_password';
 
   Future<void> write(String key, String value) => _storage.write(key: key, value: value);
@@ -170,9 +168,4 @@ class KeyStore {
     }
     return pass;
   }
-
-  String get identityKeyPairKey => _keyIdentityKeyPair;
-  String get registrationIdKey => _keyRegistrationId;
-  String get signedPreKeyKey => _keySignedPreKey;
-  String get publicPreKeysKey => _keyPublicPreKeys;
 }
