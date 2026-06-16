@@ -1,10 +1,10 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/material.dart';
 import 'package:sigma_database/sigma_database.dart' as drift;
 import 'package:sigma_core/src/domain/entities/message_entity.dart';
 import 'package:sigma_core/src/domain/entities/recipient.dart';
 import 'package:sigma_core/src/domain/entities/thread_entity.dart';
 import 'package:sigma_core/src/domain/entities/reaction_entity.dart';
+import 'package:sigma_core/src/domain/entities/poll_entity.dart';
 import 'package:sigma_core/src/data/models/user_response.dart' as api;
 
 /// ModelMapper - Centraliza as conversões entre camadas (API -> Domain, Drift -> Domain).
@@ -31,7 +31,7 @@ class ModelMapper {
           : Recipient.createUnknown(data.id),
       snippet: data.lastMessageId, // Snippet could be more complex
       date: data.updatedAt ?? 0,
-      unreadCount: data.unreadCount,
+      unreadCount: 0,
       isArchived: data.isArchived,
       isMuted: data.isMuted,
       pinnedOrder: data.isPinned ? 1 : 0,
@@ -58,7 +58,7 @@ class ModelMapper {
     );
   }
 
-  static MessageEntity messageFromDrift(drift.Message data, [List<drift.Reaction> reactions = const []]) {
+  static MessageEntity messageFromDrift(drift.Message data, [List<drift.Reaction> reactions = const [], drift.MessageLocation? location]) {
     return MessageEntity(
       id: data.id,
       conversationId: data.conversationId ?? "",
@@ -70,6 +70,31 @@ class ModelMapper {
       status: (data.status ?? "pending").toMessageStatusEntity(),
       reactions: reactions.map((r) => reactionFromDrift(r)).toList(),
       relatedMessageId: data.replyToMessageId,
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      accuracy: location?.accuracy,
+      isLive: location?.isLive,
+      locationTimestamp: location?.updatedAt,
+    );
+  }
+
+  static PollRecordEntity pollFromDrift(drift.Poll poll, List<drift.PollOption> options, List<drift.PollVote> votes) {
+    return PollRecordEntity(
+      id: poll.id,
+      question: poll.question ?? "",
+      allowMultipleVotes: poll.multipleChoice,
+      hasEnded: false, // Defaulting for now
+      authorId: "unknown", // Need to resolve
+      messageId: poll.messageId ?? "",
+      options: options.map((opt) {
+        final optVotes = votes.where((v) => v.optionId == opt.id).map((v) => Voter(id: v.userId ?? "", voteCount: 1)).toList();
+        return PollOptionEntity(
+          id: opt.id,
+          text: opt.textContent ?? "",
+          voters: optVotes,
+          voteState: VoteState.none,
+        );
+      }).toList(),
     );
   }
 }
@@ -123,6 +148,17 @@ extension MessageEntityMapping on MessageEntity {
       status: Value(status.toDrift()),
       updatedAt: Value(updatedAt),
       replyToMessageId: Value(relatedMessageId),
+    );
+  }
+
+  drift.MessageLocationsCompanion toLocationCompanion() {
+    return drift.MessageLocationsCompanion(
+      messageId: Value(id),
+      latitude: Value(latitude),
+      longitude: Value(longitude),
+      accuracy: Value(accuracy),
+      isLive: Value(isLive ?? false),
+      updatedAt: Value(locationTimestamp ?? DateTime.now().millisecondsSinceEpoch),
     );
   }
 }

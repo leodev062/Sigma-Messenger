@@ -8,22 +8,33 @@ class SendLocationInteractor {
 
   SendLocationInteractor(this._chatRepository, this._jobManager);
 
-  Future<void> execute({
+  Future<MessageEntity> execute({
     required String conversationId,
     required String senderId,
     required double latitude,
     required double longitude,
+    double? accuracy,
+    bool isLive = false,
+    String destinationType = "USER",
   }) async {
     final message = MessageEntity.createLocationOutgoing(
       conversationId: conversationId,
       senderId: senderId,
       latitude: latitude,
       longitude: longitude,
+      accuracy: accuracy,
+      isLive: isLive,
     );
 
     await _chatRepository.saveMessageAndMetadata(message);
+    await _chatRepository.saveLocationData(message);
     
     // Entrega garantida via Job especializado em localização
-    await _jobManager.add(PushLocationSendJob(messageId: message.id));
+    await _jobManager.add(PushLocationSendJob(
+      messageId: message.id,
+      destinationType: destinationType,
+    ));
+    
+    return message;
   }
 }

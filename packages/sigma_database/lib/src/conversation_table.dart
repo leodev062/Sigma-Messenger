@@ -10,7 +10,6 @@ class Conversations extends Table {
   TextColumn get title => text().nullable()();
   TextColumn get avatar => text().nullable()();
   TextColumn get lastMessageId => text().nullable()();
-  IntColumn get unreadCount => integer().withDefault(const Constant(0))();
   IntColumn get updatedAt => integer().nullable()();
   BoolColumn get isMuted => boolean().withDefault(const Constant(false))();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
@@ -85,10 +84,5 @@ class ConversationDao extends DatabaseAccessor<SigmaDatabase> with _$Conversatio
 
   Future<void> deleteConversation(String id) {
     return (delete(conversations)..where((t) => t.id.equals(id))).go();
-  }
-
-  Future<void> resetUnreadCount(String id) {
-    return (update(conversations)..where((t) => t.id.equals(id)))
-        .write(const ConversationsCompanion(unreadCount: Value(0)));
   }
 }

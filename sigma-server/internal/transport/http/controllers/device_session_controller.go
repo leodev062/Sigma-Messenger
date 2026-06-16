@@ -2,13 +2,11 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	httpx "sigma-server/internal/transport/http"
 	"sigma-server/internal/transport/http/middleware"
 	"sigma-server/internal/repository/storage"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -26,12 +24,7 @@ func (c *DeviceSessionController) List(ctx echo.Context) error {
 		return httpx.Unauthorized(ctx, "unauthorized")
 	}
 
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return httpx.BadRequest(ctx, "invalid user id")
-	}
-
-	sessions, err := c.manager.FindByUserID(userID)
+	sessions, err := c.manager.FindByUserID(userIDStr)
 	if err != nil {
 		return httpx.InternalError(ctx, "failed to fetch sessions")
 	}
@@ -41,14 +34,13 @@ func (c *DeviceSessionController) List(ctx echo.Context) error {
 
 func (c *DeviceSessionController) Delete(ctx echo.Context) error {
 	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
+	if idStr == "" {
 		return httpx.BadRequest(ctx, "invalid session id")
 	}
 
 	// Optional: Check if session belongs to user
 	// For now, simplicity
-	if err := c.manager.Delete(uint(id)); err != nil {
+	if err := c.manager.DeleteByDeviceID(idStr); err != nil {
 		return httpx.InternalError(ctx, "failed to delete session")
 	}
 

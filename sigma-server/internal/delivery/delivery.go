@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sigma-server/internal/domain/entities"
+	"sigma-server/internal/platform/utils"
 
 	"github.com/google/uuid"
 )
@@ -21,7 +22,7 @@ type WakeupPusher interface {
 }
 
 type AccountFinder interface {
-	FindByID(id uuid.UUID) (*entities.Account, error)
+	FindByID(id any) (*entities.Account, error)
 }
 
 type EnvelopeStore interface {
@@ -53,7 +54,7 @@ func NewMessageDeliveryService(presence PresenceBroadcaster, store EnvelopeStore
 	}
 }
 
-func (s *MessageDeliveryService) Deliver(recipientID string, payload []byte, notify ...bool) error {
+func (s *MessageDeliveryService) Deliver(recipientID, destinationType string, payload []byte, notify ...bool) error {
 	if recipientID == "" {
 		return errors.New("recipient id is required")
 	}
@@ -61,14 +62,14 @@ func (s *MessageDeliveryService) Deliver(recipientID string, payload []byte, not
 	if len(notify) > 0 {
 		sendPush = notify[0]
 	}
-	return s.deliverTargets([]string{recipientID}, payload, sendPush)
+	return s.deliverTargets([]string{recipientID}, destinationType, payload, sendPush)
 }
 
-func (s *MessageDeliveryService) DeliverTargets(recipientIDs []string, payload []byte) error {
-	return s.deliverTargets(recipientIDs, payload, true)
+func (s *MessageDeliveryService) DeliverTargets(recipientIDs []string, destinationType string, payload []byte) error {
+	return s.deliverTargets(recipientIDs, destinationType, payload, true)
 }
 
-func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, payload []byte, notify bool) error {
+func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, destinationType string, payload []byte, notify bool) error {
 	if s == nil {
 		return errors.New("message delivery service is not configured")
 	}
@@ -78,7 +79,7 @@ func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, payload [
 		}
 
 		// ALWAYS persist first to ensure at-least-once delivery (Relay Engine pattern)
-		if err := s.persistAndNotify(recipientID, payload, notify); err != nil {
+		if err := s.persistAndNotify(recipientID, destinationType, payload, notify); err != nil {
 			s.logger.Printf("delivery: failed to persist for recipient=%s: %v", recipientID, err)
 			return err
 		}
@@ -93,7 +94,7 @@ func (s *MessageDeliveryService) deliverTargets(recipientIDs []string, payload [
 	return nil
 }
 
-func (s *MessageDeliveryService) persistAndNotify(recipientID string, payload []byte, notify bool) error {
+func (s *MessageDeliveryService) persistAndNotify(recipientID, destinationType string, payload []byte, notify bool) error {
 	if s.store == nil {
 		return errors.New("envelope store is not configured")
 	}
@@ -103,22 +104,15 @@ func (s *MessageDeliveryService) persistAndNotify(recipientID string, payload []
 		return err
 	}
 
-	// NEW: Unmarshal payload to extract Envelope metadata for proper storage
-	// We expect payload to be the serialized Protobuf Envelope from the client.
-	// (Actually in Relay mode, the client sends Envelope bytes, and we store them).
-
-	// For simple Relay persistence, we just store it as an Envelope record.
-	// Since we don't necessarily want to unmarshal EVERY message for performance,
-	// we use a simple approach:
-
 	now := time.Now().UnixMilli()
 	pending := &entities.Envelope{
-		EnvelopeID:    uuid.New().String(), // Unique ID for deletion/ACK
-		DestinationID: uid.String(),
-		Payload:       append([]byte(nil), payload...),
-		Status:        "pending",
-		CreatedAt:     now,
-		DeliverAt:     now,
+		EnvelopeID:      utils.NewID("env"), // Unique ID for deletion/ACK
+		DestinationID:   uid.String(),
+		DestinationType: destinationType,
+		Payload:         append([]byte(nil), payload...),
+		Status:          "pending",
+		CreatedAt:       now,
+		DeliverAt:       now,
 	}
 
 	if err := s.store.Save(pending); err != nil {
@@ -166,6 +160,10 @@ func NewEventDeliveryService(presence PresenceBroadcaster, store EventStore, acc
 		push:     push,
 		logger:   logger,
 	}
+}
+
+func NewPresenceService(h PresenceBroadcaster) PresenceBroadcaster {
+	return h
 }
 
 func (s *EventDeliveryService) Deliver(targetID string, eventType string, payload []byte) error {

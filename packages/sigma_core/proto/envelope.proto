@@ -2,25 +2,26 @@ syntax = "proto3";
 
 package sigmapb;
 
+import "common.proto";
+
 option go_package = "sigma-server/proto;sigmapb";
 
 message Envelope {
-  enum Type {
-    TYPE_UNKNOWN = 0;
-    CIPHERTEXT = 1;
-    PREKEY_BUNDLE = 2;
-    RECEIPT = 3;
-    TYPING = 4;
-    SYNC_MESSAGE = 5;
-  }
+  string envelope_id = 1;
+  string from = 2;
+  string to = 3;
+  bytes payload = 4;
+  string status = 5;
+  int64 created_at = 6;
+  int64 deliver_at = 7;
 
-  Type type = 1;
-  string source = 2;
-  uint32 source_device = 3;
-  uint64 timestamp = 4;
-  bytes content = 5;
-  bytes signature = 6;          // HMAC para validar integridade
-  string clientId = 7;          // ID da mensagem no cliente para deduplicação
-  uint32 ttl = 8;               // Time-to-live em segundos (default 86400 = 24h)
-  repeated string groupIds = 9; // Para mensagens de grupo
+  // MRDA Fields
+  EntityType destination_type = 8;
+  string destination_id = 9;
+
+  // Signal/Extended Fields
+  uint32 type = 10;
+  string source = 11;
+  uint32 source_device = 12;
+  uint64 timestamp = 13;
 }

@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_chat/sigma_chat.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
-import 'package:sigma_core/src/network/pb/envelope.pb.dart' as env_pb;
 
 /// FcmReceiverService - Refatorado para POO com Loggable.
 class FcmReceiverService with Loggable {
@@ -47,16 +45,16 @@ class FcmReceiverService with Loggable {
     final envelopeBase64 = data.envelope!;
 
     final envelopeBytes = base64Decode(envelopeBase64);
-    final envelope = env_pb.Envelope.fromBuffer(envelopeBytes);
+    final envelope = Envelope.fromBuffer(envelopeBytes);
     
     // Na nova arquitetura, o envelope contém o payload diretamente (Relay Only)
-    final payload = sigmapb.Message.fromBuffer(envelope.payload);
+    final payload = Message.fromBuffer(envelope.payload);
     
     await _chatRepository.getOrCreateThread(chatId);
     final now = DateTime.now().millisecondsSinceEpoch;
 
     final message = MessageEntity(
-      id: payload.id.isNotEmpty ? payload.id : "fcm_$now",
+      id: payload.messageId.isNotEmpty ? payload.messageId : "fcm_$now",
       conversationId: chatId,
       senderId: senderId,
       textContent: payload.hasText() ? payload.text.text : "",

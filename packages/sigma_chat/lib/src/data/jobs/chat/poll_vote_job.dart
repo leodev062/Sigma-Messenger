@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
+import 'package:fixnum/fixnum.dart' as fixnum;
 
 /// PollVoteJob - Envia um voto em uma enquete.
 class PollVoteJob extends core.Job {
@@ -12,6 +13,7 @@ class PollVoteJob extends core.Job {
   final String targetAuthorId;
   final int targetSentTimestamp;
   final int voteCount;
+  final String destinationType;
   
   final IChatRepository? chatRepository;
   final SignalServiceMessageSender? messageSender;
@@ -22,6 +24,7 @@ class PollVoteJob extends core.Job {
     required this.targetAuthorId,
     required this.targetSentTimestamp,
     required this.voteCount,
+    this.destinationType = "USER",
     this.chatRepository,
     this.messageSender,
     int? databaseId,
@@ -39,6 +42,7 @@ class PollVoteJob extends core.Job {
         'targetAuthorId': targetAuthorId,
         'targetSentTimestamp': targetSentTimestamp,
         'voteCount': voteCount,
+        'destinationType': destinationType,
       };
 
   static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
@@ -48,6 +52,7 @@ class PollVoteJob extends core.Job {
       targetAuthorId: data['targetAuthorId'],
       targetSentTimestamp: data['targetSentTimestamp'],
       voteCount: data['voteCount'],
+      destinationType: data['destinationType'] ?? "USER",
       chatRepository: locator<IChatRepository>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
@@ -56,25 +61,22 @@ class PollVoteJob extends core.Job {
 
   @override
   Future<void> run() async {
-    final message = await chatRepository!.getMessage(messageId);
-    if (message == null) return;
+    final relayMessage = Message()
+      ..pollVote = (PollVote()
+        ..pollId = messageId // In this job, messageId is used as pollId or we should have a separate pollId
+        ..optionId = optionIndexes.isNotEmpty ? optionIndexes.first.toString() : ""
+        ..userId = "me"
+        ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch));
 
-    // TODO: Implement PollVote in proto if missing. 
-    // Sending as a special text message for now or skipping until proto is updated.
-    SigmaLog.i(KEY, "Voto em enquete não enviado: PollVote missing in proto.");
+    // Send vote to server
+    messageSender!.sendUnencryptedEnvelope(
+      targetAuthorId, 
+      relayMessage, 
+      destinationType: destinationType,
+    );
     
-    /*
-    final relayMessage = sigmapb.Message()
-      ..id = "vote_${DateTime.now().millisecondsSinceEpoch}"
-      ..conversationId = message.chatId
-      ..senderId = "me"
-      ..receiverId = message.chatId
-      ..type = sigmapb.MessageType.POLL
-      ..timestamp = Int64(DateTime.now().millisecondsSinceEpoch);
-      // ..pollVote = ... (Missing in generated Dart code)
-
-    messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
-    */
+    // Also update local DB for optimistic update (though usually done before queueing)
+    await chatRepository!.castVote(messageId, optionIndexes.first.toString(), "me");
   }
 
   @override

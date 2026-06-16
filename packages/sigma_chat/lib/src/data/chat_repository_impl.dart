@@ -111,7 +111,7 @@ class ChatRepositoryImpl implements IChatRepository {
 
   @override
   Future<void> markThreadAsRead(String threadId) async {
-    await _conversationDao.resetUnreadCount(threadId);
+    // Column removed to sync with server/agent
   }
 
   @override
@@ -131,7 +131,15 @@ class ChatRepositoryImpl implements IChatRepository {
   @override
   Future<MessageEntity?> getMessage(String id) async {
     final driftMsg = await _messageDao.getMessage(id);
-    return driftMsg != null ? ModelMapper.messageFromDrift(driftMsg) : null;
+    if (driftMsg == null) return null;
+
+    drift.MessageLocation? location;
+    if (driftMsg.type == MessageTypeEntity.location.toDrift()) {
+      location = await _messageDao.getLocation(id);
+    }
+
+    final reactions = await _messageDao.watchReactionsForMessage(id).first;
+    return ModelMapper.messageFromDrift(driftMsg, reactions, location);
   }
 
   @override
@@ -201,6 +209,9 @@ class ChatRepositoryImpl implements IChatRepository {
     required String chatId,
     required double latitude,
     required double longitude,
+    double? accuracy,
+    bool isLive = false,
+    String destinationType = "USER",
   }) async {
     await getOrCreateThread(chatId);
     final message = MessageEntity.createLocationOutgoing(
@@ -208,13 +219,22 @@ class ChatRepositoryImpl implements IChatRepository {
       senderId: "me", // TODO: Pegar do AuthService
       latitude: latitude,
       longitude: longitude,
+      accuracy: accuracy,
+      isLive: isLive,
     );
 
     await saveMessageAndMetadata(message);
+    await saveLocationData(message);
 
     _jobManager.add(PushLocationSendJob(
       messageId: message.id,
+      destinationType: destinationType,
     ));
+  }
+
+  @override
+  Future<void> saveLocationData(MessageEntity message) async {
+    await _messageDao.saveLocation(message.toLocationCompanion());
   }
 
   @override
@@ -223,6 +243,7 @@ class ChatRepositoryImpl implements IChatRepository {
     required String question,
     required List<String> options,
     required bool allowMultipleVotes,
+    String destinationType = "USER",
   }) async {
     await getOrCreateThread(chatId);
     final message = MessageEntity.createPollOutgoing(
@@ -233,21 +254,43 @@ class ChatRepositoryImpl implements IChatRepository {
       allowMultipleVotes: allowMultipleVotes,
     );
 
+    final pollId = "poll_${message.id}";
+
     await saveMessageAndMetadata(message);
 
-    await _pollDao.createPoll(
-      drift.PollsCompanion.insert(
-        id: "poll_${message.id}",
-        question: Value(question),
-        messageId: Value(message.id),
-        multipleChoice: Value(allowMultipleVotes),
-      ),
-      options,
+    await savePollData(
+      pollId: pollId,
+      messageId: message.id,
+      question: question,
+      options: options,
+      multipleChoice: allowMultipleVotes,
     );
 
     _jobManager.add(PushPollSendJob(
       messageId: message.id,
+      pollId: pollId,
+      destinationType: destinationType,
     ));
+  }
+
+  @override
+  Future<void> savePollData({
+    required String pollId,
+    required String messageId,
+    required String question,
+    required List<String> options,
+    required bool multipleChoice,
+  }) async {
+    await _pollDao.createPoll(
+      drift.PollsCompanion.insert(
+        id: pollId,
+        question: Value(question),
+        messageId: Value(messageId),
+        multipleChoice: Value(multipleChoice),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+      options,
+    );
   }
 
   @override
@@ -257,10 +300,10 @@ class ChatRepositoryImpl implements IChatRepository {
 
   @override
   Stream<PollRecordEntity?> watchPoll(String messageId) {
-    return _pollDao.watchPoll(messageId).map((data) {
+    return _pollDao.watchPoll(messageId).asyncMap((data) async {
       if (data == null) return null;
-      // Map to PollRecordEntity (Domain)
-      return null; // Implementation needed
+      final votes = await _pollDao.getVotes(data.poll.id);
+      return ModelMapper.pollFromDrift(data.poll, data.options, votes);
     });
   }
 
@@ -276,10 +319,14 @@ class ChatRepositoryImpl implements IChatRepository {
 
     final message = await _messageDao.getMessage(messageId);
     if (message != null) {
+      final thread = await _conversationDao.getConversation(message.conversationId!);
+      final destType = thread?.id != null ? (await watchThread(thread!.id).first)?.recipient.type.toDestinationType() ?? "USER" : "USER";
+
       _jobManager.add(ReactionSendJob(
         messageId: messageId,
         emoji: emoji,
         recipientId: message.conversationId ?? "",
+        destinationType: destType,
       ));
     }
   }

@@ -28,6 +28,7 @@ part 'sigma_database.g.dart';
     PollOptions,
     PollVotes,
     OutboxQueue,
+    Envelopes,
     KeyValues,
     Jobs,
   ],

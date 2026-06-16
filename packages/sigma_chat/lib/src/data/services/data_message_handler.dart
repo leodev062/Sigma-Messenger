@@ -1,7 +1,6 @@
 import 'package:sigma_core/sigma_core.dart';
 import 'message_handler.dart';
 import 'content/message_content_processor.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
 /// DataMessageHandler - Refatorado para o padrão Relay Protobuf (agente-server.md).
 class DataMessageHandler with Loggable implements MessageHandler {
@@ -14,9 +13,9 @@ class DataMessageHandler with Loggable implements MessageHandler {
     final senderId = envelope.from;
 
     try {
-      final message = sigmapb.Message.fromBuffer(envelope.payload);
+      final message = Message.fromBuffer(envelope.payload);
       
-      final messageId = message.id.isNotEmpty ? message.id : "msg_\${envelope.createdAt}_\${envelope.from}";
+      final messageId = message.messageId.isNotEmpty ? message.messageId : "msg_${envelope.createdAt}_${envelope.from}";
       final timestamp = message.timestamp > 0 ? message.timestamp.toInt() : DateTime.now().millisecondsSinceEpoch;
 
       // Executa a estratégia correta baseada no conteúdo da Message
@@ -36,7 +35,7 @@ class DataMessageHandler with Loggable implements MessageHandler {
       }
 
       if (!processed) {
-        logW("Nenhum processador encontrado para o payload de \$senderId (content type: \${message.whichContent()})");
+        logW("Nenhum processador encontrado para o payload de $senderId (content type: ${message.whichContent()})");
       }
       
     } catch (e, stack) {

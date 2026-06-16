@@ -8,7 +8,7 @@ import (
 )
 
 func TestRouterMatchDeleteMessagePaths(t *testing.T) {
-	rt := New(nil, nil, nil, nil)
+	rt := New(nil, nil, nil, nil, nil)
 	paths := []string{"/api/v2/message", "/v2/message", "v2/message"}
 	for _, path := range paths {
 		route, _ := rt.match(&protocol.Request{Verb: "DELETE", Path: path})

@@ -4,6 +4,6 @@ package session
 type Registry interface {
 	Register(conn *Connection)
 	Unregister(conn *Connection)
-	Dispatch(recipientID string, payload []byte)
+	Dispatch(recipientID, destinationType string, payload []byte)
 	RefreshPresence(userID string)
 }

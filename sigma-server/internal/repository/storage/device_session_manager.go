@@ -33,3 +33,8 @@ func (m *DeviceSessionManager) FindByDeviceID(deviceID string) (*entities.Device
 func (m *DeviceSessionManager) DeleteByDeviceID(deviceID string) error {
 	return m.db.Where("id = ?", deviceID).Delete(&entities.Device{}).Error
 }
+
+func (m *DeviceSessionManager) Touch(userID any, deviceID string, ip string) error {
+	// Simple touch implementation
+	return nil
+}

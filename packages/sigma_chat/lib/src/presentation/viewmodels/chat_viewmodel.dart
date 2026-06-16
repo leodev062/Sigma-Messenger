@@ -5,7 +5,9 @@ import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_auth/sigma_auth.dart';
 import 'package:sigma_chat/sigma_chat.dart';
 import 'package:sigma_chat/src/domain/interactors/send_poll_interactor.dart';
+import 'package:sigma_chat/src/data/jobs/chat/poll_vote_job.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:sigma_chat/src/domain/services/live_location_manager.dart';
 import 'state/chat_state.dart';
 
 /// ChatViewModel - Arquitetura Profissional focada em performance (Padrão Signal).
@@ -28,7 +30,9 @@ class ChatViewModel extends ChangeNotifier {
   final IChatRepository _chatRepository;
   final IRecipientRepository _recipientRepository;
   final IAuthRepository _authRepository;
+  final SigmaJobManager _jobManager;
   final LocationService _locationService;
+  final LiveLocationManager _liveLocationManager;
 
   ChatState _state = ChatState();
   ChatState get state => _state;
@@ -55,7 +59,9 @@ class ChatViewModel extends ChangeNotifier {
     this._chatRepository,
     this._recipientRepository,
     this._authRepository,
+    this._jobManager,
     this._locationService,
+    this._liveLocationManager,
     MediaPreviewService mediaPreviewService,
   ) {
     _loadCurrentUser();
@@ -72,10 +78,14 @@ class ChatViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  void setupChat(String conversationId) {
+  void setupChat(String conversationId) async {
     if (_currentConversationId == conversationId) return;
     _currentConversationId = conversationId;
     
+    // Fetch recipient type
+    final thread = await _chatRepository.watchThread(conversationId).first;
+    final recipientType = thread?.recipient.type ?? RecipientType.individual;
+
     _state = _state.copyWith(
       messageLimit: 50, 
       isLoadingMore: false,
@@ -84,6 +94,7 @@ class ChatViewModel extends ChangeNotifier {
       currentChatId: conversationId,
       isSelectionMode: false,
       selectedMessageIds: const {},
+      currentRecipientType: recipientType,
     );
     notifyListeners();
 
@@ -104,6 +115,7 @@ class ChatViewModel extends ChangeNotifier {
         {
           'messages': messages,
           'currentUserId': Identity.currentUserId,
+          'recipientType': _state.currentRecipientType,
         },
       );
       
@@ -143,11 +155,14 @@ class ChatViewModel extends ChangeNotifier {
     final currentUser = _state.currentUser;
     if (currentUser == null) return;
 
+    final destType = _state.currentRecipientType.toDestinationType();
+
     _sendMessageInteractor.execute(
       conversationId,
       conversationId,
       currentUser.id,
       text,
+      destinationType: destType,
     );
   }
 
@@ -162,22 +177,63 @@ class ChatViewModel extends ChangeNotifier {
     );
   }
 
-  Future<void> sendLocation(String conversationId, double lat, double lon) async {
+  Future<void> sendLocation(String conversationId, double lat, double lon, {double? accuracy, bool isLive = false}) async {
     final currentUser = _state.currentUser;
     if (currentUser == null) return;
+    
+    final destType = _state.currentRecipientType.toDestinationType();
+
     await _sendLocationInteractor.execute(
       conversationId: conversationId,
       senderId: currentUser.id,
       latitude: lat,
       longitude: lon,
+      accuracy: accuracy,
+      isLive: isLive,
+      destinationType: destType,
     );
   }
 
-  Future<void> sendCurrentLocation(String conversationId) async {
+  Future<void> sendCurrentLocation(String conversationId, {bool isLive = false, int durationMinutes = 15}) async {
     final position = await _locationService.getCurrentLocation();
     if (position != null) {
-      await sendLocation(conversationId, position.latitude, position.longitude);
+      if (isLive) {
+        await startLiveLocation(conversationId, durationMinutes);
+      } else {
+        await sendLocation(conversationId, position.latitude, position.longitude, accuracy: position.accuracy);
+      }
     }
+  }
+
+  Future<void> startLiveLocation(String chatId, int durationMinutes) async {
+    final currentUser = _state.currentUser;
+    if (currentUser == null) return;
+
+    final position = await _locationService.getCurrentLocation();
+    if (position == null) return;
+
+    final destType = _state.currentRecipientType.toDestinationType();
+
+    final message = await _sendLocationInteractor.execute(
+      conversationId: chatId,
+      senderId: currentUser.id,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      accuracy: position.accuracy,
+      isLive: true,
+      destinationType: destType,
+    );
+
+    await _liveLocationManager.startLiveLocation(
+      chatId: chatId,
+      messageId: message.id,
+      durationMinutes: durationMinutes,
+      destinationType: destType,
+    );
+  }
+
+  void stopLiveLocation(String messageId) {
+    _liveLocationManager.stopLiveLocation(messageId);
   }
 
   Future<void> sendPoll(String conversationId, String question, List<String> options, {bool allowMultipleVotes = false}) async {
@@ -208,7 +264,16 @@ class ChatViewModel extends ChangeNotifier {
     final pollId = "poll_$messageId";
     await _chatRepository.castVote(pollId, optionId, currentUser.id);
 
-    // TODO: Implement PollVoteJob with new parameters or fix proto
+    final destType = _state.currentRecipientType.toDestinationType();
+
+    _jobManager.add(PollVoteJob(
+      messageId: messageId,
+      optionIndexes: [int.tryParse(optionId) ?? 0],
+      targetAuthorId: message.senderId,
+      targetSentTimestamp: message.timestamp,
+      voteCount: 1,
+      destinationType: destType,
+    ));
   }
 
   Stream<PollRecordEntity?> watchPoll(String messageId) {

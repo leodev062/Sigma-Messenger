@@ -1,20 +1,44 @@
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
+import 'package:sigma_core/sigma_core.dart';
 import 'package:sigma_chat/sigma_chat.dart';
 import 'message_content_processor.dart';
 
 class LocationContentProcessor implements MessageContentProcessor {
-  LocationContentProcessor(IChatRepository chatRepository);
+  final IChatRepository _chatRepository;
+
+  LocationContentProcessor(this._chatRepository);
 
   @override
-  bool canProcess(sigmapb.Message payload) => false; // Missing in current proto
+  bool canProcess(Message payload) => 
+      payload.hasDataMessage() && payload.dataMessage.hasLocation();
 
   @override
   Future<void> process({
     required String messageId,
     required String senderId,
-    required sigmapb.Message payload,
+    required Message payload,
     required int timestamp,
   }) async {
-    // TODO: Implement once Location is added to Message proto
+    final location = payload.dataMessage.location;
+    
+    final message = MessageEntity(
+      id: messageId,
+      conversationId: senderId,
+      senderId: senderId,
+      textContent: "📍 Localização",
+      type: MessageTypeEntity.location,
+      timestamp: timestamp,
+      status: MessageStatusEntity.delivered,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy,
+      isLive: location.isLive,
+      locationTimestamp: location.timestamp.toInt(),
+    );
+
+    // Save message (metadata and content)
+    await _chatRepository.saveMessageAndMetadata(message);
+    
+    // Save specific location data
+    await _chatRepository.saveLocationData(message);
   }
 }

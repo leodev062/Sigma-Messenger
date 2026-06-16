@@ -9,7 +9,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/google/uuid"
+	"sigma-server/internal/platform/utils"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -46,7 +47,7 @@ func (c *AttachmentController) RequestUpload(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "file_size must be greater than zero"})
 	}
 
-	attachmentID := uuid.New().String()
+	attachmentID := utils.NewID("att")
 
 	response := requestUploadResponse{
 		AttachmentID: attachmentID,

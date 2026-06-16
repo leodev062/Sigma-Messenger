@@ -29,6 +29,7 @@ export 'src/domain/interactors/archive_thread_interactor.dart';
 export 'src/domain/interactors/pin_thread_interactor.dart';
 export 'src/domain/interactors/mark_as_read_interactor.dart';
 export 'src/domain/services/data_message_processor.dart';
+export 'src/domain/services/live_location_manager.dart';
 export 'src/push/push_message_processor.dart';
 export 'src/presentation/models/chat_ui_item.dart';
 export 'src/presentation/pages/archived_chats_screen.dart';

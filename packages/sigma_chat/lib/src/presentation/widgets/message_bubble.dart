@@ -13,6 +13,7 @@ import '../pages/message_details_screen.dart';
 import '../pages/forward_recipient_picker.dart';
 import 'poll_component.dart';
 import '../pages/poll_votes_screen.dart';
+import 'bot_message_body.dart';
 
 /// Signal-Style Bubble Tail Painter
 class BubbleTailPainter extends CustomPainter {
@@ -206,6 +207,17 @@ class _MessageBubbleState extends State<MessageBubble>
 
   Widget _buildRow(BuildContext context, Recipient? sender) {
     final isMe = widget.item.message.isFromMe;
+    final isChannel = widget.item.recipientType == RecipientType.channel;
+
+    if (isChannel) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: _buildBubbleContent(context, sender),
+        ),
+      );
+    }
+
     return Row(
       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -216,7 +228,7 @@ class _MessageBubbleState extends State<MessageBubble>
             size: 28,
           ),
           const SizedBox(width: 8),
-        ] else if (!isMe && !widget.item.showAvatar) ...[
+        ] else if (!isMe && !widget.item.showAvatar && widget.item.recipientType == RecipientType.group) ...[
           const SizedBox(width: 36),
         ],
         Flexible(
@@ -282,12 +294,17 @@ class _MessageBubbleState extends State<MessageBubble>
     final settings = context.watch<SettingsViewModel>();
     final isMe = widget.item.message.isFromMe;
     final isDark = theme.brightness == Brightness.dark;
+    final isBot = widget.item.recipientType == RecipientType.bot;
+    final isChannel = widget.item.recipientType == RecipientType.channel;
 
-    final Color bubbleColor;
-    final Color textColor;
+    Color bubbleColor;
+    Color textColor;
 
     if (isMe) {
       bubbleColor = SigmaColors.signalBlue;
+      textColor = Colors.white;
+    } else if (isBot) {
+      bubbleColor = Colors.deepPurpleAccent.withValues(alpha: 0.8);
       textColor = Colors.white;
     } else {
       bubbleColor = isDark
@@ -296,12 +313,17 @@ class _MessageBubbleState extends State<MessageBubble>
       textColor = isDark ? Colors.white : Colors.black;
     }
 
+    if (isChannel) {
+      bubbleColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+      textColor = theme.colorScheme.onSurface;
+    }
+
     final metaColor = textColor.withValues(alpha: 0.6);
 
     return Stack(
       alignment: isMe ? Alignment.topRight : Alignment.topLeft,
       children: [
-        if (widget.item.isFirstInGroup)
+        if (widget.item.isFirstInGroup && !isChannel)
           Positioned(
             top: 0,
             right: isMe ? -6 : null,
@@ -320,11 +342,16 @@ class _MessageBubbleState extends State<MessageBubble>
         Container(
           decoration: BoxDecoration(
             color: bubbleColor,
-            borderRadius: _getBorderRadius(settings.messageBorderRadius),
+            gradient: isBot ? const LinearGradient(
+              colors: [Colors.deepPurple, Colors.indigoAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ) : null,
+            borderRadius: isChannel ? BorderRadius.circular(16) : _getBorderRadius(settings.messageBorderRadius),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isChannel ? CrossAxisAlignment.center : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.item.showName && !isMe)
@@ -335,7 +362,7 @@ class _MessageBubbleState extends State<MessageBubble>
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.secondary,
+                      color: isBot ? Colors.white70 : theme.colorScheme.secondary,
                     ),
                   ),
                 ),
@@ -356,12 +383,21 @@ class _MessageBubbleState extends State<MessageBubble>
   ) {
     final message = widget.item.message;
 
+    final isBot = widget.item.recipientType == RecipientType.bot;
+
     switch (message.type) {
       case MessageTypeEntity.location:
         return _LocationMessageBody(message: message, textColor: textColor);
       case MessageTypeEntity.poll:
         return _PollMessageBody(message: message, textColor: textColor);
       default:
+        if (isBot && !message.isFromMe) {
+          return BotMessageBody(
+            message: message,
+            textColor: textColor,
+            fontSize: settings.messageFontSize,
+          );
+        }
         return Text(
           message.textContent,
           style: TextStyle(
@@ -451,6 +487,7 @@ class _LocationMessageBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final lat = message.latitude ?? 0.0;
     final lon = message.longitude ?? 0.0;
+    final isLive = message.isLive ?? false;
     final mapUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lon";
 
     return InkWell(
@@ -469,13 +506,33 @@ class _LocationMessageBody extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.1),
                 child: Stack(
                   children: [
-                    const Center(
+                    Center(
                       child: Icon(
-                        Icons.map_rounded,
+                        isLive ? Icons.live_tv_rounded : Icons.map_rounded,
                         size: 48,
-                        color: Colors.black26,
+                        color: isLive ? Colors.redAccent : Colors.black26,
                       ),
                     ),
+                    if (isLive)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            "LIVE",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       bottom: 8,
                       right: 8,
@@ -513,16 +570,32 @@ class _LocationMessageBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              message.textContent,
+              isLive ? "📍 Localização em tempo real" : message.textContent,
               style: TextStyle(
                 color: textColor,
                 fontSize: 13,
                 height: 1.4,
-                decoration: TextDecoration.underline,
+                decoration: isLive ? TextDecoration.none : TextDecoration.underline,
                 decorationColor: textColor.withValues(alpha: 0.5),
               ),
             ),
           ),
+          if (isLive && message.isFromMe)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 4),
+              child: TextButton(
+                onPressed: () {
+                  context.read<ChatViewModel>().stopLiveLocation(message.id);
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white24,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+                child: const Text("Parar", style: TextStyle(fontSize: 11)),
+              ),
+            ),
         ],
       ),
     );

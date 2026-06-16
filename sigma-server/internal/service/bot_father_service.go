@@ -50,7 +50,7 @@ func (s *BotFatherService) ListOwnedBots(ownerID uuid.UUID) ([]bizbot.OwnedBotSu
 	out := make([]bizbot.OwnedBotSummary, 0, len(bots))
 	for _, bot := range bots {
 		out = append(out, bizbot.OwnedBotSummary{
-			ID:          bot.ID.String(),
+			ID:          bot.ID,
 			DisplayName: deref(bot.DisplayName),
 			Username:    deref(bot.Username),
 		})

@@ -31,17 +31,17 @@ func NewReceiptService(dispatcher ports.OutboundDispatcher, logger *log.Logger) 
 }
 
 // HandleReceipt processa um ReceiptMessage recebido.
-func (s *ReceiptService) HandleReceipt(ctx context.Context, receipt *sigmapb.ReceiptMessage, senderID string) error {
+func (s *ReceiptService) HandleReceipt(ctx context.Context, message *sigmapb.Message, senderID string) error {
+	receipt := message.GetReceipt()
 	if receipt == nil || receipt.SenderId == "" {
 		return nil
 	}
 
 	// Rotear recibo de volta para quem enviou a mensagem original
 	envelope := &sigmapb.Envelope{
-		Type:      sigmapb.Envelope_RECEIPT,
-		Source:    senderID,
-		Timestamp: uint64(time.Now().UnixMilli()),
-		Content:   nil, // Recibos não vão criptografados
+		From:      senderID,
+		CreatedAt: time.Now().UnixMilli(),
+		Payload:   nil, // Recibos não vão criptografados
 	}
 
 	payload, err := proto.Marshal(envelope)
@@ -51,7 +51,7 @@ func (s *ReceiptService) HandleReceipt(ctx context.Context, receipt *sigmapb.Rec
 	}
 
 	if s.dispatcher != nil {
-		if err := s.dispatcher.Dispatch(senderID, receipt.SenderId, payload); err != nil {
+		if err := s.dispatcher.Dispatch(senderID, receipt.SenderId, "USER", payload); err != nil {
 			s.logger.Printf("receipt service: failed to dispatch receipt to=%s: %v", receipt.SenderId, err)
 			return err
 		}
@@ -94,7 +94,8 @@ func NewTypingService(dispatcher ports.OutboundDispatcher, logger *log.Logger) *
 }
 
 // HandleTyping processa um indicador de digitação.
-func (s *TypingService) HandleTyping(ctx context.Context, typing *sigmapb.TypingMessage, senderID, recipientID string) error {
+func (s *TypingService) HandleTyping(ctx context.Context, message *sigmapb.Message, senderID, recipientID string) error {
+	typing := message.GetTyping()
 	if typing == nil {
 		return nil
 	}
@@ -102,7 +103,7 @@ func (s *TypingService) HandleTyping(ctx context.Context, typing *sigmapb.Typing
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if typing.State == sigmapb.TypingMessage_STARTED {
+	if typing.State == sigmapb.TypingMessage_TYPING_STATE_STARTED {
 		// Registrar novo typer
 		if s.activeTypers[recipientID] == nil {
 			s.activeTypers[recipientID] = make(map[string]*typingState)
@@ -122,10 +123,9 @@ func (s *TypingService) HandleTyping(ctx context.Context, typing *sigmapb.Typing
 
 	// Retransmitir para destinatário
 	envelope := &sigmapb.Envelope{
-		Type:      sigmapb.Envelope_TYPING,
-		Source:    senderID,
-		Timestamp: uint64(time.Now().UnixMilli()),
-		Content:   nil,
+		From:      senderID,
+		CreatedAt: time.Now().UnixMilli(),
+		Payload:   nil,
 	}
 
 	payload, err := proto.Marshal(envelope)
@@ -134,7 +134,7 @@ func (s *TypingService) HandleTyping(ctx context.Context, typing *sigmapb.Typing
 	}
 
 	if s.dispatcher != nil {
-		_ = s.dispatcher.Dispatch(senderID, recipientID, payload)
+		_ = s.dispatcher.Dispatch(senderID, recipientID, "USER", payload)
 	}
 
 	return nil
@@ -199,7 +199,8 @@ func NewSyncService(dispatcher ports.OutboundDispatcher, logger *log.Logger) *Sy
 }
 
 // HandleSync processa uma SyncMessage.
-func (s *SyncService) HandleSync(ctx context.Context, sync *sigmapb.SyncMessage, senderID string) error {
+func (s *SyncService) HandleSync(ctx context.Context, message *sigmapb.Message, senderID string) error {
+	sync := message.GetSync()
 	if sync == nil {
 		return nil
 	}
@@ -221,22 +222,21 @@ func (s *SyncService) HandleSync(ctx context.Context, sync *sigmapb.SyncMessage,
 
 func (s *SyncService) syncToTarget(ctx context.Context, sync *sigmapb.SyncMessage, senderID, targetID string) error {
 	envelope := &sigmapb.Envelope{
-		Type:      sigmapb.Envelope_SYNC_MESSAGE,
-		Source:    senderID,
-		Timestamp: uint64(time.Now().UnixMilli()),
+		From:      senderID,
+		CreatedAt: time.Now().UnixMilli(),
 	}
 
-	// Encapsular sync em Content
-	content := &sigmapb.Content{
-		Content: &sigmapb.Content_Sync{Sync: sync},
+	// Encapsular sync em Message
+	msg := &sigmapb.Message{
+		Content: &sigmapb.Message_Sync{Sync: sync},
 	}
 
-	contentBytes, err := proto.Marshal(content)
+	msgBytes, err := proto.Marshal(msg)
 	if err != nil {
-		s.logger.Printf("sync service: failed to marshal content: %v", err)
+		s.logger.Printf("sync service: failed to marshal message: %v", err)
 		return err
 	}
-	envelope.Content = contentBytes
+	envelope.Payload = msgBytes
 
 	payload, err := proto.Marshal(envelope)
 	if err != nil {
@@ -245,7 +245,7 @@ func (s *SyncService) syncToTarget(ctx context.Context, sync *sigmapb.SyncMessag
 	}
 
 	if s.dispatcher != nil {
-		if err := s.dispatcher.Dispatch(senderID, targetID, payload); err != nil {
+		if err := s.dispatcher.Dispatch(senderID, targetID, "USER", payload); err != nil {
 			s.logger.Printf("sync service: failed to dispatch sync to=%s: %v", targetID, err)
 			return err
 		}

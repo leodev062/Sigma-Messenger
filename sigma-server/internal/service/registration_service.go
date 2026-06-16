@@ -14,8 +14,9 @@ import (
 	"sigma-server/internal/registration"
 	"sigma-server/internal/repository/storage"
 	"sigma-server/internal/platform/telephony"
+	"sigma-server/internal/platform/utils"
 
-	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 var (
@@ -178,7 +179,7 @@ func (s *RegistrationService) CheckVerificationCode(
 	user, err := s.userManager.FindByPhone(session.E164)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		// Auto-registration
-		userID := uuid.New().String()
+		userID := utils.NewUserID()
 		user = &entities.User{
 			ID:        userID,
 			Phone:     session.E164,
@@ -190,7 +191,7 @@ func (s *RegistrationService) CheckVerificationCode(
 		}
 
 		account := &entities.Account{
-			ID:        uuid.New().String(),
+			ID:        utils.NewUserID(),
 			UserID:    userID,
 			CreatedAt: time.Now().Unix(),
 		}
@@ -276,11 +277,10 @@ func (s *RegistrationService) CreateAccount(
 	}
 
 	account := &entities.Account{
-		ID:        uuid.New(),
+		ID:        utils.NewUserID(),
 		Phone:     &session.E164,
 		Type:      "individual",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UnixMilli(),
 	}
 
 	if err := s.accountManager.Create(account); err != nil {
@@ -289,7 +289,7 @@ func (s *RegistrationService) CreateAccount(
 
 	s.upsertDeviceSession(account.ID, req.DeviceID, req.DeviceName, req.Platform, req.ClientVersion, ip)
 
-	token, err := s.jwtGenerator.GenerateToken(account.ID.String(), 30*24*time.Hour)
+	token, err := s.jwtGenerator.GenerateToken(account.ID, 30*24*time.Hour)
 	if err != nil {
 		return nil, "", err
 	}

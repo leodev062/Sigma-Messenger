@@ -13,8 +13,9 @@ class SendMessageInteractor with Loggable {
     String conversationId,
     String chatId,
     String senderId,
-    String text,
-  ) async {
+    String text, {
+    String destinationType = "USER",
+  }) async {
     try {
       final message = MessageEntity.createTextOutgoing(
         conversationId: conversationId,
@@ -30,7 +31,10 @@ class SendMessageInteractor with Loggable {
       logI("Mensagem salva localmente: ${message.id}");
 
       // 2. Entrega assíncrona garantida via Jobs
-      _jobManager.add(PushTextSendJob(messageId: message.id));
+      _jobManager.add(PushTextSendJob(
+        messageId: message.id,
+        destinationType: destinationType,
+      ));
       
     } catch (e, stack) {
       logE("Erro crítico ao processar envio de mensagem", e, stack);

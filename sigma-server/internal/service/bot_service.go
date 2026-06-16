@@ -124,7 +124,7 @@ func (s *BotService) deliverReply(userID string, envelope []byte) error {
 		return nil
 	}
 	if s.offline != nil {
-		return s.offline.Deliver(userID, envelope, true)
+		return s.offline.Deliver(userID, "BOT", envelope, true)
 	}
 	return nil
 }

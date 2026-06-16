@@ -1,5 +1,4 @@
 import 'package:sigma_core/sigma_core.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
 import 'message_handler.dart';
 
@@ -12,20 +11,18 @@ class ReceiptMessageHandler with Loggable implements MessageHandler {
   @override
   Future<void> handle(Envelope envelope) async {
     try {
-      final message = sigmapb.Message.fromBuffer(envelope.payload);
+      final message = Message.fromBuffer(envelope.payload);
 
-      // No novo protocolo, o status está na própria mensagem se for um recibo
-      // ou podemos inferir do envelope se for apenas um ACK.
-      // O agente-server.md lista MessageStatus.
-      
-      final status = (message.status == sigmapb.MessageStatus.READ)
-          ? MessageStatusEntity.read
-          : MessageStatusEntity.delivered;
+      if (message.hasReceipt()) {
+        final receipt = message.receipt;
+        final status = (receipt.type == ReceiptMessage_ReceiptType.READ)
+            ? MessageStatusEntity.read
+            : MessageStatusEntity.delivered;
 
-      // Se a mensagem tem ID preenchido, é um recibo para aquela mensagem
-      if (message.id.isNotEmpty) {
-         await _repository.updateMessageStatus(message.id, status);
-         logD('Mensagem ${message.id} marcada como $status');
+        if (receipt.messageId.isNotEmpty) {
+           await _repository.updateMessageStatus(receipt.messageId, status);
+           logD('Mensagem ${receipt.messageId} marcada como $status');
+        }
       }
       
     } catch (e, stack) {

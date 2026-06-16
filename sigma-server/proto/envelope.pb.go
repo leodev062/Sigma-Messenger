@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.35.0
-// source: envelope.proto
+// source: proto/envelope.proto
 
 package sigmapb
 
@@ -22,21 +22,29 @@ const (
 )
 
 type Envelope struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	EnvelopeId    string                 `protobuf:"bytes,1,opt,name=envelopeId,proto3" json:"envelopeId,omitempty"`
-	From          string                 `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
-	To            string                 `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"` // Protobuf Message bytes
-	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`   // pending | delivered | failed
-	CreatedAt     int64                  `protobuf:"varint,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	DeliverAt     int64                  `protobuf:"varint,7,opt,name=deliverAt,proto3" json:"deliverAt,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	EnvelopeId string                 `protobuf:"bytes,1,opt,name=envelope_id,json=envelopeId,proto3" json:"envelope_id,omitempty"`
+	From       string                 `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	To         string                 `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	Payload    []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Status     string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedAt  int64                  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	DeliverAt  int64                  `protobuf:"varint,7,opt,name=deliver_at,json=deliverAt,proto3" json:"deliver_at,omitempty"`
+	// MRDA Fields
+	DestinationType EntityType `protobuf:"varint,8,opt,name=destination_type,json=destinationType,proto3,enum=sigmapb.EntityType" json:"destination_type,omitempty"`
+	DestinationId   string     `protobuf:"bytes,9,opt,name=destination_id,json=destinationId,proto3" json:"destination_id,omitempty"`
+	// Signal/Extended Fields
+	Type          uint32 `protobuf:"varint,10,opt,name=type,proto3" json:"type,omitempty"`
+	Source        string `protobuf:"bytes,11,opt,name=source,proto3" json:"source,omitempty"`
+	SourceDevice  uint32 `protobuf:"varint,12,opt,name=source_device,json=sourceDevice,proto3" json:"source_device,omitempty"`
+	Timestamp     uint64 `protobuf:"varint,13,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Envelope) Reset() {
 	*x = Envelope{}
-	mi := &file_envelope_proto_msgTypes[0]
+	mi := &file_proto_envelope_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +56,7 @@ func (x *Envelope) String() string {
 func (*Envelope) ProtoMessage() {}
 
 func (x *Envelope) ProtoReflect() protoreflect.Message {
-	mi := &file_envelope_proto_msgTypes[0]
+	mi := &file_proto_envelope_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +69,7 @@ func (x *Envelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Envelope.ProtoReflect.Descriptor instead.
 func (*Envelope) Descriptor() ([]byte, []int) {
-	return file_envelope_proto_rawDescGZIP(), []int{0}
+	return file_proto_envelope_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Envelope) GetEnvelopeId() string {
@@ -113,66 +121,119 @@ func (x *Envelope) GetDeliverAt() int64 {
 	return 0
 }
 
-var File_envelope_proto protoreflect.FileDescriptor
+func (x *Envelope) GetDestinationType() EntityType {
+	if x != nil {
+		return x.DestinationType
+	}
+	return EntityType_ENTITY_TYPE_USER
+}
 
-const file_envelope_proto_rawDesc = "" +
+func (x *Envelope) GetDestinationId() string {
+	if x != nil {
+		return x.DestinationId
+	}
+	return ""
+}
+
+func (x *Envelope) GetType() uint32 {
+	if x != nil {
+		return x.Type
+	}
+	return 0
+}
+
+func (x *Envelope) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Envelope) GetSourceDevice() uint32 {
+	if x != nil {
+		return x.SourceDevice
+	}
+	return 0
+}
+
+func (x *Envelope) GetTimestamp() uint64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+var File_proto_envelope_proto protoreflect.FileDescriptor
+
+const file_proto_envelope_proto_rawDesc = "" +
 	"\n" +
-	"\x0eenvelope.proto\x12\tmessaging\"\xbc\x01\n" +
-	"\bEnvelope\x12\x1e\n" +
-	"\n" +
-	"envelopeId\x18\x01 \x01(\tR\n" +
+	"\x14proto/envelope.proto\x12\asigmapb\x1a\x12proto/common.proto\"\x95\x03\n" +
+	"\bEnvelope\x12\x1f\n" +
+	"\venvelope_id\x18\x01 \x01(\tR\n" +
 	"envelopeId\x12\x12\n" +
 	"\x04from\x18\x02 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x03 \x01(\tR\x02to\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\fR\apayload\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1c\n" +
-	"\tcreatedAt\x18\x06 \x01(\x03R\tcreatedAt\x12\x1c\n" +
-	"\tdeliverAt\x18\a \x01(\x03R\tdeliverAtB\x1cZ\x1asigma-server/proto;sigmapbb\x06proto3"
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"deliver_at\x18\a \x01(\x03R\tdeliverAt\x12>\n" +
+	"\x10destination_type\x18\b \x01(\x0e2\x13.sigmapb.EntityTypeR\x0fdestinationType\x12%\n" +
+	"\x0edestination_id\x18\t \x01(\tR\rdestinationId\x12\x12\n" +
+	"\x04type\x18\n" +
+	" \x01(\rR\x04type\x12\x16\n" +
+	"\x06source\x18\v \x01(\tR\x06source\x12#\n" +
+	"\rsource_device\x18\f \x01(\rR\fsourceDevice\x12\x1c\n" +
+	"\ttimestamp\x18\r \x01(\x04R\ttimestampB\x1cZ\x1asigma-server/proto;sigmapbb\x06proto3"
 
 var (
-	file_envelope_proto_rawDescOnce sync.Once
-	file_envelope_proto_rawDescData []byte
+	file_proto_envelope_proto_rawDescOnce sync.Once
+	file_proto_envelope_proto_rawDescData []byte
 )
 
-func file_envelope_proto_rawDescGZIP() []byte {
-	file_envelope_proto_rawDescOnce.Do(func() {
-		file_envelope_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_envelope_proto_rawDesc), len(file_envelope_proto_rawDesc)))
+func file_proto_envelope_proto_rawDescGZIP() []byte {
+	file_proto_envelope_proto_rawDescOnce.Do(func() {
+		file_proto_envelope_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_envelope_proto_rawDesc), len(file_proto_envelope_proto_rawDesc)))
 	})
-	return file_envelope_proto_rawDescData
+	return file_proto_envelope_proto_rawDescData
 }
 
-var file_envelope_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_envelope_proto_goTypes = []any{
-	(*Envelope)(nil), // 0: messaging.Envelope
+var file_proto_envelope_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_proto_envelope_proto_goTypes = []any{
+	(*Envelope)(nil), // 0: sigmapb.Envelope
+	(EntityType)(0),  // 1: sigmapb.EntityType
 }
-var file_envelope_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+var file_proto_envelope_proto_depIdxs = []int32{
+	1, // 0: sigmapb.Envelope.destination_type:type_name -> sigmapb.EntityType
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_envelope_proto_init() }
-func file_envelope_proto_init() {
-	if File_envelope_proto != nil {
+func init() { file_proto_envelope_proto_init() }
+func file_proto_envelope_proto_init() {
+	if File_proto_envelope_proto != nil {
 		return
 	}
+	file_proto_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_envelope_proto_rawDesc), len(file_envelope_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_envelope_proto_rawDesc), len(file_proto_envelope_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_envelope_proto_goTypes,
-		DependencyIndexes: file_envelope_proto_depIdxs,
-		MessageInfos:      file_envelope_proto_msgTypes,
+		GoTypes:           file_proto_envelope_proto_goTypes,
+		DependencyIndexes: file_proto_envelope_proto_depIdxs,
+		MessageInfos:      file_proto_envelope_proto_msgTypes,
 	}.Build()
-	File_envelope_proto = out.File
-	file_envelope_proto_goTypes = nil
-	file_envelope_proto_depIdxs = nil
+	File_proto_envelope_proto = out.File
+	file_proto_envelope_proto_goTypes = nil
+	file_proto_envelope_proto_depIdxs = nil
 }

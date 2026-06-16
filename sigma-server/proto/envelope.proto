@@ -1,15 +1,27 @@
 syntax = "proto3";
 
-package messaging;
+package sigmapb;
+
+import "proto/common.proto";
 
 option go_package = "sigma-server/proto;sigmapb";
 
 message Envelope {
-  string envelopeId = 1;
+  string envelope_id = 1;
   string from = 2;
   string to = 3;
-  bytes payload = 4; // Protobuf Message bytes
-  string status = 5; // pending | delivered | failed
-  int64 createdAt = 6;
-  int64 deliverAt = 7;
+  bytes payload = 4;
+  string status = 5;
+  int64 created_at = 6;
+  int64 deliver_at = 7;
+
+  // MRDA Fields
+  EntityType destination_type = 8;
+  string destination_id = 9;
+
+  // Signal/Extended Fields
+  uint32 type = 10;
+  string source = 11;
+  uint32 source_device = 12;
+  uint64 timestamp = 13;
 }

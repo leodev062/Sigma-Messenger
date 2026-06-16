@@ -25,6 +25,21 @@ class KeyValues extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+class Envelopes extends Table {
+  TextColumn get envelopeId => text()();
+  TextColumn get messageId => text().nullable()();
+  TextColumn get fromUserId => text().nullable()();
+  TextColumn get destinationType => text().nullable()();
+  TextColumn get destinationId => text().nullable()();
+  BlobColumn get payload => blob().nullable()();
+  TextColumn get status => text().nullable()();
+  IntColumn get createdAt => integer().nullable()();
+  IntColumn get deliverAt => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {envelopeId};
+}
+
 @DataClassName('JobRecord')
 class Jobs extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -54,6 +69,25 @@ class KeyValueDao extends DatabaseAccessor<SigmaDatabase> with _$KeyValueDaoMixi
     return row?.value;
   }
 }
+
+/*
+@DriftAccessor(tables: [Envelopes])
+class EnvelopeDao extends DatabaseAccessor<SigmaDatabase> with _$EnvelopeDaoMixin {
+  EnvelopeDao(super.db);
+
+  Future<void> saveEnvelope(EnvelopesCompanion envelope) {
+    return into(envelopes).insertOnConflictUpdate(envelope);
+  }
+
+  Future<List<Envelope>> getPendingEnvelopes() {
+    return (select(envelopes)..where((t) => t.status.equals('PENDING'))).get();
+  }
+
+  Future<void> deleteEnvelope(String id) {
+    return (delete(envelopes)..where((t) => t.envelopeId.equals(id))).go();
+  }
+}
+*/
 
 @DriftAccessor(tables: [Jobs])
 class JobDao extends DatabaseAccessor<SigmaDatabase> with _$JobDaoMixin {

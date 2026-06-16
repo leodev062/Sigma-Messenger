@@ -14,66 +14,97 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-class MessageType extends $pb.ProtobufEnum {
-  static const MessageType TEXT =
-      MessageType._(0, _omitEnumNames ? '' : 'TEXT');
-  static const MessageType IMAGE =
-      MessageType._(1, _omitEnumNames ? '' : 'IMAGE');
-  static const MessageType VIDEO =
-      MessageType._(2, _omitEnumNames ? '' : 'VIDEO');
-  static const MessageType AUDIO =
-      MessageType._(3, _omitEnumNames ? '' : 'AUDIO');
-  static const MessageType POLL =
-      MessageType._(4, _omitEnumNames ? '' : 'POLL');
-  static const MessageType REPLY =
-      MessageType._(5, _omitEnumNames ? '' : 'REPLY');
-  static const MessageType REACTION =
-      MessageType._(6, _omitEnumNames ? '' : 'REACTION');
+class ConversationType extends $pb.ProtobufEnum {
+  static const ConversationType CONVERSATION_TYPE_DIRECT =
+      ConversationType._(0, _omitEnumNames ? '' : 'CONVERSATION_TYPE_DIRECT');
+  static const ConversationType CONVERSATION_TYPE_GROUP =
+      ConversationType._(1, _omitEnumNames ? '' : 'CONVERSATION_TYPE_GROUP');
+  static const ConversationType CONVERSATION_TYPE_CHANNEL =
+      ConversationType._(2, _omitEnumNames ? '' : 'CONVERSATION_TYPE_CHANNEL');
+  static const ConversationType CONVERSATION_TYPE_BOT =
+      ConversationType._(3, _omitEnumNames ? '' : 'CONVERSATION_TYPE_BOT');
 
-  static const $core.List<MessageType> values = <MessageType>[
-    TEXT,
-    IMAGE,
-    VIDEO,
-    AUDIO,
-    POLL,
-    REPLY,
-    REACTION,
+  static const $core.List<ConversationType> values = <ConversationType>[
+    CONVERSATION_TYPE_DIRECT,
+    CONVERSATION_TYPE_GROUP,
+    CONVERSATION_TYPE_CHANNEL,
+    CONVERSATION_TYPE_BOT,
   ];
 
-  static final $core.List<MessageType?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 6);
-  static MessageType? valueOf($core.int value) =>
+  static final $core.List<ConversationType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static ConversationType? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
-  const MessageType._(super.value, super.name);
+  const ConversationType._(super.value, super.name);
 }
 
-class MessageStatus extends $pb.ProtobufEnum {
-  static const MessageStatus PENDING =
-      MessageStatus._(0, _omitEnumNames ? '' : 'PENDING');
-  static const MessageStatus SENT =
-      MessageStatus._(1, _omitEnumNames ? '' : 'SENT');
-  static const MessageStatus DELIVERED =
-      MessageStatus._(2, _omitEnumNames ? '' : 'DELIVERED');
-  static const MessageStatus READ =
-      MessageStatus._(3, _omitEnumNames ? '' : 'READ');
-  static const MessageStatus FAILED =
-      MessageStatus._(4, _omitEnumNames ? '' : 'FAILED');
+class ReceiptMessage_ReceiptType extends $pb.ProtobufEnum {
+  static const ReceiptMessage_ReceiptType UNKNOWN =
+      ReceiptMessage_ReceiptType._(0, _omitEnumNames ? '' : 'UNKNOWN');
+  static const ReceiptMessage_ReceiptType DELIVERY =
+      ReceiptMessage_ReceiptType._(1, _omitEnumNames ? '' : 'DELIVERY');
+  static const ReceiptMessage_ReceiptType READ =
+      ReceiptMessage_ReceiptType._(2, _omitEnumNames ? '' : 'READ');
 
-  static const $core.List<MessageStatus> values = <MessageStatus>[
-    PENDING,
-    SENT,
-    DELIVERED,
+  static const $core.List<ReceiptMessage_ReceiptType> values =
+      <ReceiptMessage_ReceiptType>[
+    UNKNOWN,
+    DELIVERY,
     READ,
-    FAILED,
   ];
 
-  static final $core.List<MessageStatus?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 4);
-  static MessageStatus? valueOf($core.int value) =>
+  static final $core.List<ReceiptMessage_ReceiptType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static ReceiptMessage_ReceiptType? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
-  const MessageStatus._(super.value, super.name);
+  const ReceiptMessage_ReceiptType._(super.value, super.name);
+}
+
+class TypingMessage_TypingState extends $pb.ProtobufEnum {
+  static const TypingMessage_TypingState STARTED =
+      TypingMessage_TypingState._(0, _omitEnumNames ? '' : 'STARTED');
+  static const TypingMessage_TypingState STOPPED =
+      TypingMessage_TypingState._(1, _omitEnumNames ? '' : 'STOPPED');
+
+  static const $core.List<TypingMessage_TypingState> values =
+      <TypingMessage_TypingState>[
+    STARTED,
+    STOPPED,
+  ];
+
+  static final $core.List<TypingMessage_TypingState?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 1);
+  static TypingMessage_TypingState? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const TypingMessage_TypingState._(super.value, super.name);
+}
+
+class SyncMessage_SyncType extends $pb.ProtobufEnum {
+  static const SyncMessage_SyncType UNKNOWN =
+      SyncMessage_SyncType._(0, _omitEnumNames ? '' : 'UNKNOWN');
+  static const SyncMessage_SyncType MESSAGE_STATUS_UPDATE =
+      SyncMessage_SyncType._(1, _omitEnumNames ? '' : 'MESSAGE_STATUS_UPDATE');
+  static const SyncMessage_SyncType THREAD_UPDATE =
+      SyncMessage_SyncType._(2, _omitEnumNames ? '' : 'THREAD_UPDATE');
+  static const SyncMessage_SyncType CONTACT_UPDATE =
+      SyncMessage_SyncType._(3, _omitEnumNames ? '' : 'CONTACT_UPDATE');
+
+  static const $core.List<SyncMessage_SyncType> values = <SyncMessage_SyncType>[
+    UNKNOWN,
+    MESSAGE_STATUS_UPDATE,
+    THREAD_UPDATE,
+    CONTACT_UPDATE,
+  ];
+
+  static final $core.List<SyncMessage_SyncType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static SyncMessage_SyncType? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const SyncMessage_SyncType._(super.value, super.name);
 }
 
 const $core.bool _omitEnumNames =

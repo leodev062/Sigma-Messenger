@@ -171,6 +171,8 @@ class AuthViewModel extends ChangeNotifier with Loggable {
           isNewRegistration: false,
           clearRegistrationSession: true,
         );
+        
+        await _authRepository.persistCurrentUser(user);
         await _loginInteractor.execute(user.id, isNewLogin: true);
         _listenToUserChanges();
       } else {
@@ -182,13 +184,14 @@ class AuthViewModel extends ChangeNotifier with Loggable {
 
         if (hasChanges) {
           logD("Atualizando perfil para usuário existente: $name (@$username)");
-          await _updateProfileInteractor.execute(
+          final updatedUser = await _updateProfileInteractor.execute(
             name: name,
             username: username,
             bio: _state.user?.bio,
             avatarUrl: avatarUrl ?? _state.user?.avatarUrl,
             isPrivate: _state.user?.isPrivate ?? false,
           );
+          await _authRepository.persistCurrentUser(updatedUser);
         }
 
         _state = _state.copyWith(

@@ -119,7 +119,7 @@ func (c *RegistrationController) CreateAccount(ctx echo.Context) error {
 	}
 
 	return httpx.OK(ctx, http.StatusCreated, map[string]interface{}{
-		"account_id": account.ID.String(),
+		"account_id": account.ID,
 		"number":     number,
 		"token":      token,
 	})

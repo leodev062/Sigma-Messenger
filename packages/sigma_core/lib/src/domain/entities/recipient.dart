@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:sigma_core/src/network/pb/common.pb.dart' as common_pb;
 import 'package:sigma_core/src/contacts/avatars/contact_photo.dart';
 import 'package:sigma_core/src/contacts/avatars/profile_contact_photo.dart';
 import 'package:sigma_core/src/contacts/avatars/fallback_contact_photo.dart';
@@ -6,6 +7,26 @@ import 'package:sigma_core/src/util/avatar_util.dart';
 
 // Alinhado com RecipientType.java do Signal
 enum RecipientType { individual, group, channel, bot }
+
+extension RecipientTypeMapping on RecipientType {
+  common_pb.EntityType toEntityType() {
+    switch (this) {
+      case RecipientType.individual: return common_pb.EntityType.USER;
+      case RecipientType.group: return common_pb.EntityType.GROUP;
+      case RecipientType.channel: return common_pb.EntityType.CHANNEL;
+      case RecipientType.bot: return common_pb.EntityType.BOT;
+    }
+  }
+
+  String toDestinationType() {
+    switch (this) {
+      case RecipientType.individual: return "USER";
+      case RecipientType.group: return "GROUP";
+      case RecipientType.channel: return "CHANNEL";
+      case RecipientType.bot: return "BOT";
+    }
+  }
+}
 
 /// Recipient - Representa um contato ou grupo.
 /// Implementado como um Snapshot imutável seguindo o padrão Signal-Android.

@@ -157,7 +157,7 @@ func (a *Application) initMessaging(pushManager *push.PushManager) error {
 		return err
 	}
 
-	a.botFatherID = botFather.ID
+	a.botFatherID, _ = uuid.Parse(botFather.ID)
 
 	recipientReader := storage.NewRecipientReader(a.AccountManager, a.ChatManager)
 	a.messageRouter = bizmessage.NewRouter(recipientReader)
@@ -210,8 +210,8 @@ func (a *Application) wireRealtimeMessaging(wsHub *hub.Hub, pushManager *push.Pu
 		log.Default(),
 	)
 
-	wsHub.OnOfflineMessage = func(recipientID string, message []byte) {
-		if err := messageDelivery.Deliver(recipientID, message); err != nil {
+	wsHub.OnOfflineMessage = func(recipientID, destinationType string, message []byte) {
+		if err := messageDelivery.Deliver(recipientID, destinationType, message); err != nil {
 			log.Printf("Failed to persist offline websocket message recipient=%s: %v", recipientID, err)
 		}
 	}

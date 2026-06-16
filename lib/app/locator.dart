@@ -21,6 +21,7 @@ import 'package:sigma_chat/src/data/services/content/poll_content_processor.dart
 import 'package:sigma_chat/src/data/services/content/media_content_processor.dart';
 import 'package:sigma_chat/src/data/services/content/text_content_processor.dart';
 import 'package:sigma_chat/src/data/services/content/poll_vote_content_processor.dart';
+import 'package:sigma_chat/src/domain/services/live_location_manager.dart';
 
 import 'package:sigma_profile/src/data/jobs/profile/fetch_profile_job.dart';
 import 'package:sigma_profile/src/data/jobs/profile/update_profile_job.dart';
@@ -103,6 +104,7 @@ void _initCoreModule() {
   locator.registerLazySingleton(() => NotificationService());
   locator.registerLazySingleton(() => LocationService());
   locator.registerLazySingleton(() => MediaPreviewService());
+  locator.registerLazySingleton(() => LiveLocationManager(locator<IChatRepository>(), locator<SigmaJobManager>()));
 
   final jobManager = SigmaJobManager(locator<JobDao>(), locator<ISocketService>(), locator);
   jobManager.registerFactory(PushTextSendJob.KEY, PushTextSendJob.create);
@@ -127,6 +129,7 @@ void _initAuthModule() {
     remoteDataSource: locator<AuthRemoteDataSource>(),
     localDataSource: locator<AuthLocalDataSource>(),
     accountRemoteDataSource: locator<AccountRemoteDataSource>(),
+    userDao: locator<UserDao>(),
   ));
 
   locator.registerLazySingleton<IProfileRepository>(() => ProfileRepositoryImpl(
@@ -137,7 +140,7 @@ void _initAuthModule() {
   ));
 
   locator.registerLazySingleton(() => UpdateProfileInteractor(locator<IProfileRepository>()));
-  locator.registerLazySingleton(() => LoginInteractor(locator<ISocketService>(), locator<SigmaJobManager>()));
+  locator.registerLazySingleton(() => LoginInteractor(locator<ISocketService>(), locator<SigmaJobManager>(), locator<IAuthRepository>()));
   locator.registerLazySingleton(() => LogoutInteractor(
     locator<IAuthRepository>(),
     locator<SigmaStore>(),
@@ -271,7 +274,9 @@ void _initChatModule() {
     locator<IChatRepository>(),
     locator<IRecipientRepository>(),
     locator<IAuthRepository>(),
+    locator<SigmaJobManager>(),
     locator<LocationService>(),
+    locator<LiveLocationManager>(),
     locator<MediaPreviewService>(),
   ));
   locator.registerLazySingleton(() => ContactsViewModel(locator<IRecipientRepository>()));

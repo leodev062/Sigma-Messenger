@@ -3,13 +3,14 @@ package valueobjects
 import "strings"
 
 // RecipientType matches PostgreSQL enum recipient_type / chat_type.
+// Alinhado com EntityType do Protobuf (EIRA).
 type RecipientType string
 
 const (
-	RecipientIndividual RecipientType = "individual"
-	RecipientGroup      RecipientType = "group"
-	RecipientChannel    RecipientType = "channel"
-	RecipientBot        RecipientType = "bot"
+	RecipientIndividual RecipientType = "USER"
+	RecipientGroup      RecipientType = "GROUP"
+	RecipientChannel    RecipientType = "CHANNEL"
+	RecipientBot        RecipientType = "BOT"
 )
 
 func ParseRecipientType(raw string) (RecipientType, bool) {

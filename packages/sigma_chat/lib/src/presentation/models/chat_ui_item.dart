@@ -14,6 +14,7 @@ class MessageUiItem extends ChatUiItem {
   final bool isLastInGroup;
   final bool showAvatar;
   final bool showName;
+  final RecipientType recipientType;
 
   MessageUiItem(
     this.message, {
@@ -21,6 +22,7 @@ class MessageUiItem extends ChatUiItem {
     this.isLastInGroup = true,
     this.showAvatar = true,
     this.showName = true,
+    this.recipientType = RecipientType.individual,
   }) : super(message.timestamp);
 }
 

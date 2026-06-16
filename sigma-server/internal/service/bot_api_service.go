@@ -61,7 +61,7 @@ func NewBotAPIService(
 
 func (s *BotAPIService) GetMe(bot *entities.Account) *bizbotapi.BotInfo {
 	return &bizbotapi.BotInfo{
-		ID:        bot.ID.String(),
+		ID:        bot.ID,
 		IsBot:     true,
 		FirstName: deref(bot.DisplayName),
 		Username:  deref(bot.Username),
@@ -73,7 +73,7 @@ func (s *BotAPIService) IngestMessage(ctx context.Context, botID, fromUserID uui
 		return errors.New("bot api service is not configured")
 	}
 
-	fromUser, err := s.accounts.FindByID(fromUserID)
+	fromUser, err := s.accounts.FindByID(fromUserID.String())
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (s *BotAPIService) SendMessage(bot *entities.Account, req dto.BotAPISendMes
 		return nil, fmt.Errorf("invalid chat_id")
 	}
 
-	envelope, err := buildTextEnvelope(bot.ID.String(), text)
+	envelope, err := buildTextEnvelope(bot.ID, text)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *BotAPIService) deliverToUser(userID string, envelope []byte) error {
 		return nil
 	}
 	if s.offline != nil {
-		return s.offline.Deliver(userID, envelope, true)
+		return s.offline.Deliver(userID, "USER", envelope, true)
 	}
 	return errors.New("delivery is not configured")
 }
@@ -311,7 +311,7 @@ func (s *BotAPIService) dispatchWebhook(ctx context.Context, botID uuid.UUID, up
 
 func buildUpdate(updateID int64, from *entities.Account, text string) bizbotapi.Update {
 	now := time.Now().Unix()
-	chatID := from.ID.String()
+	chatID := from.ID
 	return bizbotapi.Update{
 		UpdateID: updateID,
 		Message: &bizbotapi.Message{

@@ -15,6 +15,8 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
+import 'common.pbenum.dart' as $0;
+
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
 class Envelope extends $pb.GeneratedMessage {
@@ -26,6 +28,12 @@ class Envelope extends $pb.GeneratedMessage {
     $core.String? status,
     $fixnum.Int64? createdAt,
     $fixnum.Int64? deliverAt,
+    $0.EntityType? destinationType,
+    $core.String? destinationId,
+    $core.int? type,
+    $core.String? source,
+    $core.int? sourceDevice,
+    $fixnum.Int64? timestamp,
   }) {
     final result = create();
     if (envelopeId != null) result.envelopeId = envelopeId;
@@ -35,6 +43,12 @@ class Envelope extends $pb.GeneratedMessage {
     if (status != null) result.status = status;
     if (createdAt != null) result.createdAt = createdAt;
     if (deliverAt != null) result.deliverAt = deliverAt;
+    if (destinationType != null) result.destinationType = destinationType;
+    if (destinationId != null) result.destinationId = destinationId;
+    if (type != null) result.type = type;
+    if (source != null) result.source = source;
+    if (sourceDevice != null) result.sourceDevice = sourceDevice;
+    if (timestamp != null) result.timestamp = timestamp;
     return result;
   }
 
@@ -49,16 +63,26 @@ class Envelope extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'Envelope',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'messaging'),
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'sigmapb'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'envelopeId', protoName: 'envelopeId')
+    ..aOS(1, _omitFieldNames ? '' : 'envelopeId')
     ..aOS(2, _omitFieldNames ? '' : 'from')
     ..aOS(3, _omitFieldNames ? '' : 'to')
     ..a<$core.List<$core.int>>(
         4, _omitFieldNames ? '' : 'payload', $pb.PbFieldType.OY)
     ..aOS(5, _omitFieldNames ? '' : 'status')
-    ..aInt64(6, _omitFieldNames ? '' : 'createdAt', protoName: 'createdAt')
-    ..aInt64(7, _omitFieldNames ? '' : 'deliverAt', protoName: 'deliverAt')
+    ..aInt64(6, _omitFieldNames ? '' : 'createdAt')
+    ..aInt64(7, _omitFieldNames ? '' : 'deliverAt')
+    ..aE<$0.EntityType>(8, _omitFieldNames ? '' : 'destinationType',
+        enumValues: $0.EntityType.values)
+    ..aOS(9, _omitFieldNames ? '' : 'destinationId')
+    ..aI(10, _omitFieldNames ? '' : 'type', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(11, _omitFieldNames ? '' : 'source')
+    ..aI(12, _omitFieldNames ? '' : 'sourceDevice',
+        fieldType: $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(
+        13, _omitFieldNames ? '' : 'timestamp', $pb.PbFieldType.OU6,
+        defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -141,6 +165,62 @@ class Envelope extends $pb.GeneratedMessage {
   $core.bool hasDeliverAt() => $_has(6);
   @$pb.TagNumber(7)
   void clearDeliverAt() => $_clearField(7);
+
+  /// MRDA Fields
+  @$pb.TagNumber(8)
+  $0.EntityType get destinationType => $_getN(7);
+  @$pb.TagNumber(8)
+  set destinationType($0.EntityType value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasDestinationType() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearDestinationType() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $core.String get destinationId => $_getSZ(8);
+  @$pb.TagNumber(9)
+  set destinationId($core.String value) => $_setString(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasDestinationId() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearDestinationId() => $_clearField(9);
+
+  /// Signal/Extended Fields
+  @$pb.TagNumber(10)
+  $core.int get type => $_getIZ(9);
+  @$pb.TagNumber(10)
+  set type($core.int value) => $_setUnsignedInt32(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasType() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearType() => $_clearField(10);
+
+  @$pb.TagNumber(11)
+  $core.String get source => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set source($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasSource() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearSource() => $_clearField(11);
+
+  @$pb.TagNumber(12)
+  $core.int get sourceDevice => $_getIZ(11);
+  @$pb.TagNumber(12)
+  set sourceDevice($core.int value) => $_setUnsignedInt32(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasSourceDevice() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearSourceDevice() => $_clearField(12);
+
+  @$pb.TagNumber(13)
+  $fixnum.Int64 get timestamp => $_getI64(12);
+  @$pb.TagNumber(13)
+  set timestamp($fixnum.Int64 value) => $_setInt64(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasTimestamp() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearTimestamp() => $_clearField(13);
 }
 
 const $core.bool _omitFieldNames =

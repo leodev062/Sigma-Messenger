@@ -10,10 +10,10 @@ import (
 
 func buildTextEnvelope(source, text string) ([]byte, error) {
 	envelope := &sigmapb.Envelope{
-		Type:      sigmapb.Envelope_CIPHERTEXT,
-		Source:    source,
-		Timestamp: uint64(time.Now().UnixMilli()),
-		Content:   []byte(text),
+		From:            source,
+		CreatedAt:       time.Now().UnixMilli(),
+		Payload:         []byte(text),
+		DestinationType: sigmapb.EntityType_ENTITY_TYPE_USER, // Bots usually send to users
 	}
 	return proto.Marshal(envelope)
 }

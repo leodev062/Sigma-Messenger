@@ -33,13 +33,27 @@ abstract class IChatRepository {
     required String chatId,
     required double latitude,
     required double longitude,
+    double? accuracy,
+    bool isLive = false,
+    String destinationType = "USER",
   });
+
+  Future<void> saveLocationData(MessageEntity message);
 
   Future<void> sendPoll({
     required String chatId,
     required String question,
     required List<String> options,
     required bool allowMultipleVotes,
+    String destinationType = "USER",
+  });
+
+  Future<void> savePollData({
+    required String pollId,
+    required String messageId,
+    required String question,
+    required List<String> options,
+    required bool multipleChoice,
   });
 
   // Enquetes Avançadas

@@ -4,6 +4,9 @@ abstract class IAuthRepository {
   /// Obter usuário atual
   Future<Recipient?> getCurrentUser();
 
+  /// Persiste o usuário atual no banco de dados local
+  Future<void> persistCurrentUser(Recipient user);
+
   /// Logout
   Future<void> logout();
 

@@ -1,4 +1,3 @@
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 import 'package:sigma_core/sigma_core.dart';
 import '../i_chat_repository.dart';
 
@@ -10,7 +9,7 @@ class DataMessageProcessor with Loggable {
   DataMessageProcessor(this._chatRepository);
 
   /// Ponto de entrada para qualquer dado recebido via Push ou Socket.
-  Future<void> process(sigmapb.Message payload, Map<String, dynamic> metadata) async {
+  Future<void> process(Message payload, Map<String, dynamic> metadata) async {
     if (payload.hasReaction()) {
       await _handleReaction(payload.reaction, metadata['senderId']);
     } else {
@@ -18,7 +17,7 @@ class DataMessageProcessor with Loggable {
     }
   }
 
-  Future<void> _handleReaction(sigmapb.ReactionContent reaction, String senderId) async {
+  Future<void> _handleReaction(ReactionContent reaction, String senderId) async {
     logI("Processando reação: ${reaction.emoji} de $senderId");
 
     final targetMessage = await _chatRepository.getMessage(reaction.messageId);
@@ -30,7 +29,7 @@ class DataMessageProcessor with Loggable {
     }
   }
 
-  Future<void> _handleMessage(sigmapb.Message payload, Map<String, dynamic> metadata) async {
+  Future<void> _handleMessage(Message payload, Map<String, dynamic> metadata) async {
     MessageTypeEntity type = MessageTypeEntity.text;
     if (payload.hasImage()) type = MessageTypeEntity.image;
     if (payload.hasVideo()) type = MessageTypeEntity.video;
@@ -38,7 +37,7 @@ class DataMessageProcessor with Loggable {
     if (payload.hasPoll()) type = MessageTypeEntity.poll;
 
     final message = MessageEntity(
-      id: payload.id.isNotEmpty ? payload.id : metadata['id'],
+      id: payload.messageId.isNotEmpty ? payload.messageId : metadata['id'],
       conversationId: payload.conversationId.isNotEmpty ? payload.conversationId : metadata['chatId'],
       senderId: payload.senderId.isNotEmpty ? payload.senderId : metadata['senderId'],
       textContent: payload.hasText() ? payload.text.text : "",

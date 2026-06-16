@@ -15,6 +15,7 @@ class ChatState {
   final bool isSelectionMode;
   final Set<String> selectedMessageIds;
   final bool isTyping;
+  final RecipientType currentRecipientType;
 
   ChatState({
     this.searchResults = const [],
@@ -30,6 +31,7 @@ class ChatState {
     this.isSelectionMode = false,
     this.selectedMessageIds = const {},
     this.isTyping = false,
+    this.currentRecipientType = RecipientType.individual,
   });
 
   ChatState copyWith({
@@ -46,6 +48,7 @@ class ChatState {
     bool? isSelectionMode,
     Set<String>? selectedMessageIds,
     bool? isTyping,
+    RecipientType? currentRecipientType,
   }) {
     return ChatState(
       searchResults: searchResults ?? this.searchResults,
@@ -61,6 +64,7 @@ class ChatState {
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedMessageIds: selectedMessageIds ?? this.selectedMessageIds,
       isTyping: isTyping ?? this.isTyping,
+      currentRecipientType: currentRecipientType ?? this.currentRecipientType,
     );
   }
 }

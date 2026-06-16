@@ -2,7 +2,6 @@ import 'package:fixnum/fixnum.dart' as fixnum;
 import 'package:get_it/get_it.dart';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
 /// ReceiptSendJob - Envia confirmações de entrega/leitura estilo Relay Engine.
 class ReceiptSendJob extends core.Job {
@@ -52,19 +51,22 @@ class ReceiptSendJob extends core.Job {
   Future<void> run() async {
     try {
       final type = this.receiptType.toUpperCase() == "READ"
-          ? sigmapb.MessageStatus.READ
-          : sigmapb.MessageStatus.DELIVERED;
+          ? ReceiptMessage_ReceiptType.READ
+          : ReceiptMessage_ReceiptType.DELIVERY;
 
-      final relayMessage = sigmapb.Message()
-        ..id = "receipt_${DateTime.now().millisecondsSinceEpoch}"
-        ..conversationId = senderId
-        ..senderId = "me" 
-        ..receiverId = senderId
-        ..type = sigmapb.MessageType.REPLY 
-        ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch)
-        ..status = type;
+      final receipt = ReceiptMessage()
+        ..type = type
+        ..messageId = messageId
+        ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
 
-      messageSender!.sendUnencryptedEnvelope(senderId, relayMessage);
+      final relayMessage = Message()
+        ..receipt = receipt;
+
+      messageSender!.sendUnencryptedEnvelope(
+        senderId, 
+        relayMessage, 
+        destinationType: "USER", // Receipts are always 1:1
+      );
 
       SigmaLog.d(KEY, "Recibo $type enviado para $senderId");
     } catch (e, stack) {

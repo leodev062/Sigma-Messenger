@@ -208,13 +208,13 @@ func (rt *Router) deleteMessage(ctx *Context) ([]byte, int, error) {
 func (rt *Router) deleteByID(ctx *Context, requestID string, recipientID uuid.UUID) ([]byte, int, error) {
 	// 0) Tentar deletar do EnvelopeStore (Relay Engine)
 	if ctx.Envelopes != nil {
-		rows, err := ctx.Envelopes.DeleteByEnvelopeIDForRecipient(requestID, recipientID)
+		rows, err := ctx.Envelopes.DeleteByEnvelopeIDForRecipient(requestID, recipientID.String())
 		if err == nil && rows > 0 {
 			return marshalJSON(map[string]bool{"deleted": true})
 		}
 		// Tentar como ID sequencial
 		if pid, err := strconv.Atoi(requestID); err == nil {
-			rows, err2 := ctx.Envelopes.DeleteForRecipient(pid, recipientID)
+			rows, err2 := ctx.Envelopes.DeleteForRecipient(pid, recipientID.String())
 			if err2 == nil && rows > 0 {
 				return marshalJSON(map[string]bool{"deleted": true})
 			}

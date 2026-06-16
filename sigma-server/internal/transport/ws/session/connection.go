@@ -290,8 +290,19 @@ func (c *Connection) handleMessage(message *protocol.Message) {
 			}
 
 			// Set source to current user ID if not already set
-			if envelope.Source == "" {
-				envelope.Source = c.Client.UserID
+			if envelope.From == "" {
+				envelope.From = c.Client.UserID
+			}
+
+			destType := envelope.DestinationType
+			destTypeStr := "USER"
+			switch destType {
+			case sigmapb.EntityType_ENTITY_TYPE_BOT:
+				destTypeStr = "BOT"
+			case sigmapb.EntityType_ENTITY_TYPE_GROUP:
+				destTypeStr = "GROUP"
+			case sigmapb.EntityType_ENTITY_TYPE_CHANNEL:
+				destTypeStr = "CHANNEL"
 			}
 
 			// Re-marshal the envelope with source filled
@@ -303,7 +314,7 @@ func (c *Connection) handleMessage(message *protocol.Message) {
 			}
 
 			if c.dispatcher != nil {
-				if err := c.dispatcher.Dispatch(c.Client.UserID, recipientID, enrichedPayload); err != nil {
+				if err := c.dispatcher.Dispatch(c.Client.UserID, recipientID, destTypeStr, enrichedPayload); err != nil {
 					c.SendResponse(message.Request.Id, 400, []byte(err.Error()))
 					return
 				}
@@ -311,7 +322,7 @@ func (c *Connection) handleMessage(message *protocol.Message) {
 				return
 			}
 			if c.registry != nil {
-				c.registry.Dispatch(recipientID, enrichedPayload)
+				c.registry.Dispatch(recipientID, destTypeStr, enrichedPayload)
 				c.SendResponse(message.Request.Id, 202, nil)
 			}
 			return

@@ -40,11 +40,7 @@ func (d *PendingDelivery) deliverEnvelopes(userID string, conn *session.Connecti
 	if d.envelopes == nil {
 		return
 	}
-	accountID, err := uuid.Parse(userID)
-	if err != nil {
-		return
-	}
-	envelopes, err := d.envelopes.FindPendingByRecipient(accountID)
+	envelopes, err := d.envelopes.FindPendingByRecipient(userID)
 	if err != nil {
 		d.logger.Printf("ws pending delivery envelopes user=%s: %v", userID, err)
 		return

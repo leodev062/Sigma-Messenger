@@ -19,19 +19,36 @@ import 'dart:typed_data' as $typed_data;
 const Envelope$json = {
   '1': 'Envelope',
   '2': [
-    {'1': 'envelopeId', '3': 1, '4': 1, '5': 9, '10': 'envelopeId'},
+    {'1': 'envelope_id', '3': 1, '4': 1, '5': 9, '10': 'envelopeId'},
     {'1': 'from', '3': 2, '4': 1, '5': 9, '10': 'from'},
     {'1': 'to', '3': 3, '4': 1, '5': 9, '10': 'to'},
     {'1': 'payload', '3': 4, '4': 1, '5': 12, '10': 'payload'},
     {'1': 'status', '3': 5, '4': 1, '5': 9, '10': 'status'},
-    {'1': 'createdAt', '3': 6, '4': 1, '5': 3, '10': 'createdAt'},
-    {'1': 'deliverAt', '3': 7, '4': 1, '5': 3, '10': 'deliverAt'},
+    {'1': 'created_at', '3': 6, '4': 1, '5': 3, '10': 'createdAt'},
+    {'1': 'deliver_at', '3': 7, '4': 1, '5': 3, '10': 'deliverAt'},
+    {
+      '1': 'destination_type',
+      '3': 8,
+      '4': 1,
+      '5': 14,
+      '6': '.sigmapb.EntityType',
+      '10': 'destinationType'
+    },
+    {'1': 'destination_id', '3': 9, '4': 1, '5': 9, '10': 'destinationId'},
+    {'1': 'type', '3': 10, '4': 1, '5': 13, '10': 'type'},
+    {'1': 'source', '3': 11, '4': 1, '5': 9, '10': 'source'},
+    {'1': 'source_device', '3': 12, '4': 1, '5': 13, '10': 'sourceDevice'},
+    {'1': 'timestamp', '3': 13, '4': 1, '5': 4, '10': 'timestamp'},
   ],
 };
 
 /// Descriptor for `Envelope`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List envelopeDescriptor = $convert.base64Decode(
-    'CghFbnZlbG9wZRIeCgplbnZlbG9wZUlkGAEgASgJUgplbnZlbG9wZUlkEhIKBGZyb20YAiABKA'
-    'lSBGZyb20SDgoCdG8YAyABKAlSAnRvEhgKB3BheWxvYWQYBCABKAxSB3BheWxvYWQSFgoGc3Rh'
-    'dHVzGAUgASgJUgZzdGF0dXMSHAoJY3JlYXRlZEF0GAYgASgDUgljcmVhdGVkQXQSHAoJZGVsaX'
-    'ZlckF0GAcgASgDUglkZWxpdmVyQXQ=');
+    'CghFbnZlbG9wZRIfCgtlbnZlbG9wZV9pZBgBIAEoCVIKZW52ZWxvcGVJZBISCgRmcm9tGAIgAS'
+    'gJUgRmcm9tEg4KAnRvGAMgASgJUgJ0bxIYCgdwYXlsb2FkGAQgASgMUgdwYXlsb2FkEhYKBnN0'
+    'YXR1cxgFIAEoCVIGc3RhdHVzEh0KCmNyZWF0ZWRfYXQYBiABKANSCWNyZWF0ZWRBdBIdCgpkZW'
+    'xpdmVyX2F0GAcgASgDUglkZWxpdmVyQXQSPgoQZGVzdGluYXRpb25fdHlwZRgIIAEoDjITLnNp'
+    'Z21hcGIuRW50aXR5VHlwZVIPZGVzdGluYXRpb25UeXBlEiUKDmRlc3RpbmF0aW9uX2lkGAkgAS'
+    'gJUg1kZXN0aW5hdGlvbklkEhIKBHR5cGUYCiABKA1SBHR5cGUSFgoGc291cmNlGAsgASgJUgZz'
+    'b3VyY2USIwoNc291cmNlX2RldmljZRgMIAEoDVIMc291cmNlRGV2aWNlEhwKCXRpbWVzdGFtcB'
+    'gNIAEoBFIJdGltZXN0YW1w');

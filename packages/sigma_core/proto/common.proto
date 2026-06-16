@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package sigmapb;
+
+option go_package = "sigma-server/proto;sigmapb";
+
+enum EntityType {
+  USER = 0;
+  BOT = 1;
+  GROUP = 2;
+  CHANNEL = 3;
+}

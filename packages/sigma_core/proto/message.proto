@@ -2,15 +2,77 @@ syntax = "proto3";
 
 package sigmapb;
 
+import "common.proto";
+
 option go_package = "sigma-server/proto;sigmapb";
 
-message Content {
+message Message {
+  string message_id = 1;
+  string conversation_id = 2;
+  string sender_id = 3;
+  EntityType sender_type = 4;
+  string destination_id = 5;
+  EntityType destination_type = 6;
+
+  uint32 type = 7;
+  int64 timestamp = 8;
+  int64 updated_at = 9;
+  uint32 status = 10;
+
   oneof content {
-    DataMessage dataMessage = 1;
-    ReceiptMessage receipt = 2;
-    TypingMessage typing = 3;
-    SyncMessage sync = 4;
+    TextContent text = 11;
+    DataMessage data_message = 12;
+    ReceiptMessage receipt = 13;
+    TypingMessage typing = 14;
+    SyncMessage sync = 15;
+    PollVote poll_vote = 16;
+
+    // Legacy/Compatibility fields
+    ImageContent image = 17;
+    VideoContent video = 18;
+    AudioContent audio = 19;
+    PollContent poll = 20;
+    ReactionContent reaction = 21;
   }
+}
+
+message TextContent {
+  string text = 1;
+}
+
+message ImageContent {
+  string url = 1;
+  string thumbnail = 2;
+  int32 width = 3;
+  int32 height = 4;
+}
+
+message VideoContent {
+  string url = 1;
+  string thumbnail = 2;
+  int64 duration = 3;
+}
+
+message AudioContent {
+  string url = 1;
+  int64 duration = 2;
+}
+
+message PollOption {
+  string id = 1;
+  string text = 2;
+  int32 votes = 3;
+}
+
+message PollContent {
+  string question = 1;
+  repeated PollOption options = 2;
+  bool multiple_choice = 3;
+}
+
+message ReactionContent {
+  string message_id = 1;
+  string emoji = 2;
 }
 
 message DataMessage {
@@ -18,26 +80,26 @@ message DataMessage {
   AttachmentPointer attachment = 2;
   Reaction reaction = 3;
   Location location = 4;
-  PollCreate pollCreate = 5;
-  PollVote pollVote = 6;
-  PollTerminate pollTerminate = 7;
+  PollCreate poll_create = 5;
+  PollTerminate poll_terminate = 6;
 }
 
 message PollCreate {
-  string question = 1;
-  repeated string options = 2;
-  bool allow_multiple_votes = 3;
+  string id = 1;
+  string question = 2;
+  repeated PollOption options = 3;
+  bool multiple_choice = 4;
 }
 
 message PollVote {
-  string target_author_aci = 1;
-  uint64 target_sent_timestamp = 2;
-  repeated uint32 option_indexes = 3;
-  uint32 vote_count = 4;
+  string poll_id = 1;
+  string option_id = 2;
+  string user_id = 3;
+  uint64 timestamp = 4;
 }
 
 message PollTerminate {
-  uint64 target_sent_timestamp = 1;
+  string poll_id = 1;
 }
 
 message AttachmentPointer {
@@ -52,31 +114,32 @@ message AttachmentPointer {
 message Reaction {
   string emoji = 1;
   bool remove = 2;
-  string targetAuthorAci = 3;
-  uint64 targetTimestamp = 4;
+  string target_author_aci = 3;
+  uint64 target_timestamp = 4;
 }
 
 message Location {
   double latitude = 1;
   double longitude = 2;
   string address = 3;
+  double accuracy = 4;
+  uint64 timestamp = 5;
+  bool is_live = 6;
+  uint32 duration = 7;
 }
 
-// ReceiptMessage para confirmações de entrega/leitura
 message ReceiptMessage {
   enum ReceiptType {
     UNKNOWN = 0;
-    DELIVERY = 1;  // Delivered
-    READ = 2;       // Read
+    DELIVERY = 1;
+    READ = 2;
   }
   ReceiptType type = 1;
-  string messageId = 2;           // UUID da mensagem sendo confirmada
-  string senderId = 3;            // UUID de quem enviou a mensagem original
-  uint64 timestamp = 4;           // Timestamp quando foi confirmado
-  uint32 messageCount = 5;        // Quantas mensagens confirmadas
+  string message_id = 2;
+  string sender_id = 3;
+  uint64 timestamp = 4;
 }
 
-// TypingMessage para indicadores de digitação
 message TypingMessage {
   enum TypingState {
     STARTED = 0;
@@ -86,18 +149,24 @@ message TypingMessage {
   uint64 timestamp = 2;
 }
 
-// SyncMessage para sincronização de status/eventos
 message SyncMessage {
   enum SyncType {
     UNKNOWN = 0;
-    MESSAGE_STATUS_UPDATE = 1;  // Status de mensagem enviada
-    THREAD_UPDATE = 2;          // Atualização de thread
-    CONTACT_UPDATE = 3;         // Atualização de contato
+    MESSAGE_STATUS_UPDATE = 1;
+    THREAD_UPDATE = 2;
+    CONTACT_UPDATE = 3;
   }
   SyncType type = 1;
-  string messageId = 2;
-  int32 status = 3;  // 0=PENDING, 1=SENT, 2=DELIVERED, 3=READ, 4=FAILED
+  string message_id = 2;
+  int32 status = 3;
   string error = 4;
   uint64 timestamp = 5;
-  repeated string targetIds = 6;  // Para sincronização em grupo
+  repeated string target_ids = 6;
+}
+
+enum ConversationType {
+  CONVERSATION_TYPE_DIRECT = 0;
+  CONVERSATION_TYPE_GROUP = 1;
+  CONVERSATION_TYPE_CHANNEL = 2;
+  CONVERSATION_TYPE_BOT = 3;
 }

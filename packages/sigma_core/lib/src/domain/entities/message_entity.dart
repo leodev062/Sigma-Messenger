@@ -36,6 +36,9 @@ class MessageEntity {
   // Localização
   final double? _latitude;
   final double? _longitude;
+  final double? _accuracy;
+  final bool? _isLive;
+  final int? _locationTimestamp;
 
   // Getters públicos
   String get id => _id;
@@ -65,6 +68,9 @@ class MessageEntity {
 
   double? get latitude => _latitude;
   double? get longitude => _longitude;
+  double? get accuracy => _accuracy;
+  bool? get isLive => _isLive;
+  int? get locationTimestamp => _locationTimestamp;
 
   MessageEntity({
     required String id,
@@ -88,6 +94,9 @@ class MessageEntity {
     String? emoji,
     double? latitude,
     double? longitude,
+    double? accuracy,
+    bool? isLive,
+    int? locationTimestamp,
   })  : _id = id,
         _conversationId = conversationId,
         _senderId = senderId,
@@ -108,7 +117,10 @@ class MessageEntity {
         _relatedMessageId = relatedMessageId,
         _emoji = emoji,
         _latitude = latitude,
-        _longitude = longitude;
+        _longitude = longitude,
+        _accuracy = accuracy,
+        _isLive = isLive,
+        _locationTimestamp = locationTimestamp;
 
   factory MessageEntity.createTextOutgoing({
     required String conversationId,
@@ -132,6 +144,8 @@ class MessageEntity {
     required String senderId,
     required double latitude,
     required double longitude,
+    double? accuracy,
+    bool isLive = false,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return MessageEntity(
@@ -144,6 +158,9 @@ class MessageEntity {
       status: MessageStatusEntity.pending,
       latitude: latitude,
       longitude: longitude,
+      accuracy: accuracy,
+      isLive: isLive,
+      locationTimestamp: now,
     );
   }
 

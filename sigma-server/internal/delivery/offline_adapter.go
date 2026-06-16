@@ -9,9 +9,9 @@ func NewOfflineDeliveryAdapter(inner *MessageDeliveryService) *OfflineDeliveryAd
 	return &OfflineDeliveryAdapter{inner: inner}
 }
 
-func (a *OfflineDeliveryAdapter) Deliver(recipientID string, payload []byte, notify bool) error {
+func (a *OfflineDeliveryAdapter) Deliver(recipientID, destinationType string, payload []byte, notify bool) error {
 	if a == nil || a.inner == nil {
 		return nil
 	}
-	return a.inner.Deliver(recipientID, payload, notify)
+	return a.inner.Deliver(recipientID, destinationType, payload, notify)
 }

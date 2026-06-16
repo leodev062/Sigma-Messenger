@@ -20,7 +20,7 @@ class PollOptions extends Table {
 
   TextColumn get id => text()();
   TextColumn get pollId => text().nullable()();
-  TextColumn get textContent => text().nullable()();
+  TextColumn get textContent => text().nullable().named('text')();
   IntColumn get voteCount => integer().withDefault(const Constant(0))();
 
   @override
@@ -85,5 +85,9 @@ class PollDao extends DatabaseAccessor<SigmaDatabase> with _$PollDaoMixin {
       final opts = await (select(pollOptions)..where((t) => t.pollId.equals(poll.id))).get();
       return PollWithDetails(poll, opts);
     });
+  }
+
+  Future<List<PollVote>> getVotes(String pollId) {
+    return (select(pollVotes)..where((t) => t.pollId.equals(pollId))).get();
   }
 }

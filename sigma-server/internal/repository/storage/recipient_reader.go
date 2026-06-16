@@ -24,7 +24,7 @@ func NewRecipientReader(accounts *AccountManager, chats *ChatManager) *Recipient
 
 func (r *RecipientReader) FindRecipient(ctx context.Context, id uuid.UUID) (*bizmessage.RecipientInfo, error) {
 	_ = ctx
-	account, err := r.accounts.FindByID(id)
+	account, err := r.accounts.FindByID(id.String())
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,8 @@ func (r *RecipientReader) FindRecipient(ctx context.Context, id uuid.UUID) (*biz
 	if !ok {
 		recipientType = valueobjects.RecipientIndividual
 	}
-	return &bizmessage.RecipientInfo{ID: account.ID, Type: recipientType}, nil
+	uid, _ := uuid.Parse(account.ID)
+	return &bizmessage.RecipientInfo{ID: uid, Type: recipientType}, nil
 }
 
 func (r *RecipientReader) ListMembers(ctx context.Context, chatID uuid.UUID) ([]bizmessage.MemberInfo, error) {

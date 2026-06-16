@@ -19,7 +19,7 @@ type PushSender interface {
 }
 
 type AccountFinder interface {
-	FindByID(id uuid.UUID) (*entities.Account, error)
+	FindByID(id any) (*entities.Account, error)
 }
 
 type EventStore interface {
@@ -69,15 +69,15 @@ func NewRouterWithDelivery(dispatcher EventDispatcher, hub EventHub, contactReso
 
 func (r *Router) PublishProfileChanged(ctx context.Context, account *entities.Account) error {
 	payload := map[string]any{
-		"user_id":           account.ID.String(),
+		"user_id":           account.ID,
 		"display_name":      derefString(account.DisplayName),
 		"username":          derefString(account.Username),
-		"avatar_url":        derefString(account.AvatarURL),
-		"bio":               derefString(account.Bio),
+		"avatar_url":        "", // Profile info should come from User entity if needed
+		"bio":               "",
 		"verification_type": account.VerificationType,
 	}
 
-	event := NewEnvelope(ProfileChanged, account.ID.String(), []string{account.ID.String()}, payload)
+	event := NewEnvelope(ProfileChanged, account.ID, []string{account.ID}, payload)
 	event.SourceServerID = r.sourceServerID
 	return r.publish(ctx, event)
 }
@@ -87,7 +87,8 @@ func (r *Router) PublishContactUpdated(ctx context.Context, account *entities.Ac
 		return nil
 	}
 
-	contacts, err := r.contactResolver.ResolveContacts(account.ID)
+	uid, _ := uuid.Parse(account.ID)
+	contacts, err := r.contactResolver.ResolveContacts(uid)
 	if err != nil {
 		return err
 	}
@@ -98,26 +99,26 @@ func (r *Router) PublishContactUpdated(ctx context.Context, account *entities.Ac
 	}
 
 	payload := map[string]any{
-		"user_id":           account.ID.String(),
+		"user_id":           account.ID,
 		"display_name":      derefString(account.DisplayName),
 		"username":          derefString(account.Username),
-		"avatar_url":        derefString(account.AvatarURL),
-		"bio":               derefString(account.Bio),
+		"avatar_url":        "",
+		"bio":               "",
 		"verification_type": account.VerificationType,
 	}
 
-	event := NewEnvelope(ContactUpdated, account.ID.String(), targets, payload)
+	event := NewEnvelope(ContactUpdated, account.ID, targets, payload)
 	event.SourceServerID = r.sourceServerID
 	return r.publish(ctx, event)
 }
 
 func (r *Router) PublishVerificationStatusChanged(ctx context.Context, account *entities.Account) error {
 	payload := map[string]any{
-		"user_id":           account.ID.String(),
+		"user_id":           account.ID,
 		"verification_type": account.VerificationType,
 	}
 
-	event := NewEnvelope(VerificationStatusChanged, account.ID.String(), []string{account.ID.String()}, payload)
+	event := NewEnvelope(VerificationStatusChanged, account.ID, []string{account.ID}, payload)
 	event.SourceServerID = r.sourceServerID
 	return r.publish(ctx, event)
 }

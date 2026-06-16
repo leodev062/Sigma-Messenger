@@ -8,6 +8,7 @@ import (
 	"sigma-server/internal/service"
 	"sigma-server/internal/transport/http/middleware"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,7 +38,8 @@ func (c *BotAPIController) GetUpdates(ctx echo.Context) error {
 	limit, _ := strconv.Atoi(ctx.QueryParam("limit"))
 	timeout, _ := strconv.Atoi(ctx.QueryParam("timeout"))
 
-	updates, err := c.api.GetUpdates(ctx.Request().Context(), bot.ID, offset, limit, timeout)
+	botID, _ := uuid.Parse(bot.ID)
+	updates, err := c.api.GetUpdates(ctx.Request().Context(), botID, offset, limit, timeout)
 	if err != nil {
 		return botError(ctx, 500, err.Error())
 	}
@@ -72,7 +74,8 @@ func (c *BotAPIController) SetWebhook(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return botError(ctx, 400, "invalid request body")
 	}
-	if err := c.api.SetWebhook(bot.ID, req); err != nil {
+	botID, _ := uuid.Parse(bot.ID)
+	if err := c.api.SetWebhook(botID, req); err != nil {
 		return botError(ctx, 400, err.Error())
 	}
 	return botOK(ctx, true)
@@ -85,7 +88,8 @@ func (c *BotAPIController) DeleteWebhook(ctx echo.Context) error {
 	}
 
 	dropPending := ctx.QueryParam("drop_pending_updates") == "true"
-	if err := c.api.DeleteWebhook(bot.ID, dropPending); err != nil {
+	botID, _ := uuid.Parse(bot.ID)
+	if err := c.api.DeleteWebhook(botID, dropPending); err != nil {
 		return botError(ctx, 500, err.Error())
 	}
 	return botOK(ctx, true)
@@ -97,7 +101,8 @@ func (c *BotAPIController) GetWebhookInfo(ctx echo.Context) error {
 		return botUnauthorized(ctx)
 	}
 
-	info, err := c.api.GetWebhookInfo(bot.ID)
+	botID, _ := uuid.Parse(bot.ID)
+	info, err := c.api.GetWebhookInfo(botID)
 	if err != nil {
 		return botError(ctx, 500, err.Error())
 	}

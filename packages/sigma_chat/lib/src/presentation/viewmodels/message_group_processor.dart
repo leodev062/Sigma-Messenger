@@ -11,6 +11,7 @@ class MessageGroupProcessor {
   static List<ChatUiItem> processInIsolate(Map<String, dynamic> params) {
     final List<MessageEntity> messages = params['messages'] as List<MessageEntity>;
     final String currentUserId = params['currentUserId'] as String;
+    final RecipientType recipientType = params['recipientType'] as RecipientType;
 
     if (messages.isEmpty) return [];
 
@@ -27,8 +28,15 @@ class MessageGroupProcessor {
       final bool isLastInGroup = _checkIsLastInGroup(current, next);
 
       final bool isFromMe = current.senderId == currentUserId;
-      final bool showAvatar = !isFromMe && isLastInGroup;
-      final bool showName = !isFromMe && isFirstInGroup;
+      
+      // Rules from CMURA:
+      // GROUP: avatar mandatory, name above message
+      // DIRECT: no name, no mandatory avatar
+      // CHANNEL: broadcast style
+      // BOT: system style
+      
+      final bool showAvatar = !isFromMe && isLastInGroup && (recipientType == RecipientType.group);
+      final bool showName = !isFromMe && isFirstInGroup && (recipientType == RecipientType.group);
 
       uiItems.add(MessageUiItem(
         current,
@@ -36,6 +44,7 @@ class MessageGroupProcessor {
         isLastInGroup: isLastInGroup,
         showAvatar: showAvatar,
         showName: showName,
+        recipientType: recipientType,
       ));
 
       if (prev == null || !DateUtil.isSameDay(currentDate, DateTime.fromMillisecondsSinceEpoch(prev.timestamp))) {

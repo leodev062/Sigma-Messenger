@@ -8,6 +8,7 @@ import (
 	"sigma-server/internal/dto"
 	"sigma-server/internal/domain/entities"
 	"sigma-server/internal/repository/storage"
+	"sigma-server/internal/platform/utils"
 
 	"gorm.io/gorm"
 )
@@ -45,7 +46,7 @@ func (s *AuthService) Login(req dto.LoginRequest, ip string) (*dto.LoginResponse
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Auto-registration on Login
-			userID := uuid.New().String()
+			userID := utils.NewUserID()
 			user = &entities.User{
 				ID:        userID,
 				Phone:     req.Phone,
@@ -57,7 +58,7 @@ func (s *AuthService) Login(req dto.LoginRequest, ip string) (*dto.LoginResponse
 			}
 
 			account := &entities.Account{
-				ID:        uuid.New().String(),
+				ID:        utils.NewUserID(),
 				UserID:    userID,
 				CreatedAt: time.Now().Unix(),
 			}

@@ -13,21 +13,22 @@ import (
 )
 
 type dispatchJob struct {
-	recipientID string
-	payload     []byte
+	recipientID     string
+	destinationType string
+	payload         []byte
 }
 
 // Hub manages active websocket sessions and message fan-out.
 type Hub struct {
-	mu               sync.RWMutex
-	connections      map[string]map[*session.Connection]struct{}
-	register         chan *session.Connection
-	unregister       chan *session.Connection
-	dispatch         chan dispatchJob
-	stop             chan struct{}
-	stopped          chan struct{}
-	OnOfflineMessage func(recipientID string, message []byte)
-	logger           *log.Logger
+	mu                sync.RWMutex
+	connections       map[string]map[*session.Connection]struct{}
+	register          chan *session.Connection
+	unregister        chan *session.Connection
+	dispatch          chan dispatchJob
+	stop              chan struct{}
+	stopped           chan struct{}
+	OnOfflineMessage  func(recipientID, destinationType string, message []byte)
+	logger            *log.Logger
 	presence         *presence.Coordinator
 	cfg              config.HubConfig
 	metrics          *metrics.Collector
@@ -73,7 +74,7 @@ func (h *Hub) Run() {
 				continue
 			}
 			if h.OnOfflineMessage != nil {
-				h.OnOfflineMessage(job.recipientID, job.payload)
+				h.OnOfflineMessage(job.recipientID, job.destinationType, job.payload)
 			}
 		}
 	}
@@ -169,8 +170,8 @@ func (h *Hub) unregisterConnection(conn *session.Connection) {
 	}
 }
 
-func (h *Hub) Dispatch(recipientID string, payload []byte) {
-	h.dispatch <- dispatchJob{recipientID: recipientID, payload: payload}
+func (h *Hub) Dispatch(recipientID, destinationType string, payload []byte) {
+	h.dispatch <- dispatchJob{recipientID: recipientID, destinationType: destinationType, payload: payload}
 }
 
 func (h *Hub) Send(recipientID string, payload []byte) bool {

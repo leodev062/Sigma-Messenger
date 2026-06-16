@@ -3,18 +3,18 @@ import 'package:get_it/get_it.dart';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
-import 'package:fixnum/fixnum.dart' as fixnum;
 
 /// PushTextSendJob - Refatorado para o padrão Relay Protobuf (agente-server.md).
 class PushTextSendJob extends core.Job {
   static const String KEY = "PushTextSendJob";
   final String messageId;
+  final String destinationType;
   final IChatRepository? chatRepository;
   final SignalServiceMessageSender? messageSender;
 
   PushTextSendJob({
     required this.messageId,
+    this.destinationType = "USER",
     this.chatRepository,
     this.messageSender,
     int? databaseId,
@@ -26,11 +26,15 @@ class PushTextSendJob extends core.Job {
        );
 
   @override
-  Map<String, dynamic> serialize() => {'messageId': messageId};
+  Map<String, dynamic> serialize() => {
+    'messageId': messageId,
+    'destinationType': destinationType,
+  };
 
   static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PushTextSendJob(
       messageId: data['messageId'],
+      destinationType: data['destinationType'] ?? "USER",
       chatRepository: locator<IChatRepository>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
@@ -54,19 +58,17 @@ class PushTextSendJob extends core.Job {
       }
 
       // Criar sigmapb.Message (Protobuf seguindo agente-server.md)
-      final relayMessage = sigmapb.Message()
-        ..id = message.id
-        ..conversationId = message.chatId
-        ..senderId = message.senderId
-        ..receiverId = message.chatId
-        ..type = sigmapb.MessageType.TEXT
-        ..timestamp = fixnum.Int64(message.timestamp)
-        ..status = sigmapb.MessageStatus.SENT
-        ..text = (sigmapb.TextContent()..text = message.textContent);
+      final relayMessage = Message()
+        ..messageId = message.id
+        ..dataMessage = (DataMessage()..body = message.textContent);
 
-      SigmaLog.d(KEY, "Transmitindo Message via Relay para ${message.chatId}...");
+      SigmaLog.d(KEY, "Transmitindo Message via Relay para ${message.chatId} com tipo $destinationType...");
       
-      messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
+      messageSender!.sendUnencryptedEnvelope(
+        message.chatId, 
+        relayMessage, 
+        destinationType: destinationType,
+      );
 
       await chatRepository!.updateMessageStatus(
         messageId,

@@ -1,17 +1,15 @@
 package controllers
 
 import (
-	"context"
-	"log"
 	"net/http"
 
 	httpx "sigma-server/internal/transport/http"
 	"sigma-server/internal/dto"
+	"sigma-server/internal/domain/entities"
 	"sigma-server/internal/events"
 	"sigma-server/internal/transport/http/middleware"
 	"sigma-server/internal/service"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 

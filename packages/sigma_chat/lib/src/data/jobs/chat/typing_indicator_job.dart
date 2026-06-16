@@ -2,7 +2,6 @@ import 'package:fixnum/fixnum.dart' as fixnum;
 import 'package:get_it/get_it.dart';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
 
 /// TypingIndicatorJob - Envia indicadores de digitação Relay.
 class TypingIndicatorJob extends core.Job {
@@ -47,13 +46,12 @@ class TypingIndicatorJob extends core.Job {
   @override
   Future<void> run() async {
     try {
-      final relayMessage = sigmapb.Message()
-        ..id = "typing_${DateTime.now().millisecondsSinceEpoch}"
-        ..conversationId = recipientId
-        ..senderId = "me"
-        ..receiverId = recipientId
-        ..type = sigmapb.MessageType.TEXT 
+      final typing = TypingMessage()
+        ..state = isTyping ? TypingMessage_TypingState.STARTED : TypingMessage_TypingState.STOPPED
         ..timestamp = fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
+
+      final relayMessage = Message()
+        ..typing = typing;
 
       messageSender!.sendUnencryptedEnvelope(recipientId, relayMessage);
     } catch (e, stack) {

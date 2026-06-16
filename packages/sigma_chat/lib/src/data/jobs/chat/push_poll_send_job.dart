@@ -2,18 +2,20 @@ import 'package:get_it/get_it.dart';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
-import 'package:fixnum/fixnum.dart' as fixnum;
 
 /// PushPollSendJob - Envio de enquete via Relay Protobuf.
 class PushPollSendJob extends core.Job {
   static const String KEY = "PushPollSendJob";
   final String messageId;
+  final String? pollId;
+  final String destinationType;
   final IChatRepository? chatRepository;
   final SignalServiceMessageSender? messageSender;
 
   PushPollSendJob({
     required this.messageId,
+    this.pollId,
+    this.destinationType = "USER",
     this.chatRepository,
     this.messageSender,
     int? databaseId,
@@ -25,11 +27,17 @@ class PushPollSendJob extends core.Job {
         );
 
   @override
-  Map<String, dynamic> serialize() => {'messageId': messageId};
+  Map<String, dynamic> serialize() => {
+    'messageId': messageId,
+    'pollId': pollId,
+    'destinationType': destinationType,
+  };
 
   static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
     return PushPollSendJob(
       messageId: data['messageId'],
+      pollId: data['pollId'],
+      destinationType: data['destinationType'] ?? "USER",
       chatRepository: locator<IChatRepository>(),
       messageSender: locator<SignalServiceMessageSender>(),
       databaseId: databaseId,
@@ -41,19 +49,30 @@ class PushPollSendJob extends core.Job {
     final message = await chatRepository!.getMessage(messageId);
     if (message == null || message.status != MessageStatusEntity.pending) return;
 
-    final relayMessage = sigmapb.Message()
-      ..id = message.id
-      ..conversationId = message.chatId
-      ..senderId = "me"
-      ..receiverId = message.chatId
-      ..type = sigmapb.MessageType.POLL
-      ..timestamp = fixnum.Int64(message.timestamp)
-      ..poll = (sigmapb.PollContent()
-        ..question = message.pollQuestion ?? ""
-        ..multipleChoice = message.multipleChoice ?? false
-        ..options.addAll((message.pollOptions ?? []).map((o) => sigmapb.PollOption()..text = o)));
+    final pollCreate = PollCreate()
+      ..id = pollId ?? "poll_$messageId"
+      ..question = message.pollQuestion ?? ""
+      ..multipleChoice = message.multipleChoice ?? false;
+    
+    // In a real scenario, we might want to fetch actual IDs from DB, 
+    // but here we just re-create options.
+    pollCreate.options.addAll((message.pollOptions ?? []).asMap().entries.map((entry) {
+      return PollOption()
+        ..id = "opt_${entry.key}"
+        ..text = entry.value;
+    }));
 
-    messageSender!.sendUnencryptedEnvelope(message.chatId, relayMessage);
+    final dataMessage = DataMessage()
+      ..pollCreate = pollCreate;
+
+    final relayMessage = Message()
+      ..dataMessage = dataMessage;
+
+    messageSender!.sendUnencryptedEnvelope(
+      message.chatId, 
+      relayMessage, 
+      destinationType: destinationType,
+    );
     await chatRepository!.updateMessageStatus(messageId, MessageStatusEntity.sent);
   }
 

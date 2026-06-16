@@ -66,6 +66,14 @@ class MessageDao extends DatabaseAccessor<SigmaDatabase> with _$MessageDaoMixin 
     return into(messages).insertOnConflictUpdate(message);
   }
 
+  Future<void> saveLocation(MessageLocationsCompanion location) {
+    return into(messageLocations).insertOnConflictUpdate(location);
+  }
+
+  Future<MessageLocation?> getLocation(String messageId) {
+    return (select(messageLocations)..where((t) => t.messageId.equals(messageId))).getSingleOrNull();
+  }
+
   Future<Message?> getMessage(String id) {
     return (select(messages)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
@@ -111,14 +119,10 @@ class MessageDao extends DatabaseAccessor<SigmaDatabase> with _$MessageDaoMixin 
     await transaction(() async {
       await saveMessage(message);
       
-      final conv = await (select(conversations)..where((t) => t.id.equals(conversationId))).getSingleOrNull();
-      final currentUnread = conv?.unreadCount ?? 0;
-
       await (update(conversations)..where((t) => t.id.equals(conversationId))).write(
         ConversationsCompanion(
           lastMessageId: Value(message.id.value),
           updatedAt: Value(message.createdAt.value ?? DateTime.now().millisecondsSinceEpoch),
-          unreadCount: Value(incrementUnread ? currentUnread + 1 : currentUnread),
         ),
       );
     });

@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"sigma-server/internal/domain/entities"
-
-	"github.com/google/uuid"
 )
 
 func TestBotAPIService_validateWebhookURL(t *testing.T) {
@@ -26,7 +24,7 @@ func TestBuildUpdate(t *testing.T) {
 	name := "Ana"
 	user := "dev01"
 	account := &entities.Account{
-		ID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+		ID:          "11111111-1111-1111-1111-111111111111",
 		DisplayName: &name,
 		Username:    &user,
 	}

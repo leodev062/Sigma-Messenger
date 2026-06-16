@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:sigma_core/sigma_core.dart' hide Job;
 import 'package:sigma_core/sigma_core.dart' as core show Job;
 import 'package:sigma_chat/src/domain/i_chat_repository.dart';
-import 'package:sigma_core/src/network/pb/message.pb.dart' as sigmapb;
-import 'package:fixnum/fixnum.dart' as fixnum;
 
 /// PushMediaSendJob - Gerencia o upload e envio de mídia Relay.
 class PushMediaSendJob extends core.Job {
@@ -13,6 +11,7 @@ class PushMediaSendJob extends core.Job {
   final String messageId;
   final String filePath;
   final String chatId;
+  final String destinationType;
 
   final AttachmentManager? attachmentManager;
   final SignalServiceMessageSender? messageSender;
@@ -22,6 +21,7 @@ class PushMediaSendJob extends core.Job {
     required this.messageId,
     required this.filePath,
     required this.chatId,
+    this.destinationType = "USER",
     this.attachmentManager,
     this.messageSender,
     this.chatRepository,
@@ -38,6 +38,7 @@ class PushMediaSendJob extends core.Job {
     'messageId': messageId,
     'filePath': filePath,
     'chatId': chatId,
+    'destinationType': destinationType,
   };
 
   static core.Job create(Map<String, dynamic> data, int databaseId, GetIt locator) {
@@ -45,6 +46,7 @@ class PushMediaSendJob extends core.Job {
       messageId: data['messageId'],
       filePath: data['filePath'],
       chatId: data['chatId'],
+      destinationType: data['destinationType'] ?? "USER",
       attachmentManager: locator<AttachmentManager>(),
       messageSender: locator<SignalServiceMessageSender>(),
       chatRepository: locator<IChatRepository>(),
@@ -68,29 +70,20 @@ class PushMediaSendJob extends core.Job {
       bytes,
     );
 
-    final relayMessage = sigmapb.Message()
-      ..id = message.id
-      ..conversationId = message.chatId
-      ..senderId = "me"
-      ..receiverId = message.chatId
-      ..timestamp = fixnum.Int64(message.timestamp);
+    final dataMessage = DataMessage()
+      ..attachment = (AttachmentPointer()
+        ..id = requestResponse.uploadUrl
+        ..fileName = filePath.split('/').last
+        ..size = bytes.length);
 
-    if (message.type == MessageTypeEntity.image) {
-      relayMessage.type = sigmapb.MessageType.IMAGE;
-      relayMessage.image = (sigmapb.ImageContent()
-        ..url = requestResponse.uploadUrl
-        ..thumbnail = "");
-    } else if (message.type == MessageTypeEntity.video) {
-      relayMessage.type = sigmapb.MessageType.VIDEO;
-      relayMessage.video = (sigmapb.VideoContent()
-        ..url = requestResponse.uploadUrl);
-    } else if (message.type == MessageTypeEntity.audio) {
-      relayMessage.type = sigmapb.MessageType.AUDIO;
-      relayMessage.audio = (sigmapb.AudioContent()
-        ..url = requestResponse.uploadUrl);
-    }
+    final relayMessage = Message()
+      ..dataMessage = dataMessage;
 
-    messageSender!.sendUnencryptedEnvelope(chatId, relayMessage);
+    messageSender!.sendUnencryptedEnvelope(
+      chatId, 
+      relayMessage, 
+      destinationType: destinationType,
+    );
     await chatRepository!.updateMessageStatus(messageId, MessageStatusEntity.sent);
   }
 

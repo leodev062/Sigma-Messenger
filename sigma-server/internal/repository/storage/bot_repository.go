@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 
 	"sigma-server/internal/domain/entities"
 	"sigma-server/internal/domain/valueobjects"
+	"sigma-server/internal/platform/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -54,6 +54,7 @@ func (r *BotRepository) CreateBot(ownerID uuid.UUID, displayName, username strin
 	}
 
 	bot := &entities.Account{
+		ID:               utils.NewBotID(),
 		Type:             string(valueobjects.RecipientBot),
 		DisplayName:      &displayName,
 		OwnerID:          &ownerID,
@@ -85,6 +86,7 @@ func (r *BotRepository) EnsureBotFather(displayName, username string) (*entities
 	name := displayName
 	user := strings.TrimPrefix(username, "@")
 	bot := &entities.Account{
+		ID:               utils.NewBotID(),
 		Type:             string(valueobjects.RecipientBot),
 		DisplayName:      &name,
 		Username:         &user,
@@ -133,7 +135,7 @@ func SlugUsername(name string) string {
 	}
 	out := strings.Trim(b.String(), "_")
 	if out == "" {
-		return fmt.Sprintf("bot_%s", uuid.NewString()[:8])
+		return utils.NewBotID()[:12] // Use a portion of a new bot ID
 	}
 	if len(out) > 40 {
 		out = out[:40]

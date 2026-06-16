@@ -20,9 +20,9 @@ type PendingMessageStore interface {
 
 // EnvelopeStore reads and acknowledges queued Relay envelopes.
 type EnvelopeStore interface {
-	FindPendingByRecipient(recipientID uuid.UUID) ([]entities.Envelope, error)
-	DeleteForRecipient(id int, recipientID uuid.UUID) (int64, error)
-	DeleteByEnvelopeIDForRecipient(envelopeID string, recipientID uuid.UUID) (int64, error)
+	FindPendingByRecipient(recipientID string) ([]entities.Envelope, error)
+	DeleteForRecipient(id int, recipientID string) (int64, error)
+	DeleteByEnvelopeIDForRecipient(envelopeID string, recipientID string) (int64, error)
 }
 
 // PendingEventStore reads and removes one-time push events.
@@ -45,5 +45,5 @@ type OutboundSession interface {
 
 // OutboundDispatcher routes outgoing websocket messages by recipient type.
 type OutboundDispatcher interface {
-	Dispatch(senderID, recipientID string, payload []byte) error
+	Dispatch(senderID, recipientID, destinationType string, payload []byte) error
 }
