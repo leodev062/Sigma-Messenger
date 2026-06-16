@@ -1,0 +1,557 @@
+# 🆔 ENTITY ID & ROUTING AGENT (EIRA)
+
+## 📌 OBJETIVO
+
+Este agente define como usuários, bots, grupos, canais e dispositivos
+devem ser identificados e tratados no APP e no SERVIDOR.
+
+O objetivo é impedir ambiguidades, colisões de IDs e erros de roteamento.
+
+---
+
+# 🧠 PRINCÍPIO FUNDAMENTAL
+
+```text
+Todo objeto do sistema possui um ID global único e um tipo explícito.
+```
+
+Nunca deduzir o tipo pelo formato do ID.
+
+O tipo sempre deve ser informado separadamente.
+
+---
+
+# 📦 TIPOS DE ENTIDADE
+
+```proto
+enum EntityType {
+  USER = 0;
+  BOT = 1;
+  GROUP = 2;
+  CHANNEL = 3;
+}
+```
+
+---
+
+# 🆔 USER ID
+
+Representa uma pessoa.
+
+Exemplo:
+
+```
+id = "usr_01HZX4..."
+```
+
+Características:
+
+- nunca muda
+- não depende do telefone
+- não depende do username
+- continua igual mesmo se alterar perfil
+
+---
+
+# 🤖 BOT ID
+
+Representa um bot.
+
+Exemplo:
+
+```
+id = "bot_01ABCD..."
+```
+
+Características:
+
+- único
+- não compartilhado com usuários
+- tratado como entidade própria
+
+---
+
+# 👥 GROUP ID
+
+Representa um grupo.
+
+Exemplo:
+
+```
+id = "grp_01KLMN..."
+```
+
+Características:
+
+- criado uma única vez
+- permanece igual durante toda a vida do grupo
+
+---
+
+# 📢 CHANNEL ID
+
+Representa um canal.
+
+Exemplo:
+
+```
+id = "chn_01PQRS..."
+```
+
+Características:
+
+- único
+- independente do owner
+
+---
+
+# 📱 DEVICE ID
+
+Representa um aparelho.
+
+Exemplo:
+
+```
+dev_01928374
+```
+
+Cada instalação possui um device próprio.
+
+Mesmo usuário:
+
+Phone A -> dev_a
+
+Phone B -> dev_b
+
+Tablet -> dev_c
+
+---
+
+# 🔑 IDENTIDADE DO USUÁRIO
+
+O telefone NÃO é o ID.
+
+```
+phone
+    ↓
+procura usuário
+    ↓
+userId
+```
+
+Mesmo trocando número:
+
+```
+userId continua igual
+```
+
+---
+
+# 📦 DESTINATION TYPE
+
+Toda mensagem possui:
+
+```proto
+string destination_id
+EntityType destination_type
+```
+
+Exemplo:
+
+```
+destination_id = grp_xxx
+destination_type = GROUP
+```
+
+Nunca tentar descobrir pelo ID.
+
+---
+
+# 📨 MESSAGE MODEL
+
+```proto
+message Message {
+
+    string message_id = 1;
+
+    string sender_id = 2;
+    EntityType sender_type = 3;
+
+    string destination_id = 4;
+    EntityType destination_type = 5;
+
+}
+```
+
+---
+
+# 📱 APP
+
+O APP sempre usa:
+
+```
+destination_type
+```
+
+para decidir:
+
+- tela
+- avatar
+- permissões
+- layout
+- ações disponíveis
+
+Nunca usar prefixos do ID para isso.
+
+---
+
+# 🌐 SERVER
+
+O servidor sempre roteia usando:
+
+```
+destination_type
++
+destination_id
+```
+
+Exemplo:
+
+```
+USER
+→ entrega para user
+
+GROUP
+→ entrega para todos membros
+
+CHANNEL
+→ entrega para inscritos
+
+BOT
+→ entrega para engine do bot
+```
+
+---
+
+# 👤 USER CHAT
+
+```
+sender:
+usr_xxx
+
+destination:
+usr_yyy
+
+destinationType:
+USER
+```
+
+---
+
+# 👥 GROUP CHAT
+
+```
+sender:
+usr_xxx
+
+destination:
+grp_xxx
+
+destinationType:
+GROUP
+```
+
+Servidor:
+
+```
+busca membros
+
+entrega individualmente
+```
+
+---
+
+# 📢 CHANNEL
+
+```
+sender:
+usr_admin
+
+destination:
+chn_xxx
+
+destinationType:
+CHANNEL
+```
+
+Servidor:
+
+```
+busca inscritos
+
+envia broadcast
+```
+
+---
+
+# 🤖 BOT
+
+```
+sender:
+usr_xxx
+
+destination:
+bot_xxx
+
+destinationType:
+BOT
+```
+
+Servidor:
+
+```
+encaminha para engine do bot
+
+resposta volta como:
+
+sender = bot_xxx
+senderType = BOT
+```
+
+---
+
+# 💬 CONVERSATION ID
+
+ConversationId é independente.
+
+Nunca usar userId.
+
+Exemplo:
+
+```
+conversationId:
+
+cnv_01928374
+```
+
+Mesmo chat entre duas pessoas:
+
+```
+conversationId != senderId
+```
+
+---
+
+# 📦 PARTICIPANTS
+
+Grupo:
+
+```
+participants
+
+- usr1
+- usr2
+- usr3
+```
+
+Canal:
+
+```
+owner
+
+subscribers
+```
+
+Bot:
+
+```
+botId
+```
+
+---
+
+# 🔄 MUDANÇA DE USERNAME
+
+Pode mudar:
+
+```
+username
+```
+
+Nunca muda:
+
+```
+userId
+```
+
+Todo relacionamento usa userId.
+
+---
+
+# 📱 MUDANÇA DE TELEFONE
+
+Pode mudar:
+
+```
+phone
+```
+
+Nunca muda:
+
+```
+userId
+```
+
+---
+
+# 📷 MUDANÇA DE FOTO
+
+Pode mudar:
+
+```
+avatarUrl
+```
+
+Nunca muda:
+
+```
+userId
+```
+
+---
+
+# 🧠 CACHE LOCAL
+
+Sempre indexado por:
+
+```
+userId
+
+groupId
+
+channelId
+
+botId
+```
+
+Nunca por telefone.
+
+Nunca por username.
+
+---
+
+# 🚨 REGRAS CRÍTICAS
+
+Nunca comparar usuários por telefone.
+
+Nunca comparar usuários por username.
+
+Nunca comparar usuários por nome.
+
+Sempre comparar por:
+
+```
+userId
+```
+
+---
+
+# 🚨 REGRAS PARA O SERVIDOR
+
+O servidor nunca deve fazer:
+
+```
+if(id.startsWith("grp"))
+```
+
+ou
+
+```
+if(id.startsWith("bot"))
+```
+
+Sempre utilizar:
+
+```
+destinationType
+```
+
+recebido na mensagem ou consultado no banco.
+
+---
+
+# 🚨 REGRAS PARA O APP
+
+Nunca inferir o tipo pela aparência.
+
+Nunca inferir o tipo pelo avatar.
+
+Nunca inferir o tipo pelo ID.
+
+Sempre usar:
+
+```
+conversation.type
+```
+
+ou
+
+```
+destinationType
+```
+
+---
+
+# 📊 FLUXO DE ROTEAMENTO
+
+Mensagem criada
+
+↓
+
+sender_id
+
+↓
+
+destination_id
+
+↓
+
+destination_type
+
+↓
+
+Servidor identifica destino
+
+↓
+
+Executa roteamento correto
+
+↓
+
+Entrega aos dispositivos
+
+↓
+
+App renderiza conforme conversation.type
+
+---
+
+# ✅ RESULTADO FINAL
+
+✔ IDs imutáveis
+
+✔ username pode mudar sem quebrar relações
+
+✔ telefone pode mudar sem perder conta
+
+✔ roteamento seguro
+
+✔ suporte completo a USER, BOT, GROUP e CHANNEL,SYTEMS etc...
+
+✔ multi-device compatível
+
+✔ sem colisões de identificação
+
+✔ sem lógica baseada em prefixos ou heurísticas
+
+✔ arquitetura escalável e consistente entre APP e SERVIDOR
